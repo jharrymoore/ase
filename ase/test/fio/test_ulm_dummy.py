@@ -9,9 +9,9 @@ def test_dummy_write():
     # to be able to do the dummy actions
     with DummyWriter() as w:
         w.write(a=1, b=2)
-        w.add_array('psi', (1, 2))
+        w.add_array("psi", (1, 2))
         w.fill(np.ones((1, 2)))
         w.sync()
-        with w.child('child') as w2:
+        with w.child("child") as w2:
             w2.write(c=3)
         assert len(w) == 0

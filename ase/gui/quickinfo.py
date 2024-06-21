@@ -20,62 +20,61 @@ def info(gui):
 
     tokens = []
 
-    def add(token=''):
+    def add(token=""):
         tokens.append(token)
 
     if len(atoms) < 1:
-        add(_('This frame has no atoms.'))
+        add(_("This frame has no atoms."))
     else:
         img = gui.frame
 
         if nimg == 1:
-            add(_('Single image loaded.'))
+            add(_("Single image loaded."))
         else:
-            add(_('Image {} loaded (0–{}).').format(img, nimg - 1))
+            add(_("Image {} loaded (0–{}).").format(img, nimg - 1))
         add()
-        add(_('Number of atoms: {}').format(len(atoms)))
+        add(_("Number of atoms: {}").format(len(atoms)))
 
         # We need to write Å³ further down, so we have no choice but to
         # use proper subscripts in the chemical formula:
         formula = atoms.get_chemical_formula()
-        subscripts = dict(zip('0123456789', '₀₁₂₃₄₅₆₇₈₉'))
-        pretty_formula = ''.join(subscripts.get(c, c) for c in formula)
+        subscripts = dict(zip("0123456789", "₀₁₂₃₄₅₆₇₈₉"))
+        pretty_formula = "".join(subscripts.get(c, c) for c in formula)
         add(pretty_formula)
 
         add()
-        add(_('Unit cell [Å]:'))
+        add(_("Unit cell [Å]:"))
         add(ucellformat.format(*atoms.cell.ravel()))
-        periodic = [[_('no'), _('yes')][int(periodic)]
-                    for periodic in atoms.pbc]
+        periodic = [[_("no"), _("yes")][int(periodic)] for periodic in atoms.pbc]
         # TRANSLATORS: This has the form Periodic: no, no, yes
-        add(_('Periodic: {}, {}, {}').format(*periodic))
+        add(_("Periodic: {}, {}, {}").format(*periodic))
         add()
 
         cellpar = atoms.cell.cellpar()
         add()
-        add(_('Lengths [Å]: {:.3f}, {:.3f}, {:.3f}').format(*cellpar[:3]))
-        add(_('Angles: {:.1f}°, {:.1f}°, {:.1f}°').format(*cellpar[3:]))
+        add(_("Lengths [Å]: {:.3f}, {:.3f}, {:.3f}").format(*cellpar[:3]))
+        add(_("Angles: {:.1f}°, {:.1f}°, {:.1f}°").format(*cellpar[3:]))
 
         if atoms.cell.rank == 3:
-            add(_('Volume: {:.3f} Å³').format(atoms.cell.volume))
+            add(_("Volume: {:.3f} Å³").format(atoms.cell.volume))
 
         add()
 
         if nimg > 1:
             if all((atoms.cell == img.cell).all() for img in images):
-                add(_('Unit cell is fixed.'))
+                add(_("Unit cell is fixed."))
             else:
-                add(_('Unit cell varies.'))
+                add(_("Unit cell varies."))
 
         if atoms.pbc[:2].all() and atoms.cell.rank >= 1:
             try:
                 lat = atoms.cell.get_bravais_lattice()
             except RuntimeError:
-                add(_('Could not recognize the lattice type'))
+                add(_("Could not recognize the lattice type"))
             except Exception:
-                add(_('Unexpected error determining lattice type'))
+                add(_("Unexpected error determining lattice type"))
             else:
-                add(_('Reduced Bravais lattice:\n{}').format(lat))
+                add(_("Reduced Bravais lattice:\n{}").format(lat))
 
         # Print electronic structure information if we have a calculator
         if atoms.calc:
@@ -92,8 +91,10 @@ def info(gui):
                         quantity = get_quantity()
                 except Exception as err:
                     quantity = None
-                    errmsg = ('An error occurred while retrieving {} '
-                              'from the calculator: {}'.format(name, err))
+                    errmsg = (
+                        "An error occurred while retrieving {} "
+                        "from the calculator: {}".format(name, err)
+                    )
                     warnings.warn(errmsg)
                 return quantity
 
@@ -102,26 +103,27 @@ def info(gui):
             # name of a code even if they are just cached results.
             add()
             from ase.calculators.singlepoint import SinglePointCalculator
-            if isinstance(calc, SinglePointCalculator):
-                add(_('Calculator: {} (cached)').format(calc.name))
-            else:
-                add(_('Calculator: {} (attached)').format(calc.name))
 
-            energy = getresult('energy', atoms.get_potential_energy)
-            forces = getresult('forces', atoms.get_forces)
-            magmom = getresult('magmom', atoms.get_magnetic_moment)
+            if isinstance(calc, SinglePointCalculator):
+                add(_("Calculator: {} (cached)").format(calc.name))
+            else:
+                add(_("Calculator: {} (attached)").format(calc.name))
+
+            energy = getresult("energy", atoms.get_potential_energy)
+            forces = getresult("forces", atoms.get_forces)
+            magmom = getresult("magmom", atoms.get_magnetic_moment)
 
             if energy is not None:
-                energy_str = _('Energy: {:.3f} eV').format(energy)
+                energy_str = _("Energy: {:.3f} eV").format(energy)
                 add(energy_str)
 
             if forces is not None:
                 maxf = np.linalg.norm(forces, axis=1).max()
-                forces_str = _('Max force: {:.3f} eV/Å').format(maxf)
+                forces_str = _("Max force: {:.3f} eV/Å").format(maxf)
                 add(forces_str)
 
             if magmom is not None:
-                mag_str = _('Magmom: {:.3f} µ').format(magmom)
+                mag_str = _("Magmom: {:.3f} µ").format(magmom)
                 add(mag_str)
 
-    return '\n'.join(tokens)
+    return "\n".join(tokens)

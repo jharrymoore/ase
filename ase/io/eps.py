@@ -4,10 +4,17 @@ from ase.io.utils import PlottingVariables, make_patch_list
 
 
 class EPS(PlottingVariables):
-    def __init__(self, atoms,
-                 rotation='', radii=None,
-                 bbox=None, colors=None, scale=20, maxwidth=500,
-                 **kwargs):
+    def __init__(
+        self,
+        atoms,
+        rotation="",
+        radii=None,
+        bbox=None,
+        colors=None,
+        scale=20,
+        maxwidth=500,
+        **kwargs
+    ):
         """Encapsulated PostScript writer.
 
         show_unit_cell: int
@@ -15,10 +22,16 @@ class EPS(PlottingVariables):
             2: Show unit cell and make sure all of it is visible.
         """
         PlottingVariables.__init__(
-            self, atoms, rotation=rotation,
-            radii=radii, bbox=bbox, colors=colors, scale=scale,
+            self,
+            atoms,
+            rotation=rotation,
+            radii=radii,
+            bbox=bbox,
+            colors=colors,
+            scale=scale,
             maxwidth=maxwidth,
-            **kwargs)
+            **kwargs
+        )
 
     def write(self, fd):
         renderer = self._renderer(fd)
@@ -29,30 +42,31 @@ class EPS(PlottingVariables):
     def write_header(self, fd):
         from matplotlib.backends.backend_ps import psDefs
 
-        fd.write('%!PS-Adobe-3.0 EPSF-3.0\n')
-        fd.write('%%Creator: G2\n')
-        fd.write('%%CreationDate: %s\n' % time.ctime(time.time()))
-        fd.write('%%Orientation: portrait\n')
+        fd.write("%!PS-Adobe-3.0 EPSF-3.0\n")
+        fd.write("%%Creator: G2\n")
+        fd.write("%%CreationDate: %s\n" % time.ctime(time.time()))
+        fd.write("%%Orientation: portrait\n")
         bbox = (0, 0, self.w, self.h)
-        fd.write('%%%%BoundingBox: %d %d %d %d\n' % bbox)
-        fd.write('%%EndComments\n')
+        fd.write("%%%%BoundingBox: %d %d %d %d\n" % bbox)
+        fd.write("%%EndComments\n")
 
         Ndict = len(psDefs)
-        fd.write('%%BeginProlog\n')
-        fd.write('/mpldict %d dict def\n' % Ndict)
-        fd.write('mpldict begin\n')
+        fd.write("%%BeginProlog\n")
+        fd.write("/mpldict %d dict def\n" % Ndict)
+        fd.write("mpldict begin\n")
         for d in psDefs:
             d = d.strip()
-            for line in d.split('\n'):
-                fd.write(line.strip() + '\n')
-        fd.write('%%EndProlog\n')
+            for line in d.split("\n"):
+                fd.write(line.strip() + "\n")
+        fd.write("%%EndProlog\n")
 
-        fd.write('mpldict begin\n')
-        fd.write('%d %d 0 0 clipbox\n' % (self.w, self.h))
+        fd.write("mpldict begin\n")
+        fd.write("%d %d 0 0 clipbox\n" % (self.w, self.h))
 
     def _renderer(self, fd):
         # Subclass can override
         from matplotlib.backends.backend_ps import RendererPS
+
         return RendererPS(self.w, self.h, fd)
 
     def write_body(self, fd, renderer):
@@ -61,8 +75,8 @@ class EPS(PlottingVariables):
             patch.draw(renderer)
 
     def write_trailer(self, fd, renderer):
-        fd.write('end\n')
-        fd.write('showpage\n')
+        fd.write("end\n")
+        fd.write("showpage\n")
 
 
 @writer

@@ -3,8 +3,13 @@ import numpy as np
 from numpy import linalg
 from ase.transport.selfenergy import LeadSelfEnergy, BoxProbe
 from ase.transport.greenfunction import GreenFunction
-from ase.transport.tools import subdiagonalize, cutcoupling, dagger,\
-    rotate_matrix, fermidistribution
+from ase.transport.tools import (
+    subdiagonalize,
+    cutcoupling,
+    dagger,
+    rotate_matrix,
+    fermidistribution,
+)
 from ase.units import kB
 
 
@@ -84,26 +89,28 @@ class TransportCalculator:
         """
 
         # The default values for all extra keywords
-        self.input_parameters = {'energies': None,
-                                 'h': None,
-                                 'h1': None,
-                                 'h2': None,
-                                 's': None,
-                                 's1': None,
-                                 's2': None,
-                                 'hc1': None,
-                                 'hc2': None,
-                                 'sc1': None,
-                                 'sc2': None,
-                                 'box': None,
-                                 'align_bf': None,
-                                 'eta1': 1e-5,
-                                 'eta2': 1e-5,
-                                 'eta': 1e-5,
-                                 'logfile': None,
-                                 'eigenchannels': 0,
-                                 'dos': False,
-                                 'pdos': []}
+        self.input_parameters = {
+            "energies": None,
+            "h": None,
+            "h1": None,
+            "h2": None,
+            "s": None,
+            "s1": None,
+            "s2": None,
+            "hc1": None,
+            "hc2": None,
+            "sc1": None,
+            "sc2": None,
+            "box": None,
+            "align_bf": None,
+            "eta1": 1e-5,
+            "eta2": 1e-5,
+            "eta": 1e-5,
+            "logfile": None,
+            "eigenchannels": 0,
+            "dos": False,
+            "pdos": [],
+        }
 
         self.initialized = False  # Changed Hamiltonians?
         self.uptodate = False  # Changed energy grid?
@@ -111,20 +118,35 @@ class TransportCalculator:
 
     def set(self, **kwargs):
         for key in kwargs:
-            if key in ['h', 'h1', 'h2', 'hc1', 'hc2',
-                       's', 's1', 's2', 'sc1', 'sc2',
-                       'eta', 'eta1', 'eta2', 'align_bf', 'box']:
+            if key in [
+                "h",
+                "h1",
+                "h2",
+                "hc1",
+                "hc2",
+                "s",
+                "s1",
+                "s2",
+                "sc1",
+                "sc2",
+                "eta",
+                "eta1",
+                "eta2",
+                "align_bf",
+                "box",
+            ]:
                 self.initialized = False
                 self.uptodate = False
                 break
-            elif key in ['energies', 'eigenchannels', 'dos', 'pdos']:
+            elif key in ["energies", "eigenchannels", "dos", "pdos"]:
                 self.uptodate = False
             elif key not in self.input_parameters:
-                raise KeyError('%r not a vaild keyword' % key)
+                raise KeyError("%r not a vaild keyword" % key)
 
         self.input_parameters.update(kwargs)
-        log = self.input_parameters['logfile']
+        log = self.input_parameters["logfile"]
         if log is None:
+
             class Trash:
                 def write(self, s):
                     pass
@@ -133,111 +155,107 @@ class TransportCalculator:
                     pass
 
             self.log = Trash()
-        elif log == '-':
+        elif log == "-":
             from sys import stdout
+
             self.log = stdout
-        elif 'logfile' in kwargs:
-            self.log = open(log, 'w')
+        elif "logfile" in kwargs:
+            self.log = open(log, "w")
 
     def initialize(self):
         if self.initialized:
             return
 
-        print('# Initializing calculator...', file=self.log)
+        print("# Initializing calculator...", file=self.log)
 
         p = self.input_parameters
-        if p['s'] is None:
-            p['s'] = np.identity(len(p['h']))
+        if p["s"] is None:
+            p["s"] = np.identity(len(p["h"]))
 
         identical_leads = False
-        if p['h2'] is None:
-            p['h2'] = p['h1']  # Lead2 is idendical to lead1
+        if p["h2"] is None:
+            p["h2"] = p["h1"]  # Lead2 is idendical to lead1
             identical_leads = True
 
-        if p['s1'] is None:
-            p['s1'] = np.identity(len(p['h1']))
+        if p["s1"] is None:
+            p["s1"] = np.identity(len(p["h1"]))
 
         if identical_leads:
-            p['s2'] = p['s1']
+            p["s2"] = p["s1"]
         else:
-            if p['s2'] is None:
-                p['s2'] = np.identity(len(p['h2']))
+            if p["s2"] is None:
+                p["s2"] = np.identity(len(p["h2"]))
 
-        h_mm = p['h']
-        s_mm = p['s']
-        pl1 = len(p['h1']) // 2
-        pl2 = len(p['h2']) // 2
-        h1_ii = p['h1'][:pl1, :pl1]
-        h1_ij = p['h1'][:pl1, pl1:2 * pl1]
-        s1_ii = p['s1'][:pl1, :pl1]
-        s1_ij = p['s1'][:pl1, pl1:2 * pl1]
-        h2_ii = p['h2'][:pl2, :pl2]
-        h2_ij = p['h2'][pl2: 2 * pl2, :pl2]
-        s2_ii = p['s2'][:pl2, :pl2]
-        s2_ij = p['s2'][pl2: 2 * pl2, :pl2]
+        h_mm = p["h"]
+        s_mm = p["s"]
+        pl1 = len(p["h1"]) // 2
+        pl2 = len(p["h2"]) // 2
+        h1_ii = p["h1"][:pl1, :pl1]
+        h1_ij = p["h1"][:pl1, pl1 : 2 * pl1]
+        s1_ii = p["s1"][:pl1, :pl1]
+        s1_ij = p["s1"][:pl1, pl1 : 2 * pl1]
+        h2_ii = p["h2"][:pl2, :pl2]
+        h2_ij = p["h2"][pl2 : 2 * pl2, :pl2]
+        s2_ii = p["s2"][:pl2, :pl2]
+        s2_ij = p["s2"][pl2 : 2 * pl2, :pl2]
 
-        if p['hc1'] is None:
+        if p["hc1"] is None:
             nbf = len(h_mm)
             h1_im = np.zeros((pl1, nbf), complex)
             s1_im = np.zeros((pl1, nbf), complex)
             h1_im[:pl1, :pl1] = h1_ij
             s1_im[:pl1, :pl1] = s1_ij
-            p['hc1'] = h1_im
-            p['sc1'] = s1_im
+            p["hc1"] = h1_im
+            p["sc1"] = s1_im
         else:
-            h1_im = p['hc1']
-            if p['sc1'] is not None:
-                s1_im = p['sc1']
+            h1_im = p["hc1"]
+            if p["sc1"] is not None:
+                s1_im = p["sc1"]
             else:
                 s1_im = np.zeros(h1_im.shape, complex)
-                p['sc1'] = s1_im
+                p["sc1"] = s1_im
 
-        if p['hc2'] is None:
+        if p["hc2"] is None:
             h2_im = np.zeros((pl2, nbf), complex)
             s2_im = np.zeros((pl2, nbf), complex)
             h2_im[-pl2:, -pl2:] = h2_ij
             s2_im[-pl2:, -pl2:] = s2_ij
-            p['hc2'] = h2_im
-            p['sc2'] = s2_im
+            p["hc2"] = h2_im
+            p["sc2"] = s2_im
         else:
-            h2_im = p['hc2']
-            if p['sc2'] is not None:
-                s2_im = p['sc2']
+            h2_im = p["hc2"]
+            if p["sc2"] is not None:
+                s2_im = p["sc2"]
             else:
                 s2_im = np.zeros(h2_im.shape, complex)
-                p['sc2'] = s2_im
+                p["sc2"] = s2_im
 
-        align_bf = p['align_bf']
+        align_bf = p["align_bf"]
         if align_bf is not None:
-            diff = ((h_mm[align_bf, align_bf] - h1_ii[align_bf, align_bf]) /
-                    s_mm[align_bf, align_bf])
-            print('# Aligning scat. H to left lead H. diff=', diff,
-                  file=self.log)
+            diff = (h_mm[align_bf, align_bf] - h1_ii[align_bf, align_bf]) / s_mm[
+                align_bf, align_bf
+            ]
+            print("# Aligning scat. H to left lead H. diff=", diff, file=self.log)
             h_mm -= diff * s_mm
 
         # Setup lead self-energies
         # All infinitesimals must be > 0
-        assert np.all(np.array((p['eta'], p['eta1'], p['eta2'])) > 0.0)
-        self.selfenergies = [LeadSelfEnergy((h1_ii, s1_ii),
-                                            (h1_ij, s1_ij),
-                                            (h1_im, s1_im),
-                                            p['eta1']),
-                             LeadSelfEnergy((h2_ii, s2_ii),
-                                            (h2_ij, s2_ij),
-                                            (h2_im, s2_im),
-                                            p['eta2'])]
-        box = p['box']
+        assert np.all(np.array((p["eta"], p["eta1"], p["eta2"])) > 0.0)
+        self.selfenergies = [
+            LeadSelfEnergy((h1_ii, s1_ii), (h1_ij, s1_ij), (h1_im, s1_im), p["eta1"]),
+            LeadSelfEnergy((h2_ii, s2_ii), (h2_ij, s2_ij), (h2_im, s2_im), p["eta2"]),
+        ]
+        box = p["box"]
         if box is not None:
-            print('Using box probe!')
+            print("Using box probe!")
             self.selfenergies.append(
-                BoxProbe(eta=box[0], a=box[1], b=box[2], energies=box[3],
-                         S=s_mm, T=0.3))
+                BoxProbe(eta=box[0], a=box[1], b=box[2], energies=box[3], S=s_mm, T=0.3)
+            )
 
         # setup scattering green function
-        self.greenfunction = GreenFunction(selfenergies=self.selfenergies,
-                                           H=h_mm,
-                                           S=s_mm,
-                                           eta=p['eta'])
+        self.greenfunction = GreenFunction(
+            selfenergies=self.selfenergies, H=h_mm, S=s_mm, eta=p["eta"]
+        )
 
         self.initialized = True
 
@@ -246,12 +264,12 @@ class TransportCalculator:
             return
 
         p = self.input_parameters
-        self.energies = p['energies']
+        self.energies = p["energies"]
         nepts = len(self.energies)
-        nchan = p['eigenchannels']
-        pdos = p['pdos']
+        nchan = p["eigenchannels"]
+        pdos = p["pdos"]
         self.T_e = np.empty(nepts)
-        if p['dos']:
+        if p["dos"]:
             self.dos_e = np.empty(nepts)
         if pdos != []:
             self.pdos_ne = np.empty((len(pdos), nepts))
@@ -275,18 +293,17 @@ class TransportCalculator:
             print(energy, self.T_e[e], file=self.log)
             self.log.flush()
 
-            if p['dos']:
+            if p["dos"]:
                 self.dos_e[e] = self.greenfunction.dos(energy)
 
             if pdos != []:
-                self.pdos_ne[:, e] = np.take(self.greenfunction.pdos(energy),
-                                             pdos)
+                self.pdos_ne[:, e] = np.take(self.greenfunction.pdos(energy), pdos)
 
         self.uptodate = True
 
     def print_pl_convergence(self):
         self.initialize()
-        pl1 = len(self.input_parameters['h1']) // 2
+        pl1 = len(self.input_parameters["h1"]) // 2
 
         h_ii = self.selfenergies[0].h_ii
         s_ii = self.selfenergies[0].s_ii
@@ -294,22 +311,23 @@ class TransportCalculator:
         sa_ii = self.greenfunction.S[:pl1, :pl1]
         c1 = np.abs(h_ii - ha_ii).max()
         c2 = np.abs(s_ii - sa_ii).max()
-        print('Conv (h,s)=%.2e, %2.e' % (c1, c2))
+        print("Conv (h,s)=%.2e, %2.e" % (c1, c2))
 
     def plot_pl_convergence(self):
         self.initialize()
-        pl1 = len(self.input_parameters['h1']) // 2
+        pl1 = len(self.input_parameters["h1"]) // 2
         hlead = self.selfenergies[0].h_ii.real.diagonal()
         hprincipal = self.greenfunction.H.real.diagonal[:pl1]
 
         import pylab as pl
-        pl.plot(hlead, label='lead')
-        pl.plot(hprincipal, label='principal layer')
-        pl.axis('tight')
+
+        pl.plot(hlead, label="lead")
+        pl.plot(hprincipal, label="principal layer")
+        pl.axis("tight")
         pl.show()
 
-    def get_current(self, bias, T=0., E=None, T_e=None, spinpol=False):
-        '''Returns the current as a function of the
+    def get_current(self, bias, T=0.0, E=None, T_e=None, spinpol=False):
+        """Returns the current as a function of the
         bias voltage.
 
         **Parameters:**
@@ -342,15 +360,16 @@ class TransportCalculator:
         >> plt.ylabel('I [A]')
         >> plt.show()
 
-        '''
+        """
         if E is not None:
             if T_e is None:
                 self.energies = E
                 self.uptodate = False
                 T_e = self.get_transmission().copy()
         else:
-            assert self.uptodate, ('Energy grid and transmission function '
-                                   'not defined.')
+            assert self.uptodate, (
+                "Energy grid and transmission function " "not defined."
+            )
             E = self.energies.copy()
             T_e = self.T_e.copy()
 
@@ -359,11 +378,11 @@ class TransportCalculator:
             E = E[:, np.newaxis]
             T_e = T_e[:, np.newaxis]
 
-        fl = fermidistribution(E - bias / 2., kB * T)
-        fr = fermidistribution(E + bias / 2., kB * T)
+        fl = fermidistribution(E - bias / 2.0, kB * T)
+        fr = fermidistribution(E + bias / 2.0, kB * T)
 
         if spinpol:
-            return .5 * np.trapz((fl - fr) * T_e, x=E, axis=0)
+            return 0.5 * np.trapz((fl - fr) * T_e, x=E, axis=0)
         else:
             return np.trapz((fl - fr) * T_e, x=E, axis=0)
 
@@ -382,7 +401,7 @@ class TransportCalculator:
         self.initialize()
         self.update()
         if n is None:
-            n = self.input_parameters['eigenchannels']
+            n = self.input_parameters["eigenchannels"]
         return self.eigenchannels_ne[:n]
 
     def get_pdos(self):
@@ -394,8 +413,8 @@ class TransportCalculator:
         self.initialize()
         bfs = np.array(bfs)
         p = self.input_parameters
-        h_mm = p['h']
-        s_mm = p['s']
+        h_mm = p["h"]
+        s_mm = p["s"]
         ht_mm, st_mm, c_mm, e_m = subdiagonalize(h_mm, s_mm, bfs)
         if apply:
             self.uptodate = False
@@ -414,13 +433,13 @@ class TransportCalculator:
         self.initialize()
         bfs = np.array(bfs)
         p = self.input_parameters
-        h_pp = p['h'].copy()
-        s_pp = p['s'].copy()
+        h_pp = p["h"].copy()
+        s_pp = p["s"].copy()
         cutcoupling(h_pp, s_pp, bfs)
         if apply:
             self.uptodate = False
-            p['h'][:] = h_pp
-            p['s'][:] = s_pp
+            p["h"][:] = h_pp
+            p["s"][:] = s_pp
             for alpha, sigma in enumerate(self.selfenergies):
                 for m in bfs:
                     sigma.h_im[:, m] = 0.0
@@ -429,8 +448,8 @@ class TransportCalculator:
 
     def lowdin_rotation(self, apply=False):
         p = self.input_parameters
-        h_mm = p['h']
-        s_mm = p['s']
+        h_mm = p["h"]
+        s_mm = p["s"]
         eig, rot_mm = linalg.eigh(s_mm)
         eig = np.abs(eig)
         rot_mm = np.dot(rot_mm / np.sqrt(eig), dagger(rot_mm))

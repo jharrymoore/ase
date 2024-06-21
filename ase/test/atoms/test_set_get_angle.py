@@ -3,8 +3,9 @@ def test_set_get_angle():
 
     from ase import Atoms
 
-    atoms = Atoms('HHCCHH', [[-1, 1, 0], [-1, -1, 0], [0, 0, 0],
-                             [1, 0, 0], [2, 1, 0], [2, -1, 0]])
+    atoms = Atoms(
+        "HHCCHH", [[-1, 1, 0], [-1, -1, 0], [0, 0, 0], [1, 0, 0], [2, 1, 0], [2, -1, 0]]
+    )
 
     list = [2, 3, 4]
     theta = 20

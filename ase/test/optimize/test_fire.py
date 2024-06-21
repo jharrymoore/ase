@@ -8,7 +8,7 @@ from ase.optimize import FIRE
 
 @pytest.mark.slow
 def test_fire():
-    a = bulk('Au')
+    a = bulk("Au")
     a *= (2, 2, 2)
 
     a[0].x += 0.5
@@ -20,7 +20,7 @@ def test_fire():
     e1 = a.get_potential_energy()
     n1 = opt.nsteps
 
-    a = bulk('Au')
+    a = bulk("Au")
     a *= (2, 2, 2)
 
     a[0].x += 0.5
@@ -32,8 +32,14 @@ def test_fire():
     def callback(a, r, e, e_last):
         reset_history.append([e - e_last])
 
-    opt = FIRE(a, dtmax=1.0, dt=1.0, maxstep=100.0, downhill_check=True,
-               position_reset_callback=callback)
+    opt = FIRE(
+        a,
+        dtmax=1.0,
+        dt=1.0,
+        maxstep=100.0,
+        downhill_check=True,
+        position_reset_callback=callback,
+    )
     opt.run(fmax=0.001)
     e2 = a.get_potential_energy()
     n2 = opt.nsteps

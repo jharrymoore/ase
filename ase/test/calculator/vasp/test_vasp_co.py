@@ -9,19 +9,21 @@ calc = pytest.mark.calculator
 @pytest.fixture
 def calc_settings():
     """Some simple fast calculation settings"""
-    return dict(xc='lda',
-                prec='Low',
-                algo='Fast',
-                setups='minimal',
-                ismear=0,
-                nelm=1,
-                sigma=1.,
-                istart=0,
-                lwave=False,
-                lcharg=False)
+    return dict(
+        xc="lda",
+        prec="Low",
+        algo="Fast",
+        setups="minimal",
+        ismear=0,
+        nelm=1,
+        sigma=1.0,
+        istart=0,
+        lwave=False,
+        lcharg=False,
+    )
 
 
-@calc('vasp')
+@calc("vasp")
 def test_vasp_co(factory, atoms_co, calc_settings):
     """
     Run some VASP tests to ensure that the VASP calculator works. This
@@ -29,6 +31,7 @@ def test_vasp_co(factory, atoms_co, calc_settings):
     environment variables
 
     """
+
     def array_almost_equal(a1, a2, tol=np.finfo(type(1.0)).eps):
         """Replacement for old numpy.testing.utils.array_almost_equal."""
         return (np.abs(a1 - a2) < tol).all()
@@ -39,7 +42,7 @@ def test_vasp_co(factory, atoms_co, calc_settings):
 
     co.calc = calc
     en = co.get_potential_energy()
-    write('vasp_co.traj', co)
+    write("vasp_co.traj", co)
     # Secondly, check that restart from the previously created VASP output works
 
     calc2 = factory.calc(restart=True)

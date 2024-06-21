@@ -16,6 +16,7 @@ from ase.geometry.dimensionality.disjoint_set import DisjointSet
 # Numpy has a large overhead for lots of small vectors.  The cross product is
 # particularly bad.  Pure python is a lot faster.
 
+
 def dot_product(A, B):
     return sum([a * b for a, b in zip(A, B)])
 
@@ -134,7 +135,6 @@ def merge_mutual_visits(all_visited, ranks, graph):
 
 
 class RDA:
-
     def __init__(self, num_atoms):
         """
         Initializes the RDA class.
@@ -169,7 +169,7 @@ class RDA:
         """
         roffset = tuple(-np.array(offset))
 
-        if offset == (0, 0, 0):    # only want bonds in aperiodic unit cell
+        if offset == (0, 0, 0):  # only want bonds in aperiodic unit cell
             self.graph.union(i, j)
         else:
             self.bonds += [(i, j, offset)]
@@ -185,8 +185,7 @@ class RDA:
         Returns:
         hist : tuple         Dimensionality histogram.
         """
-        adjacency = build_adjacency_list(self.graph.find_all(),
-                                         self.bonds)
+        adjacency = build_adjacency_list(self.graph.find_all(), self.bonds)
         if adjacency == self.adjacency:
             return self.hcached
 

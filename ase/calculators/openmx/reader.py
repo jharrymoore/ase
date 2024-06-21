@@ -29,6 +29,7 @@ from ase.io import ParseError
 def read_openmx(filename=None, debug=False):
     from ase.calculators.openmx import OpenMX
     from ase import Atoms
+
     """
     Read results from typical OpenMX output files and returns the atom object
     In default mode, it reads every implementd properties we could get from
@@ -41,28 +42,41 @@ def read_openmx(filename=None, debug=False):
     version 3.8.3, stress tensor are not written in the '.out' file. It only
     contained in the '.log' file. So... I implented reading '.log' file method
     """
-    log_data = read_file(get_file_name('.log', filename), debug=debug)
-    restart_data = read_file(get_file_name('.dat#', filename), debug=debug)
-    dat_data = read_file(get_file_name('.dat', filename), debug=debug)
-    out_data = read_file(get_file_name('.out', filename), debug=debug)
-    scfout_data = read_scfout_file(get_file_name('.scfout', filename))
-    band_data = read_band_file(get_file_name('.Band', filename))
+    log_data = read_file(get_file_name(".log", filename), debug=debug)
+    restart_data = read_file(get_file_name(".dat#", filename), debug=debug)
+    dat_data = read_file(get_file_name(".dat", filename), debug=debug)
+    out_data = read_file(get_file_name(".out", filename), debug=debug)
+    scfout_data = read_scfout_file(get_file_name(".scfout", filename))
+    band_data = read_band_file(get_file_name(".Band", filename))
     # dos_data = read_dos_file(get_file_name('.Dos.val', filename))
     """
     First, we get every data we could get from the all results files. And then,
     reform the data to fit to data structure of Atom object. While doing this,
     Fix the unit to ASE format.
     """
-    parameters = get_parameters(out_data=out_data, log_data=log_data,
-                                restart_data=restart_data, dat_data=dat_data,
-                                scfout_data=scfout_data, band_data=band_data)
-    atomic_formula = get_atomic_formula(out_data=out_data, log_data=log_data,
-                                        restart_data=restart_data,
-                                        scfout_data=scfout_data,
-                                        dat_data=dat_data)
-    results = get_results(out_data=out_data, log_data=log_data,
-                          restart_data=restart_data, scfout_data=scfout_data,
-                          dat_data=dat_data, band_data=band_data)
+    parameters = get_parameters(
+        out_data=out_data,
+        log_data=log_data,
+        restart_data=restart_data,
+        dat_data=dat_data,
+        scfout_data=scfout_data,
+        band_data=band_data,
+    )
+    atomic_formula = get_atomic_formula(
+        out_data=out_data,
+        log_data=log_data,
+        restart_data=restart_data,
+        scfout_data=scfout_data,
+        dat_data=dat_data,
+    )
+    results = get_results(
+        out_data=out_data,
+        log_data=log_data,
+        restart_data=restart_data,
+        scfout_data=scfout_data,
+        dat_data=dat_data,
+        band_data=band_data,
+    )
 
     atoms = Atoms(**atomic_formula)
     atoms.calc = OpenMX(**parameters)
@@ -79,30 +93,43 @@ def read_file(filename, debug=False):
             example will be written later
     """
     from ase.calculators.openmx import parameters as param
+
     if not os.path.isfile(filename):
         return {}
-    param_keys = ['integer_keys', 'float_keys', 'string_keys', 'bool_keys',
-                  'list_int_keys', 'list_float_keys', 'list_bool_keys',
-                  'tuple_integer_keys', 'tuple_float_keys', 'tuple_float_keys']
+    param_keys = [
+        "integer_keys",
+        "float_keys",
+        "string_keys",
+        "bool_keys",
+        "list_int_keys",
+        "list_float_keys",
+        "list_bool_keys",
+        "tuple_integer_keys",
+        "tuple_float_keys",
+        "tuple_float_keys",
+    ]
     patterns = {
-        'Stress tensor': ('stress', read_stress_tensor),
-        'Dipole moment': ('dipole', read_dipole),
-        'Fractional coordinates of': ('scaled_positions', read_scaled_positions),
-        'Utot.': ('energy', read_energy),
-        'energies in': ('energies', read_energies),
-        'Chemical Potential': ('chemical_potential', read_chemical_potential),
-        '<coordinates.forces': ('forces', read_forces),
-        'Eigenvalues (Hartree)': ('eigenvalues', read_eigenvalues)}
+        "Stress tensor": ("stress", read_stress_tensor),
+        "Dipole moment": ("dipole", read_dipole),
+        "Fractional coordinates of": ("scaled_positions", read_scaled_positions),
+        "Utot.": ("energy", read_energy),
+        "energies in": ("energies", read_energies),
+        "Chemical Potential": ("chemical_potential", read_chemical_potential),
+        "<coordinates.forces": ("forces", read_forces),
+        "Eigenvalues (Hartree)": ("eigenvalues", read_eigenvalues),
+    }
     special_patterns = {
-        'Total spin moment': (('magmoms', 'total_magmom'),
-                              read_magmoms_and_total_magmom),
+        "Total spin moment": (
+            ("magmoms", "total_magmom"),
+            read_magmoms_and_total_magmom,
+        ),
     }
     out_data = {}
-    line = '\n'
-    if(debug):
-        print('Read results from %s' % filename)
-    with open(filename, 'r') as fd:
-        '''
+    line = "\n"
+    if debug:
+        print("Read results from %s" % filename)
+    with open(filename, "r") as fd:
+        """
          Read output file line by line. When the `line` matches the pattern
         of certain keywords in `param.[dtype]_keys`, for example,
 
@@ -117,8 +144,8 @@ def read_file(filename, debug=False):
                 out_data[key] = read_[dtype](line)
 
         After found matched pattern, escape the for loop using `continue`.
-        '''
-        while line != '':
+        """
+        while line != "":
             pattern_matched = False
             line = fd.readline()
             try:
@@ -126,8 +153,8 @@ def read_file(filename, debug=False):
             except IndexError:
                 continue
             for dtype_key in param_keys:
-                dtype = dtype_key.rsplit('_', 1)[0]
-                read_dtype = globals()['read_' + dtype]
+                dtype = dtype_key.rsplit("_", 1)[0]
+                read_dtype = globals()["read_" + dtype]
                 for key in param.__dict__[dtype_key]:
                     if key in _line:
                         out_data[get_standard_key(key)] = read_dtype(line)
@@ -137,7 +164,7 @@ def read_file(filename, debug=False):
                     continue
 
             for key in param.matrix_keys:
-                if '<'+key in line:
+                if "<" + key in line:
                     out_data[get_standard_key(key)] = read_matrix(line, key, fd)
                     pattern_matched = True
                     continue
@@ -145,8 +172,7 @@ def read_file(filename, debug=False):
                 continue
             for key in patterns.keys():
                 if key in line:
-                    out_data[patterns[key][0]] = patterns[key][1](
-                        line, fd, debug=debug)
+                    out_data[patterns[key][0]] = patterns[key][1](line, fd, debug=debug)
                     pattern_matched = True
                     continue
             if pattern_matched:
@@ -248,30 +274,31 @@ def read_scfout_file(filename=None):
     from numpy import cumsum as cum
     from numpy import split as spl
     from numpy import sum, zeros
+
     if not os.path.isfile(filename):
         return {}
 
     def easyReader(byte, data_type, shape):
-        data_size = {'d': 8, 'i': 4}
-        data_struct = {'d': float, 'i': int}
+        data_size = {"d": 8, "i": 4}
+        data_struct = {"d": float, "i": int}
         dt = data_type
         ds = data_size[data_type]
         unpack = struct.unpack
         if len(byte) == ds:
-            if dt == 'i':
-                return data_struct[dt].from_bytes(byte, byteorder='little')
-            elif dt == 'd':
-                return np.array(unpack(dt*(len(byte)//ds), byte))[0]
+            if dt == "i":
+                return data_struct[dt].from_bytes(byte, byteorder="little")
+            elif dt == "d":
+                return np.array(unpack(dt * (len(byte) // ds), byte))[0]
         elif shape is not None:
-            return np.array(unpack(dt*(len(byte)//ds), byte)).reshape(shape)
+            return np.array(unpack(dt * (len(byte) // ds), byte)).reshape(shape)
         else:
-            return np.array(unpack(dt*(len(byte)//ds), byte))
+            return np.array(unpack(dt * (len(byte) // ds), byte))
 
     def inte(byte, shape=None):
-        return easyReader(byte, 'i', shape)
+        return easyReader(byte, "i", shape)
 
     def floa(byte, shape=None):
-        return easyReader(byte, 'd', shape)
+        return easyReader(byte, "d", shape)
 
     def readOverlap(atomnum, Total_NumOrbs, FNAN, natn, fd):
         myOLP = []
@@ -284,7 +311,7 @@ def read_scfout_file(filename=None):
                 Gh_AN = natn[ct_AN][h_AN]
                 TNO2 = Total_NumOrbs[Gh_AN]
                 for i in range(TNO1):
-                    myOLP[ct_AN][h_AN].append(floa(fd.read(8*TNO2)))
+                    myOLP[ct_AN][h_AN].append(floa(fd.read(8 * TNO2)))
         return myOLP
 
     def readHam(SpinP_switch, FNAN, atomnum, Total_NumOrbs, natn, fd):
@@ -300,24 +327,36 @@ def read_scfout_file(filename=None):
                     Gh_AN = natn[ct_AN][h_AN]
                     TNO2 = Total_NumOrbs[Gh_AN]
                     for i in range(TNO1):
-                        Hks[spin][ct_AN][h_AN].append(floa(fd.read(8*TNO2)))
+                        Hks[spin][ct_AN][h_AN].append(floa(fd.read(8 * TNO2)))
         return Hks
 
-    fd = open(filename, mode='rb')
+    fd = open(filename, mode="rb")
     atomnum, SpinP_switch = inte(fd.read(8))
     Catomnum, Latomnum, Ratomnum, TCpyCell = inte(fd.read(16))
-    atv = floa(fd.read(8*4*(TCpyCell+1)), shape=(TCpyCell+1, 4))
-    atv_ijk = inte(fd.read(4*4*(TCpyCell+1)), shape=(TCpyCell+1, 4))
-    Total_NumOrbs = np.insert(inte(fd.read(4*(atomnum))), 0, 1, axis=0)
-    FNAN = np.insert(inte(fd.read(4*(atomnum))), 0, 0, axis=0)
-    natn = ins(spl(inte(fd.read(4*sum(FNAN[1:] + 1))), cum(FNAN[1:] + 1)),
-               0, zeros(FNAN[0] + 1), axis=0)[:-1]
-    ncn = ins(spl(inte(fd.read(4*np.sum(FNAN[1:] + 1))), cum(FNAN[1:] + 1)),
-              0, np.zeros(FNAN[0] + 1), axis=0)[:-1]
-    tv = ins(floa(fd.read(8*3*4), shape=(3, 4)), 0, [0, 0, 0, 0], axis=0)
-    rtv = ins(floa(fd.read(8*3*4), shape=(3, 4)), 0, [0, 0, 0, 0], axis=0)
-    Gxyz = ins(floa(fd.read(8*(atomnum)*4), shape=(atomnum, 4)), 0,
-               [0., 0., 0., 0.], axis=0)
+    atv = floa(fd.read(8 * 4 * (TCpyCell + 1)), shape=(TCpyCell + 1, 4))
+    atv_ijk = inte(fd.read(4 * 4 * (TCpyCell + 1)), shape=(TCpyCell + 1, 4))
+    Total_NumOrbs = np.insert(inte(fd.read(4 * (atomnum))), 0, 1, axis=0)
+    FNAN = np.insert(inte(fd.read(4 * (atomnum))), 0, 0, axis=0)
+    natn = ins(
+        spl(inte(fd.read(4 * sum(FNAN[1:] + 1))), cum(FNAN[1:] + 1)),
+        0,
+        zeros(FNAN[0] + 1),
+        axis=0,
+    )[:-1]
+    ncn = ins(
+        spl(inte(fd.read(4 * np.sum(FNAN[1:] + 1))), cum(FNAN[1:] + 1)),
+        0,
+        np.zeros(FNAN[0] + 1),
+        axis=0,
+    )[:-1]
+    tv = ins(floa(fd.read(8 * 3 * 4), shape=(3, 4)), 0, [0, 0, 0, 0], axis=0)
+    rtv = ins(floa(fd.read(8 * 3 * 4), shape=(3, 4)), 0, [0, 0, 0, 0], axis=0)
+    Gxyz = ins(
+        floa(fd.read(8 * (atomnum) * 4), shape=(atomnum, 4)),
+        0,
+        [0.0, 0.0, 0.0, 0.0],
+        axis=0,
+    )
     Hks = readHam(SpinP_switch, FNAN, atomnum, Total_NumOrbs, natn, fd)
     iHks = []
     if SpinP_switch == 3:
@@ -328,24 +367,43 @@ def read_scfout_file(filename=None):
     OLPpoz = readOverlap(atomnum, Total_NumOrbs, FNAN, natn, fd)
     DM = readHam(SpinP_switch, FNAN, atomnum, Total_NumOrbs, natn, fd)
     Solver = inte(fd.read(4))
-    ChemP, E_Temp = floa(fd.read(8*2))
-    dipole_moment_core = floa(fd.read(8*3))
-    dipole_moment_background = floa(fd.read(8*3))
-    Valence_Electrons, Total_SpinS = floa(fd.read(8*2))
+    ChemP, E_Temp = floa(fd.read(8 * 2))
+    dipole_moment_core = floa(fd.read(8 * 3))
+    dipole_moment_background = floa(fd.read(8 * 3))
+    Valence_Electrons, Total_SpinS = floa(fd.read(8 * 2))
 
     fd.close()
-    scf_out = {'atomnum': atomnum, 'SpinP_switch': SpinP_switch,
-               'Catomnum': Catomnum, 'Latomnum': Latomnum, 'Hks': Hks,
-               'Ratomnum': Ratomnum, 'TCpyCell': TCpyCell, 'atv': atv,
-               'Total_NumOrbs': Total_NumOrbs, 'FNAN': FNAN, 'natn': natn,
-               'ncn': ncn, 'tv': tv, 'rtv': rtv, 'Gxyz': Gxyz, 'OLP': OLP,
-               'OLPpox': OLPpox, 'OLPpoy': OLPpoy, 'OLPpoz': OLPpoz,
-               'Solver': Solver, 'ChemP': ChemP, 'E_Temp': E_Temp,
-               'dipole_moment_core': dipole_moment_core, 'iHks': iHks,
-               'dipole_moment_background': dipole_moment_background,
-               'Valence_Electrons': Valence_Electrons, 'atv_ijk': atv_ijk,
-               'Total_SpinS': Total_SpinS, 'DM': DM
-               }
+    scf_out = {
+        "atomnum": atomnum,
+        "SpinP_switch": SpinP_switch,
+        "Catomnum": Catomnum,
+        "Latomnum": Latomnum,
+        "Hks": Hks,
+        "Ratomnum": Ratomnum,
+        "TCpyCell": TCpyCell,
+        "atv": atv,
+        "Total_NumOrbs": Total_NumOrbs,
+        "FNAN": FNAN,
+        "natn": natn,
+        "ncn": ncn,
+        "tv": tv,
+        "rtv": rtv,
+        "Gxyz": Gxyz,
+        "OLP": OLP,
+        "OLPpox": OLPpox,
+        "OLPpoy": OLPpoy,
+        "OLPpoz": OLPpoz,
+        "Solver": Solver,
+        "ChemP": ChemP,
+        "E_Temp": E_Temp,
+        "dipole_moment_core": dipole_moment_core,
+        "iHks": iHks,
+        "dipole_moment_background": dipole_moment_background,
+        "Valence_Electrons": Valence_Electrons,
+        "atv_ijk": atv_ijk,
+        "Total_SpinS": Total_SpinS,
+        "DM": DM,
+    }
     return scf_out
 
 
@@ -355,23 +413,23 @@ def read_band_file(filename=None):
         return {}
     band_kpath = []
     eigen_bands = []
-    with open(filename, 'r') as fd:
+    with open(filename, "r") as fd:
         line = fd.readline().split()
         nkpts = 0
         nband = int(line[0])
         nspin = int(line[1]) + 1
-        band_data['nband'] = nband
-        band_data['nspin'] = nspin
+        band_data["nband"] = nband
+        band_data["nspin"] = nspin
         line = fd.readline().split()
-        band_data['band_kpath_unitcell'] = [line[:3], line[3:6], line[6:9]]
+        band_data["band_kpath_unitcell"] = [line[:3], line[3:6], line[6:9]]
         line = fd.readline().split()
-        band_data['band_nkpath'] = int(line[0])
-        for i in range(band_data['band_nkpath']):
+        band_data["band_nkpath"] = int(line[0])
+        for i in range(band_data["band_nkpath"]):
             line = fd.readline().split()
             band_kpath.append(line)
             nkpts += int(line[0])
-        band_data['nkpts'] = nkpts
-        band_data['band_kpath'] = band_kpath
+        band_data["nkpts"] = nkpts
+        band_data["band_kpath"] = band_kpath
         kpts = np.zeros((nkpts, 3))
         eigen_bands = np.zeros((nspin, nkpts, nband))
         for i in range(nspin):
@@ -380,24 +438,24 @@ def read_band_file(filename=None):
                 kpts[j] = np.array(line.split(), dtype=float)[1:]
                 line = fd.readline()
                 eigen_bands[i, j] = np.array(line.split(), dtype=float)[:]
-        band_data['eigenvalues'] = eigen_bands
-        band_data['band_kpts'] = kpts
+        band_data["eigenvalues"] = eigen_bands
+        band_data["band_kpts"] = kpts
     return band_data
 
 
-def read_electron_valency(filename='H_CA13'):
+def read_electron_valency(filename="H_CA13"):
     array = []
-    with open(filename, 'r') as fd:
+    with open(filename, "r") as fd:
         array = fd.readlines()
         fd.close()
-    required_line = ''
+    required_line = ""
     for line in array:
-        if 'valence.electron' in line:
+        if "valence.electron" in line:
             required_line = line
     return rn(required_line)
 
 
-def rn(line='\n', n=1):
+def rn(line="\n", n=1):
     """
     Read n'th to last value.
     For example:
@@ -437,9 +495,9 @@ def read_string(line):
 
 def read_bool(line):
     bool = str(rn(line)).lower()
-    if bool == 'on':
+    if bool == "on":
         return True
-    elif bool == 'off':
+    elif bool == "off":
         return False
     else:
         return None
@@ -475,7 +533,7 @@ def read_stress_tensor(line, fd, debug=None):
     yx, yy, yz = read_tuple_float(line)
     line = fd.readline()
     zx, zy, zz = read_tuple_float(line)
-    stress = [xx, yy, zz, (zy + yz)/2, (zx + xz)/2, (yx + xy)/2]
+    stress = [xx, yy, zz, (zy + yz) / 2, (zx + xz) / 2, (yx + xy) / 2]
     return stress
 
 
@@ -485,7 +543,7 @@ def read_magmoms_and_total_magmom(line, fd, debug=None):
     fd.readline()
     line = fd.readline()
     magmoms = []
-    while not(line == '' or line.isspace()):
+    while not (line == "" or line.isspace()):
         magmoms.append(read_float(line))
         line = fd.readline()
     return magmoms, total_magmom
@@ -498,7 +556,7 @@ def read_energy(line, fd, debug=None):
 
 def read_energies(line, fd, debug=None):
     line = fd.readline()
-    if '***' in line:
+    if "***" in line:
         point = 7  # Version 3.8
     else:
         point = 16  # Version 3.9
@@ -506,7 +564,7 @@ def read_energies(line, fd, debug=None):
         fd.readline()
     line = fd.readline()
     energies = []
-    while not(line == '' or line.isspace()):
+    while not (line == "" or line.isspace()):
         energies.append(float(line.split()[2]))
         line = fd.readline()
     return energies
@@ -525,27 +583,29 @@ def read_eigenvalues(line, fd, debug=False):
     However, if the calculation was conducted only on the gamma point, it will
     raise the 'gamma_flag' as true and it will returns the original samples.
     """
-    def prind(*line, end='\n'):
+
+    def prind(*line, end="\n"):
         if debug:
             print(*line, end=end)
+
     prind("Read eigenvalues output")
     current_line = fd.tell()
     fd.seek(0)  # Seek for the kgrid information
-    while line != '':
+    while line != "":
         line = fd.readline().lower()
-        if 'scf.kgrid' in line:
+        if "scf.kgrid" in line:
             break
     fd.seek(current_line)  # Retrun to the original position
 
     kgrid = read_tuple_integer(line)
 
     if kgrid != ():
-        prind('Non-Gamma point calculation')
-        prind('scf.Kgrid is %d, %d, %d' % kgrid)
+        prind("Non-Gamma point calculation")
+        prind("scf.Kgrid is %d, %d, %d" % kgrid)
         gamma_flag = False
         # fd.seek(f.tell()+57)
     else:
-        prind('Gamma point calculation')
+        prind("Gamma point calculation")
         gamma_flag = True
     line = fd.readline()
     line = fd.readline()
@@ -556,20 +616,20 @@ def read_eigenvalues(line, fd, debug=False):
     i = 0
     while True:
         # Go to eigenvalues line
-        while line != '':
+        while line != "":
             line = fd.readline()
             prind(line)
             ll = line.split()
             if line.isspace():
                 continue
             elif len(ll) > 1:
-                if ll[0] == '1':
+                if ll[0] == "1":
                     break
             elif "*****" in line:
                 break
 
         # Break if it reaches the end or next parameters
-        if "*****" in line or line == '':
+        if "*****" in line or line == "":
             break
 
         # Check Number and format is valid
@@ -578,7 +638,7 @@ def read_eigenvalues(line, fd, debug=False):
             # 1   -2.33424746491277  -2.33424746917880
             ll = line.split()
             # Check if it reaches the end of the file
-            assert line != ''
+            assert line != ""
             assert len(ll) == 3
             float(ll[1])
             float(ll[2])
@@ -588,11 +648,11 @@ def read_eigenvalues(line, fd, debug=False):
         # Read eigenvalues
         eigenvalues[0].append([])
         eigenvalues[1].append([])
-        while not (line == '' or line.isspace()):
+        while not (line == "" or line.isspace()):
             eigenvalues[0][i].append(float(rn(line, 2)))
             eigenvalues[1][i].append(float(rn(line, 1)))
             line = fd.readline()
-            prind(line, end='')
+            prind(line, end="")
         i += 1
         prind(line)
     if gamma_flag:
@@ -602,12 +662,12 @@ def read_eigenvalues(line, fd, debug=False):
     # Fill up the half
     spin, half_kpts, bands = eigen_half.shape
     even_odd = np.array(kgrid).prod() % 2
-    eigen_values = np.zeros((spin, half_kpts*2-even_odd, bands))
+    eigen_values = np.zeros((spin, half_kpts * 2 - even_odd, bands))
     for i in range(half_kpts):
         eigen_values[0, i] = eigen_half[0, i, :]
         eigen_values[1, i] = eigen_half[1, i, :]
-        eigen_values[0, 2*half_kpts-1-i-even_odd] = eigen_half[0, i, :]
-        eigen_values[1, 2*half_kpts-1-i-even_odd] = eigen_half[1, i, :]
+        eigen_values[0, 2 * half_kpts - 1 - i - even_odd] = eigen_half[0, i, :]
+        eigen_values[1, 2 * half_kpts - 1 - i - even_odd] = eigen_half[1, i, :]
     return eigen_values
 
 
@@ -616,7 +676,7 @@ def read_forces(line, fd, debug=None):
     forces = []
     fd.readline()  # Skip Empty line
     line = fd.readline()
-    while 'coordinates.forces>' not in line:
+    while "coordinates.forces>" not in line:
         forces.append(read_tuple_float(line))
         line = fd.readline()
     return np.array(forces)
@@ -624,7 +684,7 @@ def read_forces(line, fd, debug=None):
 
 def read_dipole(line, fd, debug=None):
     dipole = []
-    while 'Total' not in line:
+    while "Total" not in line:
         line = fd.readline()
     dipole.append(read_tuple_float(line))
     return dipole
@@ -636,7 +696,7 @@ def read_scaled_positions(line, fd, debug=None):
     fd.readline()
     fd.readline()
     line = fd.readline()
-    while not(line == '' or line.isspace()):  # Detect empty line
+    while not (line == "" or line.isspace()):  # Detect empty line
         scaled_positions.append(read_tuple_float(line))
         line = fd.readline()
     return scaled_positions
@@ -646,20 +706,34 @@ def read_chemical_potential(line, fd, debug=None):
     return read_float(line)
 
 
-def get_parameters(out_data=None, log_data=None, restart_data=None,
-                   scfout_data=None, dat_data=None, band_data=None):
+def get_parameters(
+    out_data=None,
+    log_data=None,
+    restart_data=None,
+    scfout_data=None,
+    dat_data=None,
+    band_data=None,
+):
     """
     From the given data sets, construct the dictionary 'parameters'. If data
     is in the paramerters, it will save it.
     """
     from ase.calculators.openmx import parameters as param
-    scaned_data = [dat_data, out_data, log_data, restart_data, scfout_data,
-                   band_data]
-    openmx_keywords = [param.tuple_integer_keys, param.tuple_float_keys,
-                       param.tuple_bool_keys, param.integer_keys,
-                       param.float_keys, param.string_keys, param.bool_keys,
-                       param.list_int_keys, param.list_bool_keys,
-                       param.list_float_keys, param.matrix_keys]
+
+    scaned_data = [dat_data, out_data, log_data, restart_data, scfout_data, band_data]
+    openmx_keywords = [
+        param.tuple_integer_keys,
+        param.tuple_float_keys,
+        param.tuple_bool_keys,
+        param.integer_keys,
+        param.float_keys,
+        param.string_keys,
+        param.bool_keys,
+        param.list_int_keys,
+        param.list_bool_keys,
+        param.list_float_keys,
+        param.matrix_keys,
+    ]
     parameters = {}
     for scaned_datum in scaned_data:
         for scaned_key in scaned_datum.keys():
@@ -681,11 +755,11 @@ def get_standard_key(key):
         'scf.XcType' -> 'scf_xctype'
     """
     if isinstance(key, str):
-        return key.lower().replace('.', '_')
+        return key.lower().replace(".", "_")
     elif isinstance(key, list):
-        return [k.lower().replace('.', '_') for k in key]
+        return [k.lower().replace(".", "_") for k in key]
     else:
-        return [k.lower().replace('.', '_') for k in key]
+        return [k.lower().replace(".", "_") for k in key]
 
 
 def get_standard_parameters(parameters):
@@ -707,22 +781,33 @@ def get_standard_parameters(parameters):
     """
     from ase.calculators.openmx import parameters as param
     from ase.units import Bohr, Ha, Ry, fs, m, s
+
     units = param.unit_dat_keywords
     standard_parameters = {}
-    standard_units = {'eV': 1, 'Ha': Ha, 'Ry': Ry, 'Bohr': Bohr, 'fs': fs,
-                      'K': 1, 'GV / m': 1e9/1.6e-19 / m, 'Ha/Bohr': Ha/Bohr,
-                      'm/s': m/s, '_amu': 1, 'Tesla': 1}
+    standard_units = {
+        "eV": 1,
+        "Ha": Ha,
+        "Ry": Ry,
+        "Bohr": Bohr,
+        "fs": fs,
+        "K": 1,
+        "GV / m": 1e9 / 1.6e-19 / m,
+        "Ha/Bohr": Ha / Bohr,
+        "m/s": m / s,
+        "_amu": 1,
+        "Tesla": 1,
+    }
     translated_parameters = {
-        'scf.XcType': 'xc',
-        'scf.maxIter': 'maxiter',
-        'scf.energycutoff': 'energy_cutoff',
-        'scf.Kgrid': 'kpts',
-        'scf.EigenvalueSolver': 'eigensolver',
-        'scf.SpinPolarization': 'spinpol',
-        'scf.criterion': 'convergence',
-        'scf.Electric.Field': 'external',
-        'scf.Mixing.Type': 'mixer',
-        'scf.system.charge': 'charge'
+        "scf.XcType": "xc",
+        "scf.maxIter": "maxiter",
+        "scf.energycutoff": "energy_cutoff",
+        "scf.Kgrid": "kpts",
+        "scf.EigenvalueSolver": "eigensolver",
+        "scf.SpinPolarization": "spinpol",
+        "scf.criterion": "convergence",
+        "scf.Electric.Field": "external",
+        "scf.Mixing.Type": "mixer",
+        "scf.system.charge": "charge",
     }
 
     for key in parameters.keys():
@@ -731,12 +816,13 @@ def get_standard_parameters(parameters):
                 standard_key = translated_parameters[openmx_key]
                 unit = standard_units.get(units.get(openmx_key), 1)
                 standard_parameters[standard_key] = parameters[key] * unit
-    standard_parameters['spinpol'] = parameters.get('scf_spinpolarization')
+    standard_parameters["spinpol"] = parameters.get("scf_spinpolarization")
     return standard_parameters
 
 
-def get_atomic_formula(out_data=None, log_data=None, restart_data=None,
-                       scfout_data=None, dat_data=None):
+def get_atomic_formula(
+    out_data=None, log_data=None, restart_data=None, scfout_data=None, dat_data=None
+):
     """_formula'.
     OpenMX results gives following information. Since, we should pick one
     between position/scaled_position, scaled_positions are suppressed by
@@ -752,70 +838,83 @@ def get_atomic_formula(out_data=None, log_data=None, restart_data=None,
                            atom for non-collinear calculations.
     """
     atomic_formula = {}
-    parameters = {'symbols': list, 'positions': list, 'scaled_positions': list,
-                  'magmoms': list, 'cell': list}
+    parameters = {
+        "symbols": list,
+        "positions": list,
+        "scaled_positions": list,
+        "magmoms": list,
+        "cell": list,
+    }
     datas = [out_data, log_data, restart_data, scfout_data, dat_data]
     atoms_unitvectors = None
-    atoms_spncrd_unit = 'ang'
-    atoms_unitvectors_unit = 'ang'
+    atoms_spncrd_unit = "ang"
+    atoms_unitvectors_unit = "ang"
     for data in datas:
         # positions unit save
-        if 'atoms_speciesandcoordinates_unit' in data:
-            atoms_spncrd_unit = data['atoms_speciesandcoordinates_unit']
+        if "atoms_speciesandcoordinates_unit" in data:
+            atoms_spncrd_unit = data["atoms_speciesandcoordinates_unit"]
         # cell unit save
-        if 'atoms_unitvectors_unit' in data:
-            atoms_unitvectors_unit = data['atoms_unitvectors_unit']
+        if "atoms_unitvectors_unit" in data:
+            atoms_unitvectors_unit = data["atoms_unitvectors_unit"]
         # symbols, positions or scaled_positions
-        if 'atoms_speciesandcoordinates' in data:
-            atoms_spncrd = data['atoms_speciesandcoordinates']
+        if "atoms_speciesandcoordinates" in data:
+            atoms_spncrd = data["atoms_speciesandcoordinates"]
         # cell
-        if 'atoms_unitvectors' in data:
-            atoms_unitvectors = data['atoms_unitvectors']
+        if "atoms_unitvectors" in data:
+            atoms_unitvectors = data["atoms_unitvectors"]
         # pbc
-        if 'scf_eigenvaluesolver' in data:
-            scf_eigenvaluesolver = data['scf_eigenvaluesolver']
+        if "scf_eigenvaluesolver" in data:
+            scf_eigenvaluesolver = data["scf_eigenvaluesolver"]
         # ???
         for openmx_keyword in data.keys():
             for standard_keyword in parameters.keys():
                 if openmx_keyword == standard_keyword:
                     atomic_formula[standard_keyword] = data[openmx_keyword]
 
-    atomic_formula['symbols'] = [i[1] for i in atoms_spncrd]
+    atomic_formula["symbols"] = [i[1] for i in atoms_spncrd]
 
     openmx_spncrd_keyword = [[i[2], i[3], i[4]] for i in atoms_spncrd]
     # Positions
     positions_unit = atoms_spncrd_unit.lower()
     positions = np.array(openmx_spncrd_keyword, dtype=float)
-    if positions_unit == 'ang':
-        atomic_formula['positions'] = positions
-    elif positions_unit == 'frac':
+    if positions_unit == "ang":
+        atomic_formula["positions"] = positions
+    elif positions_unit == "frac":
         scaled_positions = np.array(openmx_spncrd_keyword, dtype=float)
-        atomic_formula['scaled_positions'] = scaled_positions
-    elif positions_unit == 'au':
+        atomic_formula["scaled_positions"] = scaled_positions
+    elif positions_unit == "au":
         positions = np.array(openmx_spncrd_keyword, dtype=float) * Bohr
-        atomic_formula['positions'] = positions
+        atomic_formula["positions"] = positions
 
     # If Cluster, pbc is False, else it is True
-    atomic_formula['pbc'] = scf_eigenvaluesolver.lower() != 'cluster'
+    atomic_formula["pbc"] = scf_eigenvaluesolver.lower() != "cluster"
 
     # Cell Handling
     if atoms_unitvectors is not None:
         openmx_cell_keyword = atoms_unitvectors
         cell = np.array(openmx_cell_keyword, dtype=float)
-        if atoms_unitvectors_unit.lower() == 'ang':
-            atomic_formula['cell'] = openmx_cell_keyword
-        elif atoms_unitvectors_unit.lower() == 'au':
-            atomic_formula['cell'] = cell * Bohr
+        if atoms_unitvectors_unit.lower() == "ang":
+            atomic_formula["cell"] = openmx_cell_keyword
+        elif atoms_unitvectors_unit.lower() == "au":
+            atomic_formula["cell"] = cell * Bohr
 
     # If `positions` and `scaled_positions` are both given, delete `scaled_..`
-    if atomic_formula.get('scaled_positions') is not None and \
-       atomic_formula.get('positions') is not None:
-        del atomic_formula['scaled_positions']
+    if (
+        atomic_formula.get("scaled_positions") is not None
+        and atomic_formula.get("positions") is not None
+    ):
+        del atomic_formula["scaled_positions"]
     return atomic_formula
 
 
-def get_results(out_data=None, log_data=None, restart_data=None,
-                scfout_data=None, dat_data=None, band_data=None):
+def get_results(
+    out_data=None,
+    log_data=None,
+    restart_data=None,
+    scfout_data=None,
+    dat_data=None,
+    band_data=None,
+):
     """
     From the gien data sets, construct the dictionary 'results' and return it'
     OpenMX version 3.8 can yield following properties
@@ -830,25 +929,34 @@ def get_results(out_data=None, log_data=None, restart_data=None,
        magmom                    muB  ??  set to 1
     """
     from numpy import array as arr
+
     results = {}
-    implemented_properties = {'free_energy': Ha, 'energy': Ha, 'energies': Ha,
-                              'forces': Ha/Bohr, 'stress': Ha/Bohr**3,
-                              'dipole': Debye, 'chemical_potential': Ha,
-                              'magmom': 1, 'magmoms': 1, 'eigenvalues': Ha}
+    implemented_properties = {
+        "free_energy": Ha,
+        "energy": Ha,
+        "energies": Ha,
+        "forces": Ha / Bohr,
+        "stress": Ha / Bohr**3,
+        "dipole": Debye,
+        "chemical_potential": Ha,
+        "magmom": 1,
+        "magmoms": 1,
+        "eigenvalues": Ha,
+    }
     data = [out_data, log_data, restart_data, scfout_data, dat_data, band_data]
     for datum in data:
         for key in datum.keys():
             for property in implemented_properties.keys():
                 if key == property:
-                    results[key] = arr(datum[key])*implemented_properties[key]
+                    results[key] = arr(datum[key]) * implemented_properties[key]
     return results
 
 
-def get_file_name(extension='.out', filename=None, absolute_directory=True):
+def get_file_name(extension=".out", filename=None, absolute_directory=True):
     directory, prefix = os.path.split(filename)
-    if directory == '':
+    if directory == "":
         directory = os.curdir
     if absolute_directory:
-        return os.path.abspath(directory + '/' + prefix + extension)
+        return os.path.abspath(directory + "/" + prefix + extension)
     else:
-        return os.path.basename(directory + '/' + prefix + extension)
+        return os.path.basename(directory + "/" + prefix + extension)

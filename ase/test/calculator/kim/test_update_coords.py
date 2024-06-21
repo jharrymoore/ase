@@ -4,8 +4,7 @@ from ase import Atoms
 
 
 def squeeze_dimer(atoms, d):
-    """Squeeze the atoms together by the absolute distance ``d`` (Angstroms)
-    """
+    """Squeeze the atoms together by the absolute distance ``d`` (Angstroms)"""
     pos = atoms.get_positions()
     pos[0] += np.asarray([d, 0, 0])
     atoms.set_positions(pos)
@@ -40,8 +39,7 @@ def test_update_coords(KIM, testdir):
     box_len = 0.5 * model_cutoff
     dimer_separation = model_cutoff * 0.3
 
-    atoms = Atoms("Ar" * 2, cell=[[box_len, 0, 0],
-                  [0, box_len, 0], [0, 0, box_len]])
+    atoms = Atoms("Ar" * 2, cell=[[box_len, 0, 0], [0, box_len, 0], [0, 0, box_len]])
 
     # Create calculator.  Either the kimpy neighbor list library or
     # ASE's native neighbor lists should suffice to check this since

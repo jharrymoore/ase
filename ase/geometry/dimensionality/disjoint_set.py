@@ -2,7 +2,6 @@ import numpy as np
 
 
 class DisjointSet:
-
     def __init__(self, n):
         self.sizes = np.ones(n, dtype=int)
         self.parents = np.arange(n)
@@ -48,8 +47,8 @@ class DisjointSet:
             return self.parents
 
         # order elements by frequency
-        unique, inverse, counts = np.unique(self.parents,
-                                            return_inverse=True,
-                                            return_counts=True)
-        indices = np.argsort(counts, kind='merge')[::-1]
+        unique, inverse, counts = np.unique(
+            self.parents, return_inverse=True, return_counts=True
+        )
+        indices = np.argsort(counts, kind="merge")[::-1]
         return np.argsort(indices)[inverse]

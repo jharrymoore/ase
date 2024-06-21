@@ -25,135 +25,130 @@ from ase.calculators.openmx.default_settings import default_dictionary
 
 # Keys that have length 3
 tuple_integer_keys = [
-    'scf.Ngrid',
-    'scf.Kgrid',
-    'Dos.Kgrid',
+    "scf.Ngrid",
+    "scf.Kgrid",
+    "Dos.Kgrid",
 ]
-tuple_float_keys = [
-    'scf.Electric.Field',
-    'scf.fixed.grid'
-]
-tuple_bool_keys: List[str] = [
-
-]
+tuple_float_keys = ["scf.Electric.Field", "scf.fixed.grid"]
+tuple_bool_keys: List[str] = []
 integer_keys = [
-    'level.of.stdout',
-    'level.of.fileout',
-    'Species.Number',
-    'Atoms.Number',
-    'scf.maxIter',
-    'scf.Mixing.History',
-    'scf.Mixing.StartPulay',
-    'scf.Mixing.EveryPulay',
-    '1DFFT.NumGridK',
-    '1DFFT.NumGridR',
-    'orbitalOpt.scf.maxIter',
-    'orbitalOpt.Opt.maxIter',
-    'orbitalOpt.Opt.Method',
-    'orbitalOpt.HistoryPulay',
-    'Num.CntOrb.Atoms',
-    'orderN.KrylovH.order',
-    'orderN.KrylovS.order',
-    'MD.maxIter',
-    'MD.Opt.DIIS.History',
-    'MD.Opt.StartDIIS',
-    'Band.Nkpath',
-    'num.HOMOs',
-    'num.LUMOs',
-    'MO.Nkpoint',
-    'MD.Current.Iter'
+    "level.of.stdout",
+    "level.of.fileout",
+    "Species.Number",
+    "Atoms.Number",
+    "scf.maxIter",
+    "scf.Mixing.History",
+    "scf.Mixing.StartPulay",
+    "scf.Mixing.EveryPulay",
+    "1DFFT.NumGridK",
+    "1DFFT.NumGridR",
+    "orbitalOpt.scf.maxIter",
+    "orbitalOpt.Opt.maxIter",
+    "orbitalOpt.Opt.Method",
+    "orbitalOpt.HistoryPulay",
+    "Num.CntOrb.Atoms",
+    "orderN.KrylovH.order",
+    "orderN.KrylovS.order",
+    "MD.maxIter",
+    "MD.Opt.DIIS.History",
+    "MD.Opt.StartDIIS",
+    "Band.Nkpath",
+    "num.HOMOs",
+    "num.LUMOs",
+    "MO.Nkpoint",
+    "MD.Current.Iter",
 ]
 float_keys = [
-    'scf.Constraint.NC.Spin.v',
-    'scf.ElectronicTemperature',
-    'scf.energycutoff',
-    'scf.Init.Mixing.Weight',
-    'scf.Min.Mixing.Weight',
-    'scf.Max.Mixing.Weight',
-    'scf.Kerker.factor',
-    'scf.criterion',
-    'scf.system.charge',
-    '1DFFT.EnergyCutoff',
-    'orbitalOpt.SD.step',
-    'orbitalOpt.criterion',
-    'orderN.HoppingRanges',
-    'MD.TimeStep',
-    'MD.Opt.criterion',
-    'NH.Mass.HeatBath',
-    'scf.NC.Mag.Field.Spin',
-    'scf.NC.Mag.Field.Orbital',
+    "scf.Constraint.NC.Spin.v",
+    "scf.ElectronicTemperature",
+    "scf.energycutoff",
+    "scf.Init.Mixing.Weight",
+    "scf.Min.Mixing.Weight",
+    "scf.Max.Mixing.Weight",
+    "scf.Kerker.factor",
+    "scf.criterion",
+    "scf.system.charge",
+    "1DFFT.EnergyCutoff",
+    "orbitalOpt.SD.step",
+    "orbitalOpt.criterion",
+    "orderN.HoppingRanges",
+    "MD.TimeStep",
+    "MD.Opt.criterion",
+    "NH.Mass.HeatBath",
+    "scf.NC.Mag.Field.Spin",
+    "scf.NC.Mag.Field.Orbital",
 ]
 string_keys = [
-    'System.CurrentDirectory',
-    'System.Name',
-    'DATA.PATH',
-    'Atoms.SpeciesAndCoordinates.Unit',
-    'Atoms.UnitVectors.Unit',
-    'scf.XcType',
-    'scf.SpinPolarization',
-    'scf.Hubbard.Occupation',
-    'scf.EigenvalueSolver',
-    'scf.Mixing.Type',
-    'orbitalOpt.Method',
-    'orbitalOpt.StartPulay',
-    'MD.Type',
-    'Wannier.Initial.Projectors.Unit'
+    "System.CurrentDirectory",
+    "System.Name",
+    "DATA.PATH",
+    "Atoms.SpeciesAndCoordinates.Unit",
+    "Atoms.UnitVectors.Unit",
+    "scf.XcType",
+    "scf.SpinPolarization",
+    "scf.Hubbard.Occupation",
+    "scf.EigenvalueSolver",
+    "scf.Mixing.Type",
+    "orbitalOpt.Method",
+    "orbitalOpt.StartPulay",
+    "MD.Type",
+    "Wannier.Initial.Projectors.Unit",
 ]
 bool_keys = [
-    'scf.partialCoreCorrection',
-    'scf.Hubbard.U',
-    'scf.Constraint.NC.Spin',
-    'scf.ProExpn.VNA',
-    'scf.SpinOrbit.Coupling',
-    'CntOrb.fileout',
-    'orderN.Exact.Inverse.S',
-    'orderN.Recalc.Buffer',
-    'orderN.Expand.Core',
-    'Band.Dispersion',
-    'scf.restart',
-    'MO.fileout',
-    'Dos.fileout',
-    'HS.fileout',
-    'Voronoi.charge',
-    'scf.NC.Zeeman.Spin',
-    'scf.stress.tensor',
-    'Energy.Decomposition'
+    "scf.partialCoreCorrection",
+    "scf.Hubbard.U",
+    "scf.Constraint.NC.Spin",
+    "scf.ProExpn.VNA",
+    "scf.SpinOrbit.Coupling",
+    "CntOrb.fileout",
+    "orderN.Exact.Inverse.S",
+    "orderN.Recalc.Buffer",
+    "orderN.Expand.Core",
+    "Band.Dispersion",
+    "scf.restart",
+    "MO.fileout",
+    "Dos.fileout",
+    "HS.fileout",
+    "Voronoi.charge",
+    "scf.NC.Zeeman.Spin",
+    "scf.stress.tensor",
+    "Energy.Decomposition",
 ]
 list_int_keys: List[str] = []
 list_bool_keys: List[str] = []
 list_float_keys = [
-    'Dos.Erange',
+    "Dos.Erange",
 ]
 matrix_keys = [
-    'Definition.of.Atomic.Species',
-    'Atoms.SpeciesAndCoordinates',
-    'Atoms.UnitVectors',
-    'Hubbard.U.values',
-    'Atoms.Cont.Orbitals',
-    'MD.Fixed.XYZ',
-    'MD.TempControl',
-    'MD.Init.Velocity',
-    'Band.KPath.UnitCell',
-    'Band.kpath',
-    'MO.kpoint',
-    'Wannier.Initial.Projectors'
+    "Definition.of.Atomic.Species",
+    "Atoms.SpeciesAndCoordinates",
+    "Atoms.UnitVectors",
+    "Hubbard.U.values",
+    "Atoms.Cont.Orbitals",
+    "MD.Fixed.XYZ",
+    "MD.TempControl",
+    "MD.Init.Velocity",
+    "Band.KPath.UnitCell",
+    "Band.kpath",
+    "MO.kpoint",
+    "Wannier.Initial.Projectors",
 ]
 unit_dat_keywords = {
-    'Hubbard.U.Values': 'eV',
-    'scf.Constraint.NC.Spin.v': 'eV',
-    'scf.ElectronicTemperature': 'K',
-    'scf.energycutoff': 'Ry',
-    'scf.criterion': 'Ha',
-    'scf.Electric.Field': 'GV / m',
-    'OneDFFT.EnergyCutoff': 'Ry',
-    'orbitalOpt.criterion': '(Ha/Borg)**2',
-    'MD.Opt.criterion': 'Ha/Bohr',
-    'MD.TempControl': 'K',
-    'NH.Mass.HeatBath': '_amu',
-    'MD.Init.Velocity': 'm/s',
-    'Dos.Erange': 'eV',
-    'scf.NC.Mag.Field.Spin': 'Tesla',
-    'scf.NC.Mag.Field.Orbital': 'Tesla'
+    "Hubbard.U.Values": "eV",
+    "scf.Constraint.NC.Spin.v": "eV",
+    "scf.ElectronicTemperature": "K",
+    "scf.energycutoff": "Ry",
+    "scf.criterion": "Ha",
+    "scf.Electric.Field": "GV / m",
+    "OneDFFT.EnergyCutoff": "Ry",
+    "orbitalOpt.criterion": "(Ha/Borg)**2",
+    "MD.Opt.criterion": "Ha/Bohr",
+    "MD.TempControl": "K",
+    "NH.Mass.HeatBath": "_amu",
+    "MD.Init.Velocity": "m/s",
+    "Dos.Erange": "eV",
+    "scf.NC.Mag.Field.Spin": "Tesla",
+    "scf.NC.Mag.Field.Orbital": "Tesla",
 }
 
 
@@ -166,7 +161,7 @@ omx_parameter_defaults: Dict[str, Any] = dict(
     level_of_fileout=None,
     species_number=None,
     atoms_number=None,
-    scf_maxiter=None,          # default 40
+    scf_maxiter=None,  # default 40
     scf_mixing_history=None,
     scf_mixing_startpulay=None,
     scf_mixing_everypulay=None,
@@ -195,9 +190,9 @@ omx_parameter_defaults: Dict[str, Any] = dict(
     scf_min_mixing_weight=None,
     scf_max_mixing_weight=None,
     scf_kerker_factor=None,
-    scf_criterion=None,           # Ha unit defualt 1e-6
+    scf_criterion=None,  # Ha unit defualt 1e-6
     scf_system_charge=None,
-    onedfft_energycutoff=None,    # 1Dfft
+    onedfft_energycutoff=None,  # 1Dfft
     orbitalopt_sd_step=None,
     orbitalopt_criterion=None,
     ordern_hoppingranges=None,
@@ -209,13 +204,13 @@ omx_parameter_defaults: Dict[str, Any] = dict(
     system_currentdirectory=None,
     system_name=None,
     data_path=None,
-    atoms_speciesandcoordinates_unit='Ang',
-    atoms_unitvectors_unit='Ang',
-    scf_xctype='LDA',
+    atoms_speciesandcoordinates_unit="Ang",
+    atoms_unitvectors_unit="Ang",
+    scf_xctype="LDA",
     scf_spinpolarization=None,
     scf_hubbard_occupation=None,
-    scf_eigenvaluesolver='Cluster',  # Band | Cluster
-    scf_mixing_type='Rmm-Diis',
+    scf_eigenvaluesolver="Cluster",  # Band | Cluster
+    scf_mixing_type="Rmm-Diis",
     orbitalopt_method=None,
     orbitalopt_startpulay=None,
     md_type=None,
@@ -254,8 +249,8 @@ omx_parameter_defaults: Dict[str, Any] = dict(
     xc=None,  # Default is set to 'LDA' as 'scf_xctype' keyword
     maxiter=None,
     energy_cutoff=None,  # Please make sure written in eV unit not Ry
-    kpts=None,           # Default value is set to (4, 4, 4) in 'scf_kgrid'
-    band_kpts=tuple(),   # To separate monkhorst and band kpts
+    kpts=None,  # Default value is set to (4, 4, 4) in 'scf_kgrid'
+    band_kpts=tuple(),  # To separate monkhorst and band kpts
     eigensolver=None,
     spinpol=None,
     convergence=None,
@@ -269,7 +264,8 @@ omx_parameter_defaults: Dict[str, Any] = dict(
     debug=False,
     nohup=True,
     dft_data_dict=None,  # dft_data_year : Pseudo potential generated year
-    dft_data_year=None)  # writting in 'Definition.Of.Atomic.Species'. 13 or 19
+    dft_data_year=None,
+)  # writting in 'Definition.Of.Atomic.Species'. 13 or 19
 
 
 class OpenMXParameters(Parameters):
@@ -290,13 +286,16 @@ class OpenMXParameters(Parameters):
     """
 
     allowed_xc = [
-        'LDA',
-        'GGA', 'PBE', 'GGA-PBE',
-        'LSDA',
-        'LSDA-PW',
-        'LSDA-CA',
-        'CA',
-        'PW']
+        "LDA",
+        "GGA",
+        "PBE",
+        "GGA-PBE",
+        "LSDA",
+        "LSDA-PW",
+        "LSDA-CA",
+        "CA",
+        "PW",
+    ]
 
     def __init__(self, **kwargs):
         kw = omx_parameter_defaults.copy()
@@ -304,14 +303,17 @@ class OpenMXParameters(Parameters):
         Parameters.__init__(self, **kw)
 
         if self.kpts == (1, 1, 1):
-            print("When only the gamma point is considered, the eigenvalue \
+            print(
+                "When only the gamma point is considered, the eigenvalue \
                   solver is changed to 'Cluster' with the periodic boundary \
-                  condition.")
-            self.eigensolver = 'Cluster'
+                  condition."
+            )
+            self.eigensolver = "Cluster"
             self.mpi = None
             self.pbs = None
 
         from copy import deepcopy
+
         dft_data_dict = deepcopy(default_dictionary)
         if self.dft_data_dict is not None:
             dft_data_dict.update(self.dft_data_dict)

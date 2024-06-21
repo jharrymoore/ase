@@ -3,7 +3,7 @@ from ase import Atoms
 
 
 def test_row():
-    atoms = Atoms('H')
+    atoms = Atoms("H")
     row = AtomsRow(atoms)
     assert row.charge == 0.0
     atoms.set_initial_charges([1.0])

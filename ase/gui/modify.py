@@ -16,18 +16,17 @@ class ModifyAtoms:
         self.gui = gui
         selected = self.selection()
         if not selected.any():
-            ui.error(_('No atoms selected!'))
+            ui.error(_("No atoms selected!"))
             return
 
-        win = ui.Window(_('Modify'), wmtype='utility')
+        win = ui.Window(_("Modify"), wmtype="utility")
         element = Element(callback=self.set_element)
         win.add(element)
-        win.add(ui.Button(_('Change element'),
-                          partial(self.set_element, element)))
+        win.add(ui.Button(_("Change element"), partial(self.set_element, element)))
         self.tag = ui.SpinBox(0, -1000, 1000, 1, self.set_tag)
-        win.add([_('Tag'), self.tag])
+        win.add([_("Tag"), self.tag])
         self.magmom = ui.SpinBox(0.0, -10, 10, 0.1, self.set_magmom)
-        win.add([_('Moment'), self.magmom])
+        win.add([_("Moment"), self.magmom])
 
         atoms = self.gui.atoms
         sym = atoms.symbols[selected]
@@ -43,7 +42,7 @@ class ModifyAtoms:
             self.magmom.value = round(magmoms[0], 2)
 
     def selection(self):
-        return self.gui.images.selected[:len(self.gui.atoms)]
+        return self.gui.images.selected[: len(self.gui.atoms)]
 
     def set_element(self, element):
         self.gui.atoms.numbers[self.selection()] = element.Z

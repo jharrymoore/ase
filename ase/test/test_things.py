@@ -9,7 +9,7 @@ def test_things():
 
     print(Hartree, Bohr, kJ / mol, kcal / mol, kB * 300, fs, 1 / fs)
 
-    hcp = bulk('X', 'hcp', a=1) * (2, 2, 1)
+    hcp = bulk("X", "hcp", a=1) * (2, 2, 1)
     assert abs(hcp.get_distance(0, 3, mic=True) - 1) < 1e-12
     assert abs(hcp.get_distance(0, 4, mic=True) - 1) < 1e-12
     assert abs(hcp.get_distance(2, 5, mic=True) - 1) < 1e-12

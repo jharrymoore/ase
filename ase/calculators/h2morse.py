@@ -35,7 +35,7 @@ rho0 = Re * ome * invcm * np.sqrt(m / 2 / De) * 4401.21 / 284.55677429605862
 
 def H2Morse(state=0):
     """Return H2 as a Morse-Potential with calculator attached."""
-    atoms = Atoms('H2', positions=np.zeros((2, 3)))
+    atoms = Atoms("H2", positions=np.zeros((2, 3)))
     atoms[1].position[2] = Re[state]
     atoms.calc = H2MorseCalculator(state=state)
     atoms.get_potential_energy()
@@ -44,17 +44,16 @@ def H2Morse(state=0):
 
 class H2MorseCalculator(MorsePotential):
     """H2 ground or excited state as Morse potential"""
+
     _count = count(0)
 
     def __init__(self, restart=None, state=0, rng=np.random):
         self.rng = rng
-        MorsePotential.__init__(self,
-                                restart=restart,
-                                epsilon=De[state],
-                                r0=Re[state], rho0=rho0[state])
+        MorsePotential.__init__(
+            self, restart=restart, epsilon=De[state], r0=Re[state], rho0=rho0[state]
+        )
 
-    def calculate(self, atoms=None, properties=['energy'],
-                  system_changes=all_changes):
+    def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
         if atoms is not None:
             assert len(atoms) == 2
         MorsePotential.calculate(self, atoms, properties, system_changes)
@@ -76,7 +75,7 @@ class H2MorseCalculator(MorsePotential):
         hy /= np.linalg.norm(hy)
         wfs = [1, hr, hx, hy]
         # Berry phase
-        berry = (-1)**self.rng.randint(0, 2, 4)
+        berry = (-1) ** self.rng.randint(0, 2, 4)
         self.wfs = [wf * b for wf, b in zip(wfs, berry)]
 
     def read(self, filename):
@@ -84,18 +83,16 @@ class H2MorseCalculator(MorsePotential):
         with open(filename) as fd:
             ms.wfs = [int(fd.readline().split()[0])]
             for i in range(1, 4):
-                ms.wfs.append(
-                    np.array([float(x)
-                              for x in fd.readline().split()[:4]]))
+                ms.wfs.append(np.array([float(x) for x in fd.readline().split()[:4]]))
         ms.filename = filename
         return ms
 
     def write(self, filename, option=None):
         """write calculated state to a file"""
-        with open(filename, 'w') as fd:
-            fd.write('{}\n'.format(self.wfs[0]))
+        with open(filename, "w") as fd:
+            fd.write("{}\n".format(self.wfs[0]))
             for wf in self.wfs[1:]:
-                fd.write('{0:g} {1:g} {2:g}\n'.format(*wf))
+                fd.write("{0:g} {1:g} {2:g}\n".format(*wf))
 
     def overlap(self, other):
         ov = np.zeros((4, 4))
@@ -106,7 +103,7 @@ class H2MorseCalculator(MorsePotential):
         return ov
 
 
-class H2MorseExcitedStatesCalculator():
+class H2MorseExcitedStatesCalculator:
     """First singlet excited states of H2 from Morse potentials"""
 
     def __init__(self, nstates=3):
@@ -138,7 +135,7 @@ class H2MorseExcitedStatesCalculator():
         exl = H2MorseExcitedStates()
         for i in range(1, self.nstates + 1):
             hvec = cgs.wfs[0] * cgs.wfs[i]
-            energy = Ha * (0.5 - 1. / 8) - E0
+            energy = Ha * (0.5 - 1.0 / 8) - E0
             calc = H2MorseCalculator(state=i)
             calc.calculate(atoms)
             energy += calc.get_potential_energy()
@@ -164,14 +161,13 @@ class H2MorseExcitedStates(ExcitationList):
         super().__init__()
 
     def overlap(self, ov_nn, other):
-        return (ov_nn[1:len(self) + 1, 1:len(self) + 1] *
-                ov_nn[0, 0])
+        return ov_nn[1 : len(self) + 1, 1 : len(self) + 1] * ov_nn[0, 0]
 
     @classmethod
     def read(cls, filename, nstates=3):
         """Read myself from a file"""
         exl = cls(nstates)
-        with open(filename, 'r') as fd:
+        with open(filename, "r") as fd:
             exl.filename = filename
             n = int(fd.readline().split()[0])
             for i in range(min(n, exl.nstates)):
@@ -179,8 +175,8 @@ class H2MorseExcitedStates(ExcitationList):
         return exl
 
     def write(self, fname):
-        with open(fname, 'w') as fd:
-            fd.write('{0}\n'.format(len(self)))
+        with open(fname, "w") as fd:
+            fd.write("{0}\n".format(len(self)))
             for ex in self:
                 fd.write(ex.outstring())
 
@@ -192,13 +188,14 @@ class H2Excitation(Excitation):
 
     def __hash__(self):
         """Hash similar to __eq__"""
-        if not hasattr(self, 'hash'):
+        if not hasattr(self, "hash"):
             self.hash = hash(self.index)
         return self.hash
 
 
 class H2MorseExcitedStatesAndCalculator(
-        H2MorseExcitedStatesCalculator, H2MorseExcitedStates):
+    H2MorseExcitedStatesCalculator, H2MorseExcitedStates
+):
     """Traditional joined object for backward compatibility only"""
 
     def __init__(self, calculator, nstates=3):

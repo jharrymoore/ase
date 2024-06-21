@@ -9,9 +9,9 @@ from ase.vibrations.pickle2json import main as pickle2json_main
 
 
 def test_pickle2json(testdir):
-    atoms = molecule('H2O')
+    atoms = molecule("H2O")
     atoms.calc = EMT()
-    name = 'vib'
+    name = "vib"
     vib = Vibrations(atoms, name=name)
     vib.run()
 
@@ -20,18 +20,18 @@ def test_pickle2json(testdir):
 
     # Create old-style pickle cache:
     for key, value in vib.cache.items():
-        with (testdir / f'vib.{key}.pckl').open('wb') as fd:
-            array = value['forces']
+        with (testdir / f"vib.{key}.pckl").open("wb") as fd:
+            array = value["forces"]
             pickle.dump(array, fd)
 
     vib.cache.clear()
     assert dict(vib.cache) == {}
 
     # When there are old pickles but no JSON files, run() should complain:
-    with pytest.raises(RuntimeError, match='Found old pickle'):
+    with pytest.raises(RuntimeError, match="Found old pickle"):
         vib.run()
 
-    picklefiles = [str(path) for path in testdir.glob('vib.*.pckl')]
+    picklefiles = [str(path) for path in testdir.glob("vib.*.pckl")]
 
     pickle2json_main(picklefiles)
 
@@ -42,5 +42,4 @@ def test_pickle2json(testdir):
     assert set(forces_dct) == set(newforces_dct)
 
     for key in forces_dct:
-        assert forces_dct[key]['forces'] == pytest.approx(
-            newforces_dct[key]['forces'])
+        assert forces_dct[key]["forces"] == pytest.approx(newforces_dct[key]["forces"])

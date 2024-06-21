@@ -13,7 +13,7 @@ def twochar(name):
     if len(name) > 1:
         return name[:2]
     else:
-        return name + ' '
+        return name + " "
 
 
 class BondData:
@@ -21,8 +21,8 @@ class BondData:
         self.nvh = name_value_hash
 
     def name_value(self, aname, bname):
-        name1 = twochar(aname) + '-' + twochar(bname)
-        name2 = twochar(bname) + '-' + twochar(aname)
+        name1 = twochar(aname) + "-" + twochar(bname)
+        name2 = twochar(bname) + "-" + twochar(aname)
         if name1 in self.nvh:
             return name1, self.nvh[name1]
         if name2 in self.nvh:
@@ -44,8 +44,9 @@ class AnglesData:
 
     def name_value(self, aname, bname, cname):
         for name in [
-            (twochar(aname) + '-' + twochar(bname) + '-' + twochar(cname)),
-                (twochar(cname) + '-' + twochar(bname) + '-' + twochar(aname))]:
+            (twochar(aname) + "-" + twochar(bname) + "-" + twochar(cname)),
+            (twochar(cname) + "-" + twochar(bname) + "-" + twochar(aname)),
+        ]:
             if name in self.nvh:
                 return name, self.nvh[name]
         return None, None
@@ -57,10 +58,25 @@ class DihedralsData:
 
     def name_value(self, aname, bname, cname, dname):
         for name in [
-            (twochar(aname) + '-' + twochar(bname) + '-' +
-             twochar(cname) + '-' + twochar(dname)),
-            (twochar(dname) + '-' + twochar(cname) + '-' +
-             twochar(bname) + '-' + twochar(aname))]:
+            (
+                twochar(aname)
+                + "-"
+                + twochar(bname)
+                + "-"
+                + twochar(cname)
+                + "-"
+                + twochar(dname)
+            ),
+            (
+                twochar(dname)
+                + "-"
+                + twochar(cname)
+                + "-"
+                + twochar(bname)
+                + "-"
+                + twochar(aname)
+            ),
+        ]:
             if name in self.nvh:
                 return name, self.nvh[name]
         return None, None
@@ -73,8 +89,7 @@ class OPLSff:
         if fileobj is not None:
             self.read(fileobj)
 
-    def read(self, fileobj, comments='#'):
-
+    def read(self, fileobj, comments="#"):
         def read_block(name, symlen, nvalues):
             """Read a data block.
 
@@ -91,7 +106,7 @@ class OPLSff:
                 line = fileobj.readline().strip()
                 if not len(line):  # end of the block
                     return False
-                line = line.split('#')[0]  # get rid of comments
+                line = line.split("#")[0]  # get rid of comments
                 if len(line) > symlen:
                     symbol = line[:symlen]
                     words = line[symlen:].split()
@@ -99,41 +114,41 @@ class OPLSff:
                         if nvalues == 1:
                             data[symbol] = float(words[0])
                         else:
-                            data[symbol] = [float(word)
-                                            for word in words[:nvalues]]
+                            data[symbol] = [float(word) for word in words[:nvalues]]
                 return True
 
             while add_line():
                 pass
 
-        read_block('one', 2, 3)
-        read_block('bonds', 5, 2)
-        read_block('angles', 8, 2)
-        read_block('dihedrals', 11, 4)
-        read_block('cutoffs', 5, 1)
+        read_block("one", 2, 3)
+        read_block("bonds", 5, 2)
+        read_block("angles", 8, 2)
+        read_block("dihedrals", 11, 4)
+        read_block("cutoffs", 5, 1)
 
-        self.bonds = BondData(self.data['bonds'])
-        self.angles = AnglesData(self.data['angles'])
-        self.dihedrals = DihedralsData(self.data['dihedrals'])
-        self.cutoffs = CutoffList(self.data['cutoffs'])
+        self.bonds = BondData(self.data["bonds"])
+        self.angles = AnglesData(self.data["angles"])
+        self.dihedrals = DihedralsData(self.data["dihedrals"])
+        self.cutoffs = CutoffList(self.data["cutoffs"])
 
-    def write_lammps(self, atoms, prefix='lammps'):
+    def write_lammps(self, atoms, prefix="lammps"):
         """Write input for a LAMMPS calculation."""
         self.prefix = prefix
 
-        if hasattr(atoms, 'connectivities'):
+        if hasattr(atoms, "connectivities"):
             connectivities = atoms.connectivities
         else:
             btypes, blist = self.get_bonds(atoms)
             atypes, alist = self.get_angles()
             dtypes, dlist = self.get_dihedrals(alist, atypes)
             connectivities = {
-                'bonds': blist,
-                'bond types': btypes,
-                'angles': alist,
-                'angle types': atypes,
-                'dihedrals': dlist,
-                'dihedral types': dtypes}
+                "bonds": blist,
+                "bond types": btypes,
+                "angles": alist,
+                "angle types": atypes,
+                "dihedrals": dlist,
+                "dihedral types": dtypes,
+            }
 
             self.write_lammps_definitions(atoms, btypes, atypes, dtypes)
             self.write_lammps_in()
@@ -141,21 +156,24 @@ class OPLSff:
         self.write_lammps_atoms(atoms, connectivities)
 
     def write_lammps_in(self):
-        with open(self.prefix + '_in', 'w') as fileobj:
+        with open(self.prefix + "_in", "w") as fileobj:
             self._write_lammps_in(fileobj)
 
     def _write_lammps_in(self, fileobj):
-        fileobj.write("""# LAMMPS relaxation (written by ASE)
+        fileobj.write(
+            """# LAMMPS relaxation (written by ASE)
 
 units           metal
 atom_style      full
 boundary        p p p
 #boundary       p p f
 
-""")
-        fileobj.write('read_data ' + self.prefix + '_atoms\n')
-        fileobj.write('include  ' + self.prefix + '_opls\n')
-        fileobj.write("""
+"""
+        )
+        fileobj.write("read_data " + self.prefix + "_atoms\n")
+        fileobj.write("include  " + self.prefix + "_opls\n")
+        fileobj.write(
+            """
 kspace_style    pppm 1e-5
 #kspace_modify  slab 3.0
 
@@ -172,124 +190,134 @@ restart         100000 test_relax
 
 min_style       fire
 minimize        1.0e-14 1.0e-5 100000 100000
-""")  # noqa: E501
+"""
+        )  # noqa: E501
 
     def write_lammps_atoms(self, atoms, connectivities):
         """Write atoms input for LAMMPS"""
-        with open(self.prefix + '_atoms', 'w') as fileobj:
+        with open(self.prefix + "_atoms", "w") as fileobj:
             self._write_lammps_atoms(fileobj, atoms, connectivities)
 
     def _write_lammps_atoms(self, fileobj, atoms, connectivities):
         # header
-        fileobj.write(fileobj.name + ' (by ' + str(self.__class__) + ')\n\n')
-        fileobj.write(str(len(atoms)) + ' atoms\n')
-        fileobj.write(str(len(atoms.types)) + ' atom types\n')
-        blist = connectivities['bonds']
+        fileobj.write(fileobj.name + " (by " + str(self.__class__) + ")\n\n")
+        fileobj.write(str(len(atoms)) + " atoms\n")
+        fileobj.write(str(len(atoms.types)) + " atom types\n")
+        blist = connectivities["bonds"]
         if len(blist):
-            btypes = connectivities['bond types']
-            fileobj.write(str(len(blist)) + ' bonds\n')
-            fileobj.write(str(len(btypes)) + ' bond types\n')
-        alist = connectivities['angles']
+            btypes = connectivities["bond types"]
+            fileobj.write(str(len(blist)) + " bonds\n")
+            fileobj.write(str(len(btypes)) + " bond types\n")
+        alist = connectivities["angles"]
         if len(alist):
-            atypes = connectivities['angle types']
-            fileobj.write(str(len(alist)) + ' angles\n')
-            fileobj.write(str(len(atypes)) + ' angle types\n')
-        dlist = connectivities['dihedrals']
+            atypes = connectivities["angle types"]
+            fileobj.write(str(len(alist)) + " angles\n")
+            fileobj.write(str(len(atypes)) + " angle types\n")
+        dlist = connectivities["dihedrals"]
         if len(dlist):
-            dtypes = connectivities['dihedral types']
-            fileobj.write(str(len(dlist)) + ' dihedrals\n')
-            fileobj.write(str(len(dtypes)) + ' dihedral types\n')
+            dtypes = connectivities["dihedral types"]
+            fileobj.write(str(len(dlist)) + " dihedrals\n")
+            fileobj.write(str(len(dtypes)) + " dihedral types\n")
 
         # cell
         p = Prism(atoms.get_cell())
         xhi, yhi, zhi, xy, xz, yz = p.get_lammps_prism()
-        fileobj.write('\n0.0 %s  xlo xhi\n' % xhi)
-        fileobj.write('0.0 %s  ylo yhi\n' % yhi)
-        fileobj.write('0.0 %s  zlo zhi\n' % zhi)
+        fileobj.write("\n0.0 %s  xlo xhi\n" % xhi)
+        fileobj.write("0.0 %s  ylo yhi\n" % yhi)
+        fileobj.write("0.0 %s  zlo zhi\n" % zhi)
 
         if p.is_skewed():
             fileobj.write(f"{xy} {xz} {yz}  xy xz yz\n")
 
         # atoms
-        fileobj.write('\nAtoms\n\n')
+        fileobj.write("\nAtoms\n\n")
         tag = atoms.get_tags()
-        if atoms.has('molid'):
-            molid = atoms.get_array('molid')
+        if atoms.has("molid"):
+            molid = atoms.get_array("molid")
         else:
             molid = [1] * len(atoms)
-        for i, r in enumerate(
-                p.vector_to_lammps(atoms.get_positions())):
+        for i, r in enumerate(p.vector_to_lammps(atoms.get_positions())):
             atype = atoms.types[tag[i]]
             if len(atype) < 2:
-                atype = atype + ' '
-            q = self.data['one'][atype][2]
-            fileobj.write('%6d %3d %3d %s %s %s %s' % ((i + 1, molid[i],
-                                                        tag[i] + 1,
-                                                        q) + tuple(r)))
-            fileobj.write(' # ' + atoms.types[tag[i]] + '\n')
+                atype = atype + " "
+            q = self.data["one"][atype][2]
+            fileobj.write(
+                "%6d %3d %3d %s %s %s %s"
+                % ((i + 1, molid[i], tag[i] + 1, q) + tuple(r))
+            )
+            fileobj.write(" # " + atoms.types[tag[i]] + "\n")
 
         # velocities
         velocities = atoms.get_velocities()
         if velocities is not None:
             velocities = p.vector_to_lammps(atoms.get_velocities())
-            fileobj.write('\nVelocities\n\n')
+            fileobj.write("\nVelocities\n\n")
             for i, v in enumerate(velocities):
-                fileobj.write('%6d %g %g %g\n' %
-                              (i + 1, v[0], v[1], v[2]))
+                fileobj.write("%6d %g %g %g\n" % (i + 1, v[0], v[1], v[2]))
 
         # masses
-        fileobj.write('\nMasses\n\n')
+        fileobj.write("\nMasses\n\n")
         for i, typ in enumerate(atoms.types):
             cs = atoms.split_symbol(typ)[0]
-            fileobj.write('%6d %g # %s -> %s\n' %
-                          (i + 1,
-                           atomic_masses[chemical_symbols.index(cs)],
-                           typ, cs))
+            fileobj.write(
+                "%6d %g # %s -> %s\n"
+                % (i + 1, atomic_masses[chemical_symbols.index(cs)], typ, cs)
+            )
 
         # bonds
         if blist:
-            fileobj.write('\nBonds\n\n')
+            fileobj.write("\nBonds\n\n")
             for ib, bvals in enumerate(blist):
-                fileobj.write('%8d %6d %6d %6d ' %
-                              (ib + 1, bvals[0] + 1, bvals[1] + 1,
-                               bvals[2] + 1))
+                fileobj.write(
+                    "%8d %6d %6d %6d "
+                    % (ib + 1, bvals[0] + 1, bvals[1] + 1, bvals[2] + 1)
+                )
                 if bvals[0] in btypes:
-                    fileobj.write('# ' + btypes[bvals[0]])
-                fileobj.write('\n')
+                    fileobj.write("# " + btypes[bvals[0]])
+                fileobj.write("\n")
 
         # angles
         if alist:
-            fileobj.write('\nAngles\n\n')
+            fileobj.write("\nAngles\n\n")
             for ia, avals in enumerate(alist):
-                fileobj.write('%8d %6d %6d %6d %6d ' %
-                              (ia + 1, avals[0] + 1,
-                               avals[1] + 1, avals[2] + 1, avals[3] + 1))
+                fileobj.write(
+                    "%8d %6d %6d %6d %6d "
+                    % (ia + 1, avals[0] + 1, avals[1] + 1, avals[2] + 1, avals[3] + 1)
+                )
                 if avals[0] in atypes:
-                    fileobj.write('# ' + atypes[avals[0]])
-                fileobj.write('\n')
+                    fileobj.write("# " + atypes[avals[0]])
+                fileobj.write("\n")
 
         # dihedrals
         if dlist:
-            fileobj.write('\nDihedrals\n\n')
+            fileobj.write("\nDihedrals\n\n")
             for i, dvals in enumerate(dlist):
-                fileobj.write('%8d %6d %6d %6d %6d %6d ' %
-                              (i + 1, dvals[0] + 1,
-                               dvals[1] + 1, dvals[2] + 1,
-                               dvals[3] + 1, dvals[4] + 1))
+                fileobj.write(
+                    "%8d %6d %6d %6d %6d %6d "
+                    % (
+                        i + 1,
+                        dvals[0] + 1,
+                        dvals[1] + 1,
+                        dvals[2] + 1,
+                        dvals[3] + 1,
+                        dvals[4] + 1,
+                    )
+                )
                 if dvals[0] in dtypes:
-                    fileobj.write('# ' + dtypes[dvals[0]])
-                fileobj.write('\n')
+                    fileobj.write("# " + dtypes[dvals[0]])
+                fileobj.write("\n")
 
     def update_neighbor_list(self, atoms):
-        cut = 0.5 * max(self.data['cutoffs'].values())
-        self.nl = NeighborList([cut] * len(atoms), skin=0,
-                               bothways=True, self_interaction=False)
+        cut = 0.5 * max(self.data["cutoffs"].values())
+        self.nl = NeighborList(
+            [cut] * len(atoms), skin=0, bothways=True, self_interaction=False
+        )
         self.nl.update(atoms)
         self.atoms = atoms
 
     def get_bonds(self, atoms):
         """Find bonds and return them and their types"""
-        cutoffs = CutoffList(self.data['cutoffs'])
+        cutoffs = CutoffList(self.data["cutoffs"])
         self.update_neighbor_list(atoms)
 
         types = atoms.get_types()
@@ -307,18 +335,17 @@ minimize        1.0e-14 1.0e-5 100000 100000
                 cut = cutoffs.value(iname, jname)
                 if cut is None:
                     if self.warnings > 1:
-                        print('Warning: cutoff %s-%s not found'
-                              % (iname, jname))
+                        print("Warning: cutoff %s-%s not found" % (iname, jname))
                     continue  # don't have it
-                dist = np.linalg.norm(atom.position - atoms[j].position -
-                                      np.dot(offset, cell))
+                dist = np.linalg.norm(
+                    atom.position - atoms[j].position - np.dot(offset, cell)
+                )
                 if dist > cut:
                     continue  # too far away
                 name, val = self.bonds.name_value(iname, jname)
                 if name is None:
                     if self.warnings:
-                        print('Warning: potential %s-%s not found'
-                              % (iname, jname))
+                        print("Warning: potential %s-%s not found" % (iname, jname))
                     continue  # don't have it
                 if name not in bond_types:
                     bond_types.append(name)
@@ -326,7 +353,7 @@ minimize        1.0e-14 1.0e-5 100000 100000
         return bond_types, bond_list
 
     def get_angles(self, atoms=None):
-        cutoffs = CutoffList(self.data['cutoffs'])
+        cutoffs = CutoffList(self.data["cutoffs"])
         if atoms is not None:
             self.update_neighbor_list(atoms)
         else:
@@ -349,8 +376,9 @@ minimize        1.0e-14 1.0e-5 100000 100000
                 cut = cutoffs.value(iname, jname)
                 if cut is None:
                     continue  # don't have it
-                dist = np.linalg.norm(atom.position - atoms[j].position -
-                                      np.dot(offsetj, cell))
+                dist = np.linalg.norm(
+                    atom.position - atoms[j].position - np.dot(offsetj, cell)
+                )
                 if dist > cut:
                     continue  # too far away
 
@@ -362,17 +390,18 @@ minimize        1.0e-14 1.0e-5 100000 100000
                     cut = cutoffs.value(iname, kname)
                     if cut is None:
                         continue  # don't have it
-                    dist = np.linalg.norm(atom.position -
-                                          np.dot(offsetk, cell) -
-                                          atoms[k].position)
+                    dist = np.linalg.norm(
+                        atom.position - np.dot(offsetk, cell) - atoms[k].position
+                    )
                     if dist > cut:
                         continue  # too far away
-                    name, val = self.angles.name_value(jname, iname,
-                                                       kname)
+                    name, val = self.angles.name_value(jname, iname, kname)
                     if name is None:
                         if self.warnings > 1:
-                            print('Warning: angles %s-%s-%s not found'
-                                  % (jname, iname, kname))
+                            print(
+                                "Warning: angles %s-%s-%s not found"
+                                % (jname, iname, kname)
+                            )
                         continue  # don't have it
                     if name not in ang_types:
                         ang_types.append(name)
@@ -381,9 +410,9 @@ minimize        1.0e-14 1.0e-5 100000 100000
         return ang_types, ang_list
 
     def get_dihedrals(self, ang_types, ang_list):
-        'Dihedrals derived from angles.'
+        "Dihedrals derived from angles."
 
-        cutoffs = CutoffList(self.data['cutoffs'])
+        cutoffs = CutoffList(self.data["cutoffs"])
 
         atoms = self.atoms
         types = atoms.get_types()
@@ -397,8 +426,9 @@ minimize        1.0e-14 1.0e-5 100000 100000
             if name not in dih_types:
                 dih_types.append(name)
             index = dih_types.index(name)
-            if (([index, i, j, k, L] not in dih_list) and
-                    ([index, L, k, j, i] not in dih_list)):
+            if ([index, i, j, k, L] not in dih_list) and (
+                [index, L, k, j, i] not in dih_list
+            ):
                 dih_list.append([index, i, j, k, L])
 
         for angle in ang_types:
@@ -416,12 +446,12 @@ minimize        1.0e-14 1.0e-5 100000 100000
                 cut = cutoffs.value(iname, lname)
                 if cut is None:
                     continue  # don't have it
-                dist = np.linalg.norm(atoms[i].position - atoms[L].position -
-                                      np.dot(offsetl, cell))
+                dist = np.linalg.norm(
+                    atoms[i].position - atoms[L].position - np.dot(offsetl, cell)
+                )
                 if dist > cut:
                     continue  # too far away
-                name, val = self.dihedrals.name_value(lname, iname,
-                                                      jname, kname)
+                name, val = self.dihedrals.name_value(lname, iname, jname, kname)
                 if name is None:
                     continue  # don't have it
                 append(name, L, i, j, k)
@@ -435,12 +465,12 @@ minimize        1.0e-14 1.0e-5 100000 100000
                 cut = cutoffs.value(kname, lname)
                 if cut is None:
                     continue  # don't have it
-                dist = np.linalg.norm(atoms[k].position - atoms[L].position -
-                                      np.dot(offsetl, cell))
+                dist = np.linalg.norm(
+                    atoms[k].position - atoms[L].position - np.dot(offsetl, cell)
+                )
                 if dist > cut:
                     continue  # too far away
-                name, val = self.dihedrals.name_value(iname, jname,
-                                                      kname, lname)
+                name, val = self.dihedrals.name_value(iname, jname, kname, lname)
                 if name is None:
                     continue  # don't have it
                 append(name, i, j, k, L)
@@ -449,79 +479,80 @@ minimize        1.0e-14 1.0e-5 100000 100000
 
     def write_lammps_definitions(self, atoms, btypes, atypes, dtypes):
         """Write force field definitions for LAMMPS."""
-        with open(self.prefix + '_opls', 'w') as fd:
+        with open(self.prefix + "_opls", "w") as fd:
             self._write_lammps_definitions(fd, atoms, btypes, atypes, dtypes)
 
-    def _write_lammps_definitions(self, fileobj, atoms, btypes, atypes,
-                                  dtypes):
-        fileobj.write('# OPLS potential\n')
-        fileobj.write('# write_lammps' +
-                      str(time.asctime(time.localtime(time.time()))))
+    def _write_lammps_definitions(self, fileobj, atoms, btypes, atypes, dtypes):
+        fileobj.write("# OPLS potential\n")
+        fileobj.write("# write_lammps" + str(time.asctime(time.localtime(time.time()))))
 
         # bonds
         if len(btypes):
-            fileobj.write('\n# bonds\n')
-            fileobj.write('bond_style      harmonic\n')
+            fileobj.write("\n# bonds\n")
+            fileobj.write("bond_style      harmonic\n")
             for ib, btype in enumerate(btypes):
-                fileobj.write('bond_coeff %6d' % (ib + 1))
+                fileobj.write("bond_coeff %6d" % (ib + 1))
                 for value in self.bonds.nvh[btype]:
-                    fileobj.write(' ' + str(value))
-                fileobj.write(' # ' + btype + '\n')
+                    fileobj.write(" " + str(value))
+                fileobj.write(" # " + btype + "\n")
 
         # angles
         if len(atypes):
-            fileobj.write('\n# angles\n')
-            fileobj.write('angle_style      harmonic\n')
+            fileobj.write("\n# angles\n")
+            fileobj.write("angle_style      harmonic\n")
             for ia, atype in enumerate(atypes):
-                fileobj.write('angle_coeff %6d' % (ia + 1))
+                fileobj.write("angle_coeff %6d" % (ia + 1))
                 for value in self.angles.nvh[atype]:
-                    fileobj.write(' ' + str(value))
-                fileobj.write(' # ' + atype + '\n')
+                    fileobj.write(" " + str(value))
+                fileobj.write(" # " + atype + "\n")
 
         # dihedrals
         if len(dtypes):
-            fileobj.write('\n# dihedrals\n')
-            fileobj.write('dihedral_style      opls\n')
+            fileobj.write("\n# dihedrals\n")
+            fileobj.write("dihedral_style      opls\n")
             for i, dtype in enumerate(dtypes):
-                fileobj.write('dihedral_coeff %6d' % (i + 1))
+                fileobj.write("dihedral_coeff %6d" % (i + 1))
                 for value in self.dihedrals.nvh[dtype]:
-                    fileobj.write(' ' + str(value))
-                fileobj.write(' # ' + dtype + '\n')
+                    fileobj.write(" " + str(value))
+                fileobj.write(" # " + dtype + "\n")
 
         # Lennard Jones settings
-        fileobj.write('\n# L-J parameters\n')
-        fileobj.write('pair_style lj/cut/coul/long 10.0 7.4' +
-                      ' # consider changing these parameters\n')
-        fileobj.write('special_bonds lj/coul 0.0 0.0 0.5\n')
-        data = self.data['one']
+        fileobj.write("\n# L-J parameters\n")
+        fileobj.write(
+            "pair_style lj/cut/coul/long 10.0 7.4"
+            + " # consider changing these parameters\n"
+        )
+        fileobj.write("special_bonds lj/coul 0.0 0.0 0.5\n")
+        data = self.data["one"]
         for ia, atype in enumerate(atoms.types):
             if len(atype) < 2:
-                atype = atype + ' '
-            fileobj.write('pair_coeff ' + str(ia + 1) + ' ' + str(ia + 1))
+                atype = atype + " "
+            fileobj.write("pair_coeff " + str(ia + 1) + " " + str(ia + 1))
             for value in data[atype][:2]:
-                fileobj.write(' ' + str(value))
-            fileobj.write(' # ' + atype + '\n')
-        fileobj.write('pair_modify shift yes mix geometric\n')
+                fileobj.write(" " + str(value))
+            fileobj.write(" # " + atype + "\n")
+        fileobj.write("pair_modify shift yes mix geometric\n")
 
         # Charges
-        fileobj.write('\n# charges\n')
+        fileobj.write("\n# charges\n")
         for ia, atype in enumerate(atoms.types):
             if len(atype) < 2:
-                atype = atype + ' '
-            fileobj.write('set type ' + str(ia + 1))
-            fileobj.write(' charge ' + str(data[atype][2]))
-            fileobj.write(' # ' + atype + '\n')
+                atype = atype + " "
+            fileobj.write("set type " + str(ia + 1))
+            fileobj.write(" charge " + str(data[atype][2]))
+            fileobj.write(" # " + atype + "\n")
 
 
 class OPLSStructure(Atoms):
     default_map = {
-        'BR': 'Br',
-        'Be': 'Be',
-        'C0': 'Ca',
-        'Li': 'Li',
-        'Mg': 'Mg',
-        'Al': 'Al',
-        'Ar': 'Ar'}
+        "BR": "Br",
+        "Be": "Be",
+        "C0": "Ca",
+        "Li": "Li",
+        "Mg": "Mg",
+        "Al": "Al",
+        "Ar": "Ar",
+    }
 
     def __init__(self, filename=None, *args, **kwargs):
         Atoms.__init__(self, *args, **kwargs)
@@ -546,7 +577,7 @@ class OPLSStructure(Atoms):
 
         types = []
         types_map = {}
-        for atom, type in zip(atoms, atoms.get_array('type')):
+        for atom, type in zip(atoms, atoms.get_array("type")):
             if type not in types:
                 types_map[type] = len(types)
                 types.append(type)
@@ -581,20 +612,23 @@ class OPLSStructure(Atoms):
         return res
 
     def update_from_lammps_dump(self, fileobj, check=True):
-        atoms = read(fileobj, format='lammps-dump')
+        atoms = read(fileobj, format="lammps-dump")
 
         if len(atoms) != len(self):
-            raise RuntimeError('Structure in ' + str(fileobj) +
-                               ' has wrong length: %d != %d' %
-                               (len(atoms), len(self)))
+            raise RuntimeError(
+                "Structure in "
+                + str(fileobj)
+                + " has wrong length: %d != %d" % (len(atoms), len(self))
+            )
 
         if check:
             for a, b in zip(self, atoms):
                 # check that the atom types match
                 if not (a.tag + 1 == b.number):
-                    raise RuntimeError('Atoms index %d are of different '
-                                       'type (%d != %d)'
-                                       % (a.index, a.tag + 1, b.number))
+                    raise RuntimeError(
+                        "Atoms index %d are of different "
+                        "type (%d != %d)" % (a.index, a.tag + 1, b.number)
+                    )
 
         self.set_cell(atoms.get_cell())
         self.set_positions(atoms.get_positions())
@@ -632,11 +666,11 @@ class OPLSStructure(Atoms):
                 if len(w) == 2:
                     header[w[1]] = int(w[0])
                 else:
-                    header[w[1] + ' ' + w[2]] = int(w[0])
+                    header[w[1] + " " + w[2]] = int(w[0])
             else:
                 break
 
-        while not lines.pop(0).startswith('Atoms'):
+        while not lines.pop(0).startswith("Atoms"):
             pass
         lines.pop(0)
 
@@ -651,7 +685,7 @@ class OPLSStructure(Atoms):
         key = next_key()
 
         velocities = None
-        if key == 'Velocities':
+        if key == "Velocities":
             velocities = np.empty((natoms, 3))
             for i in range(natoms):
                 w = lines.pop(0).split()
@@ -659,7 +693,7 @@ class OPLSStructure(Atoms):
                 velocities[i] = np.array([float(w[1 + c]) for c in range(3)])
             key = next_key()
 
-        if key == 'Masses':
+        if key == "Masses":
             ntypes = len(self.types)
             masses = np.empty((ntypes))
             for i in range(ntypes):
@@ -680,8 +714,8 @@ class OPLSStructure(Atoms):
                     for type in types:
                         if type[0] == element:
                             count += 1
-                    label = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                    return (element + label[count])
+                    label = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                    return element + label[count]
 
                 symbolmap = {}
                 typemap = {}
@@ -689,10 +723,11 @@ class OPLSStructure(Atoms):
                 ams = atomic_masses[:]
                 ams[np.isnan(ams)] = 0
                 for i, mass in enumerate(masses):
-                    m2 = (ams - mass)**2
+                    m2 = (ams - mass) ** 2
                     symbolmap[self.types[i]] = chemical_symbols[m2.argmin()]
                     typemap[self.types[i]] = newtype(
-                        chemical_symbols[m2.argmin()], types)
+                        chemical_symbols[m2.argmin()], types
+                    )
                     types.append(typemap[self.types[i]])
                 for atom in self:
                     atom.symbol = symbolmap[atom.symbol]
@@ -713,25 +748,20 @@ class OPLSStructure(Atoms):
                     return lst, next_key()
             return lst, None
 
-        bonds, key = read_list('Bonds', 3)
-        angles, key = read_list('Angles', 4)
-        dihedrals, key = read_list('Dihedrals', 5, True)
+        bonds, key = read_list("Bonds", 3)
+        angles, key = read_list("Angles", 4)
+        dihedrals, key = read_list("Dihedrals", 5, True)
 
-        self.connectivities = {
-            'bonds': bonds,
-            'angles': angles,
-            'dihedrals': dihedrals
-        }
+        self.connectivities = {"bonds": bonds, "angles": angles, "dihedrals": dihedrals}
 
-        if 'bonds' in header:
-            assert len(bonds) == header['bonds']
-            self.connectivities['bond types'] = list(
-                range(header['bond types']))
-        if 'angles' in header:
-            assert len(angles) == header['angles']
-            self.connectivities['angle types'] = list(
-                range(header['angle types']))
-        if 'dihedrals' in header:
-            assert len(dihedrals) == header['dihedrals']
-            self.connectivities['dihedral types'] = list(range(
-                header['dihedral types']))
+        if "bonds" in header:
+            assert len(bonds) == header["bonds"]
+            self.connectivities["bond types"] = list(range(header["bond types"]))
+        if "angles" in header:
+            assert len(angles) == header["angles"]
+            self.connectivities["angle types"] = list(range(header["angle types"]))
+        if "dihedrals" in header:
+            assert len(dihedrals) == header["dihedrals"]
+            self.connectivities["dihedral types"] = list(
+                range(header["dihedral types"])
+            )

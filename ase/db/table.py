@@ -4,61 +4,74 @@ import numpy as np
 from ase.db.core import float_to_time_string, now
 
 
-all_columns = ('id', 'age', 'user', 'formula', 'calculator',
-               'energy', 'natoms', 'fmax', 'pbc', 'volume',
-               'charge', 'mass', 'smax', 'magmom')
+all_columns = (
+    "id",
+    "age",
+    "user",
+    "formula",
+    "calculator",
+    "energy",
+    "natoms",
+    "fmax",
+    "pbc",
+    "volume",
+    "charge",
+    "mass",
+    "smax",
+    "magmom",
+)
 
 
 def get_sql_columns(columns):
-    """ Map the names of table columns to names of columns in
+    """Map the names of table columns to names of columns in
     the SQL tables"""
     sql_columns = list(columns)
-    if 'age' in columns:
-        sql_columns.remove('age')
-        sql_columns += ['mtime', 'ctime']
-    if 'user' in columns:
-        sql_columns[sql_columns.index('user')] = 'username'
-    if 'formula' in columns:
-        sql_columns[sql_columns.index('formula')] = 'numbers'
-    if 'fmax' in columns:
-        sql_columns[sql_columns.index('fmax')] = 'forces'
-    if 'smax' in columns:
-        sql_columns[sql_columns.index('smax')] = 'stress'
-    if 'volume' in columns:
-        sql_columns[sql_columns.index('volume')] = 'cell'
-    if 'mass' in columns:
-        sql_columns[sql_columns.index('mass')] = 'masses'
-    if 'charge' in columns:
-        sql_columns[sql_columns.index('charge')] = 'charges'
+    if "age" in columns:
+        sql_columns.remove("age")
+        sql_columns += ["mtime", "ctime"]
+    if "user" in columns:
+        sql_columns[sql_columns.index("user")] = "username"
+    if "formula" in columns:
+        sql_columns[sql_columns.index("formula")] = "numbers"
+    if "fmax" in columns:
+        sql_columns[sql_columns.index("fmax")] = "forces"
+    if "smax" in columns:
+        sql_columns[sql_columns.index("smax")] = "stress"
+    if "volume" in columns:
+        sql_columns[sql_columns.index("volume")] = "cell"
+    if "mass" in columns:
+        sql_columns[sql_columns.index("mass")] = "masses"
+    if "charge" in columns:
+        sql_columns[sql_columns.index("charge")] = "charges"
 
-    sql_columns.append('key_value_pairs')
-    sql_columns.append('constraints')
-    if 'id' not in sql_columns:
-        sql_columns.append('id')
+    sql_columns.append("key_value_pairs")
+    sql_columns.append("constraints")
+    if "id" not in sql_columns:
+        sql_columns.append("id")
 
     return sql_columns
 
 
 def plural(n, word):
     if n == 1:
-        return '1 ' + word
-    return '%d %ss' % (n, word)
+        return "1 " + word
+    return "%d %ss" % (n, word)
 
 
 def cut(txt, length):
     if len(txt) <= length or length == 0:
         return txt
-    return txt[:length - 3] + '...'
+    return txt[: length - 3] + "..."
 
 
 def cutlist(lst, length):
     if len(lst) <= length or length == 0:
         return lst
-    return lst[:9] + ['... ({} more)'.format(len(lst) - 9)]
+    return lst[:9] + ["... ({} more)".format(len(lst) - 9)]
 
 
 class Table:
-    def __init__(self, connection, unique_key='id', verbosity=1, cut=35):
+    def __init__(self, connection, unique_key="id", verbosity=1, cut=35):
         self.connection = connection
         self.verbosity = verbosity
         self.cut = cut
@@ -70,17 +83,23 @@ class Table:
         self.unique_key = unique_key
         self.addcolumns: Optional[List[str]] = None
 
-    def select(self, query, columns, sort, limit, offset,
-               show_empty_columns=False):
+    def select(self, query, columns, sort, limit, offset, show_empty_columns=False):
         """Query datatbase and create rows."""
         sql_columns = get_sql_columns(columns)
         self.limit = limit
         self.offset = offset
-        self.rows = [Row(row, columns, self.unique_key)
-                     for row in self.connection.select(
-                         query, verbosity=self.verbosity,
-                         limit=limit, offset=offset, sort=sort,
-                         include_data=False, columns=sql_columns)]
+        self.rows = [
+            Row(row, columns, self.unique_key)
+            for row in self.connection.select(
+                query,
+                verbosity=self.verbosity,
+                limit=limit,
+                offset=offset,
+                sort=sort,
+                include_data=False,
+                columns=sql_columns,
+            )
+        ]
 
         self.columns = list(columns)
 
@@ -104,28 +123,34 @@ class Table:
         for row in self.rows:
             numbers = row.format(self.columns, subscript)
             right.update(numbers)
-            allkeys.update(row.dct.get('key_value_pairs', {}))
+            allkeys.update(row.dct.get("key_value_pairs", {}))
 
-        right.add('age')
+        right.add("age")
         self.right = [column in right for column in self.columns]
 
         self.keys = sorted(allkeys)
 
     def write(self, query=None):
         self.format()
-        L = [[len(s) for s in row.strings]
-             for row in self.rows]
+        L = [[len(s) for s in row.strings] for row in self.rows]
         L.append([len(c) for c in self.columns])
         N = np.max(L, axis=0)
 
-        fmt = '{:{align}{width}}'
+        fmt = "{:{align}{width}}"
         if self.verbosity > 0:
-            print('|'.join(fmt.format(c, align='<>'[a], width=w)
-                           for c, a, w in zip(self.columns, self.right, N)))
+            print(
+                "|".join(
+                    fmt.format(c, align="<>"[a], width=w)
+                    for c, a, w in zip(self.columns, self.right, N)
+                )
+            )
         for row in self.rows:
-            print('|'.join(fmt.format(c, align='<>'[a], width=w)
-                           for c, a, w in
-                           zip(row.strings, self.right, N)))
+            print(
+                "|".join(
+                    fmt.format(c, align="<>"[a], width=w)
+                    for c, a, w in zip(row.strings, self.right, N)
+                )
+            )
 
         if self.verbosity == 0:
             return
@@ -134,22 +159,22 @@ class Table:
 
         if self.limit and nrows == self.limit:
             n = self.connection.count(query)
-            print('Rows:', n, '(showing first {})'.format(self.limit))
+            print("Rows:", n, "(showing first {})".format(self.limit))
         else:
-            print('Rows:', nrows)
+            print("Rows:", nrows)
 
         if self.keys:
-            print('Keys:', ', '.join(cutlist(self.keys, self.cut)))
+            print("Keys:", ", ".join(cutlist(self.keys, self.cut)))
 
     def write_csv(self):
         if self.verbosity > 0:
-            print(', '.join(self.columns))
+            print(", ".join(self.columns))
         for row in self.rows:
-            print(', '.join(str(val) for val in row.values))
+            print(", ".join(str(val) for val in row.values))
 
 
 class Row:
-    def __init__(self, dct, columns, unique_key='id'):
+    def __init__(self, dct, columns, unique_key="id"):
         self.dct = dct
         self.values = None
         self.strings = None
@@ -159,10 +184,10 @@ class Row:
     def set_columns(self, columns):
         self.values = []
         for c in columns:
-            if c == 'age':
+            if c == "age":
                 value = float_to_time_string(now() - self.dct.ctime)
-            elif c == 'pbc':
-                value = ''.join('FT'[int(p)] for p in self.dct.pbc)
+            elif c == "pbc":
+                value = "".join("FT"[int(p)] for p in self.dct.pbc)
             else:
                 value = getattr(self.dct, c, None)
             self.values.append(value)
@@ -171,8 +196,8 @@ class Row:
         self.strings = []
         numbers = set()
         for value, column in zip(self.values, columns):
-            if column == 'formula' and subscript:
-                value = subscript.sub(r'<sub>\1</sub>', value)
+            if column == "formula" and subscript:
+                value = subscript.sub(r"<sub>\1</sub>", value)
             elif isinstance(value, dict):
                 value = str(value)
             elif isinstance(value, list):
@@ -184,9 +209,9 @@ class Row:
                 numbers.add(column)
             elif isinstance(value, float):
                 numbers.add(column)
-                value = '{:.3f}'.format(value)
+                value = "{:.3f}".format(value)
             elif value is None:
-                value = ''
+                value = ""
             self.strings.append(value)
 
         return numbers

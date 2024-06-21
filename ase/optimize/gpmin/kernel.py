@@ -2,7 +2,7 @@ import numpy as np
 import numpy.linalg as la
 
 
-class Kernel():
+class Kernel:
     def __init__(self):
         pass
 
@@ -14,7 +14,7 @@ class Kernel():
         pass
 
     def K(self, X1, X2):
-        """Compute the kernel matrix """
+        """Compute the kernel matrix"""
         return np.block([[self.kernel(x1, x2) for x2 in X2] for x1 in X1])
 
 
@@ -37,20 +37,20 @@ class SE_kernel(Kernel):
         self.l = params[1]
 
     def squared_distance(self, x1, x2):
-        """Returns the norm of x1-x2 using diag(l) as metric """
+        """Returns the norm of x1-x2 using diag(l) as metric"""
         return np.sum((x1 - x2) * (x1 - x2)) / self.l**2
 
     def kernel(self, x1, x2):
-        """ This is the squared exponential function"""
+        """This is the squared exponential function"""
         return self.weight**2 * np.exp(-0.5 * self.squared_distance(x1, x2))
 
     def dK_dweight(self, x1, x2):
-        """Derivative of the kernel respect to the weight """
+        """Derivative of the kernel respect to the weight"""
         return 2 * self.weight * np.exp(-0.5 * self.squared_distance(x1, x2))
 
     def dK_dl(self, x1, x2):
         """Derivative of the kernel respect to the scale"""
-        return self.kernel * la.norm(x1 - x2)**2 / self.l**3
+        return self.kernel * la.norm(x1 - x2) ** 2 / self.l**3
 
 
 class SquaredExponential(SE_kernel):
@@ -98,7 +98,7 @@ class SquaredExponential(SE_kernel):
         SE_kernel.__init__(self)
 
     def kernel_function(self, x1, x2):
-        """ This is the squared exponential function"""
+        """This is the squared exponential function"""
         return self.weight**2 * np.exp(-0.5 * self.squared_distance(x1, x2))
 
     def kernel_function_gradient(self, x1, x2):
@@ -143,10 +143,9 @@ class SquaredExponential(SE_kernel):
         for i in range(n):
             for j in range(i + 1, n):
                 k = self.kernel(X[i], X[j])
-                K[i * D1:(i + 1) * D1, j * D1:(j + 1) * D1] = k
-                K[j * D1:(j + 1) * D1, i * D1:(i + 1) * D1] = k.T
-            K[i * D1:(i + 1) * D1, i * D1:(i + 1) * D1] = self.kernel(
-                X[i], X[i])
+                K[i * D1 : (i + 1) * D1, j * D1 : (j + 1) * D1] = k
+                K[j * D1 : (j + 1) * D1, i * D1 : (i + 1) * D1] = k.T
+            K[i * D1 : (i + 1) * D1, i * D1 : (i + 1) * D1] = self.kernel(X[i], X[i])
         return K
 
     def kernel_vector(self, x, X, nsample):
@@ -154,7 +153,7 @@ class SquaredExponential(SE_kernel):
 
     # ---------Derivatives--------
     def dK_dweight(self, X):
-        """Return the derivative of K(X,X) respect to the weight """
+        """Return the derivative of K(X,X) respect to the weight"""
         return self.K(X, X) * 2 / self.weight
 
     # ----Derivatives of the kernel function respect to the scale ---

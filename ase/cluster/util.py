@@ -9,12 +9,15 @@ def get_element_info(symbol, latticeconstant):
         symbol = chemical_symbols[atomic_number]
 
     if latticeconstant is None:
-        if reference_states[atomic_number]['symmetry'] in ['fcc', 'bcc', 'sc']:
-            lattice_constant = reference_states[atomic_number]['a']
+        if reference_states[atomic_number]["symmetry"] in ["fcc", "bcc", "sc"]:
+            lattice_constant = reference_states[atomic_number]["a"]
         else:
             raise NotImplementedError(
-                ("Cannot guess lattice constant of a %s element." %
-                 (reference_states[atomic_number]['symmetry'],)))
+                (
+                    "Cannot guess lattice constant of a %s element."
+                    % (reference_states[atomic_number]["symmetry"],)
+                )
+            )
     else:
         if isinstance(latticeconstant, (int, float)):
             lattice_constant = latticeconstant

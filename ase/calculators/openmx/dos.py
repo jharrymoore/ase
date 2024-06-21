@@ -25,20 +25,25 @@ import warnings
 from ase.calculators.openmx.reader import rn as read_nth_to_last_value
 
 
-def input_command(calc, executable_name, input_files, argument_format='%s'):
+def input_command(calc, executable_name, input_files, argument_format="%s"):
     input_files = tuple(input_files)
-    command = executable_name + ' ' + argument_format % input_files
+    command = executable_name + " " + argument_format % input_files
     subprocess.check_call(command, shell=True, cwd=calc.directory)
 
 
 class DOS:
-
     def __init__(self, calc):
         self.calc = calc
         self.dos_dict = {}
 
-    def read_dos(self, method='Tetrahedron', pdos=False, atom_index=1,
-                 orbital='', spin_polarization=False):
+    def read_dos(
+        self,
+        method="Tetrahedron",
+        pdos=False,
+        atom_index=1,
+        orbital="",
+        spin_polarization=False,
+    ):
         """
         function for reading DOS from the following OpenMX file extensions:
          ~.[DOS|PDOS].[Tetrahedron|Gaussian]<.atom(int).(orbital)
@@ -58,85 +63,105 @@ class DOS:
         :return: None
         """
         add = False
-        if not spin_polarization and self.calc['initial_magnetic_moments']:
+        if not spin_polarization and self.calc["initial_magnetic_moments"]:
             add = True
-        p = ''
+        p = ""
         if pdos:
-            p = 'P'
-        filename = self.calc.label + '.' + p + 'DOS.' + method
+            p = "P"
+        filename = self.calc.label + "." + p + "DOS." + method
         if pdos:
-            period = ''
-            if orbital != '':
-                period = '.'
-            filename += '.atom' + str(atom_index) + period + orbital
+            period = ""
+            if orbital != "":
+                period = "."
+            filename += ".atom" + str(atom_index) + period + orbital
 
-        with open(filename, 'r') as fd:
-            line = '\n'
+        with open(filename, "r") as fd:
+            line = "\n"
             number_of_lines = -1
-            while line != '':
+            while line != "":
                 line = fd.readline()
                 number_of_lines += 1
 
-        key = ''
-        atom_and_orbital = ''
+        key = ""
+        atom_and_orbital = ""
         if pdos:
-            key = 'p'
+            key = "p"
             atom_and_orbital = str(atom_index) + orbital
-        key += 'dos'
-        self.dos_dict[key + '_energies_' + atom_and_orbital] = np.ndarray(
-            number_of_lines)
+        key += "dos"
+        self.dos_dict[key + "_energies_" + atom_and_orbital] = np.ndarray(
+            number_of_lines
+        )
         if spin_polarization:
-            self.dos_dict[key + atom_and_orbital + 'up'] = \
-                np.ndarray(number_of_lines)
-            self.dos_dict[key + atom_and_orbital + 'down'] = \
-                np.ndarray(number_of_lines)
-            self.dos_dict[key + '_cum_' + atom_and_orbital + 'up'] = \
-                np.ndarray(number_of_lines)
-            self.dos_dict[key + '_cum_' + atom_and_orbital + 'down'] = \
-                np.ndarray(number_of_lines)
+            self.dos_dict[key + atom_and_orbital + "up"] = np.ndarray(number_of_lines)
+            self.dos_dict[key + atom_and_orbital + "down"] = np.ndarray(number_of_lines)
+            self.dos_dict[key + "_cum_" + atom_and_orbital + "up"] = np.ndarray(
+                number_of_lines
+            )
+            self.dos_dict[key + "_cum_" + atom_and_orbital + "down"] = np.ndarray(
+                number_of_lines
+            )
         else:
             self.dos_dict[key + atom_and_orbital] = np.ndarray(number_of_lines)
-            self.dos_dict[key + '_cum_' + atom_and_orbital] = \
-                np.ndarray(number_of_lines)
-        fd = open(filename, 'r')
+            self.dos_dict[key + "_cum_" + atom_and_orbital] = np.ndarray(
+                number_of_lines
+            )
+        fd = open(filename, "r")
         if spin_polarization:
             for i in range(number_of_lines):
                 line = fd.readline()
-                self.dos_dict[key + '_energies_' + atom_and_orbital][i] = \
-                    read_nth_to_last_value(line, 5)
-                self.dos_dict[key + atom_and_orbital + 'up'][i] = \
-                    read_nth_to_last_value(line, 4)
-                self.dos_dict[key + atom_and_orbital + 'down'][i] = \
-                    -float(read_nth_to_last_value(line, 3))
-                self.dos_dict[key + '_cum_' + atom_and_orbital + 'up'][i] = \
-                    read_nth_to_last_value(line, 2)
-                self.dos_dict[key + '_cum_' + atom_and_orbital + 'down'][i] = \
-                    read_nth_to_last_value(line)
+                self.dos_dict[key + "_energies_" + atom_and_orbital][
+                    i
+                ] = read_nth_to_last_value(line, 5)
+                self.dos_dict[key + atom_and_orbital + "up"][
+                    i
+                ] = read_nth_to_last_value(line, 4)
+                self.dos_dict[key + atom_and_orbital + "down"][i] = -float(
+                    read_nth_to_last_value(line, 3)
+                )
+                self.dos_dict[key + "_cum_" + atom_and_orbital + "up"][
+                    i
+                ] = read_nth_to_last_value(line, 2)
+                self.dos_dict[key + "_cum_" + atom_and_orbital + "down"][
+                    i
+                ] = read_nth_to_last_value(line)
         elif add:
             for i in range(number_of_lines):
                 line = fd.readline()
-                self.dos_dict[key + '_energies_' + atom_and_orbital][i] = \
-                    read_nth_to_last_value(line, 5)
-                self.dos_dict[key + atom_and_orbital][i] = \
-                    float(read_nth_to_last_value(line, 4)) - \
-                    float(read_nth_to_last_value(line, 3))
-                self.dos_dict[key + '_cum_' + atom_and_orbital][i] = \
-                    float(read_nth_to_last_value(line, 2)) + \
-                    float(read_nth_to_last_value(line))
+                self.dos_dict[key + "_energies_" + atom_and_orbital][
+                    i
+                ] = read_nth_to_last_value(line, 5)
+                self.dos_dict[key + atom_and_orbital][i] = float(
+                    read_nth_to_last_value(line, 4)
+                ) - float(read_nth_to_last_value(line, 3))
+                self.dos_dict[key + "_cum_" + atom_and_orbital][i] = float(
+                    read_nth_to_last_value(line, 2)
+                ) + float(read_nth_to_last_value(line))
         else:
             for i in range(number_of_lines):
                 line = fd.readline()
-                self.dos_dict[key + '_energies_' + atom_and_orbital][i] = \
-                    read_nth_to_last_value(line, 3)
-                self.dos_dict[key + atom_and_orbital][i] = \
-                    read_nth_to_last_value(line, 2)
-                self.dos_dict[key + '_cum_' + atom_and_orbital][i] = \
-                    read_nth_to_last_value(line)
+                self.dos_dict[key + "_energies_" + atom_and_orbital][
+                    i
+                ] = read_nth_to_last_value(line, 3)
+                self.dos_dict[key + atom_and_orbital][i] = read_nth_to_last_value(
+                    line, 2
+                )
+                self.dos_dict[key + "_cum_" + atom_and_orbital][
+                    i
+                ] = read_nth_to_last_value(line)
         fd.close()
 
-    def subplot_dos(self, axis, density=True, cum=False, pdos=False,
-                    atom_index=1, orbital='', spin='',
-                    erange=(-25, 20), fermi_level=True):
+    def subplot_dos(
+        self,
+        axis,
+        density=True,
+        cum=False,
+        pdos=False,
+        atom_index=1,
+        orbital="",
+        spin="",
+        erange=(-25, 20),
+        fermi_level=True,
+    ):
         """
         Plots a graph of (pseudo-)density of states against energy onto a given
         axis of a subplot.
@@ -156,95 +181,110 @@ class DOS:
                      state's PDOS will be plotted.
         :return: None
         """
-        p = ''
+        p = ""
         bottom_index = 0
-        atom_orbital = atom_orbital_spin = ''
+        atom_orbital = atom_orbital_spin = ""
         if pdos:
-            p = 'p'
+            p = "p"
             atom_orbital += str(atom_index) + orbital
         atom_orbital_spin += atom_orbital + spin
-        key = p + 'dos'
-        density_color = 'r'
-        cum_color = 'b'
-        if spin == 'down':
-            density_color = 'c'
-            cum_color = 'm'
+        key = p + "dos"
+        density_color = "r"
+        cum_color = "b"
+        if spin == "down":
+            density_color = "c"
+            cum_color = "m"
         if density and cum:
             axis_twin = axis.twinx()
-            axis.plot(self.dos_dict[key + '_energies_' + atom_orbital],
-                      self.dos_dict[key + atom_orbital_spin],
-                      density_color)
-            axis_twin.plot(self.dos_dict[key + '_energies_' + atom_orbital],
-                           self.dos_dict[key + '_cum_' + atom_orbital_spin],
-                           cum_color)
+            axis.plot(
+                self.dos_dict[key + "_energies_" + atom_orbital],
+                self.dos_dict[key + atom_orbital_spin],
+                density_color,
+            )
+            axis_twin.plot(
+                self.dos_dict[key + "_energies_" + atom_orbital],
+                self.dos_dict[key + "_cum_" + atom_orbital_spin],
+                cum_color,
+            )
             max_density = max(self.dos_dict[key + atom_orbital_spin])
-            max_cum = max(self.dos_dict[key + '_cum_' + atom_orbital_spin])
+            max_cum = max(self.dos_dict[key + "_cum_" + atom_orbital_spin])
             if not max_density:
-                max_density = 1.
+                max_density = 1.0
             if not max_cum:
                 max_cum = 1
             axis.set_ylim(ymax=max_density)
             axis_twin.set_ylim(ymax=max_cum)
-            axis.set_ylim(ymin=0.)
-            axis_twin.set_ylim(ymin=0.)
+            axis.set_ylim(ymin=0.0)
+            axis_twin.set_ylim(ymin=0.0)
             label_index = 0
             yticklabels = axis.get_yticklabels()
-            if spin == 'down':
+            if spin == "down":
                 bottom_index = len(yticklabels) - 1
             for t in yticklabels:
-                if label_index == bottom_index or label_index == \
-                   len(yticklabels) // 2:
+                if label_index == bottom_index or label_index == len(yticklabels) // 2:
                     t.set_color(density_color)
                 else:
                     t.set_visible(False)
                 label_index += 1
             label_index = 0
             yticklabels = axis_twin.get_yticklabels()
-            if spin == 'down':
+            if spin == "down":
                 bottom_index = len(yticklabels) - 1
             for t in yticklabels:
-                if label_index == bottom_index or label_index == \
-                   len(yticklabels) // 2:
+                if label_index == bottom_index or label_index == len(yticklabels) // 2:
                     t.set_color(cum_color)
                 else:
                     t.set_visible(False)
                 label_index += 1
-            if spin == 'down':
+            if spin == "down":
                 axis.set_ylim(axis.get_ylim()[::-1])
                 axis_twin.set_ylim(axis_twin.get_ylim()[::-1])
         else:
             color = density_color
             if cum:
                 color = cum_color
-                key += '_cum_'
+                key += "_cum_"
             key += atom_orbital_spin
-            axis.plot(self.dos_dict[p + 'dos_energies_' + atom_orbital],
-                      self.dos_dict[key], color)
+            axis.plot(
+                self.dos_dict[p + "dos_energies_" + atom_orbital],
+                self.dos_dict[key],
+                color,
+            )
             maximum = max(self.dos_dict[key])
             if not maximum:
-                maximum = 1.
+                maximum = 1.0
             axis.set_ylim(ymax=maximum)
-            axis.set_ylim(ymin=0.)
+            axis.set_ylim(ymin=0.0)
             label_index = 0
             yticklabels = axis.get_yticklabels()
-            if spin == 'down':
+            if spin == "down":
                 bottom_index = len(yticklabels) - 1
             for t in yticklabels:
-                if label_index == bottom_index or label_index == \
-                   len(yticklabels) // 2:
+                if label_index == bottom_index or label_index == len(yticklabels) // 2:
                     t.set_color(color)
                 else:
                     t.set_visible(False)
                 label_index += 1
-            if spin == 'down':
+            if spin == "down":
                 axis.set_ylim(axis.get_ylim()[::-1])
         if fermi_level:
-            axis.axvspan(erange[0], 0., color='y', alpha=0.5)
+            axis.axvspan(erange[0], 0.0, color="y", alpha=0.5)
 
-    def plot_dos(self, density=True, cum=False, pdos=False, orbital_list=None,
-                 atom_index_list=None, spins=('up', 'down'), fermi_level=True,
-                 spin_polarization=False, erange=(-25, 20), atoms=None,
-                 method='Tetrahedron', file_format=None):
+    def plot_dos(
+        self,
+        density=True,
+        cum=False,
+        pdos=False,
+        orbital_list=None,
+        atom_index_list=None,
+        spins=("up", "down"),
+        fermi_level=True,
+        spin_polarization=False,
+        erange=(-25, 20),
+        atoms=None,
+        method="Tetrahedron",
+        file_format=None,
+    ):
         """
         Generates a graphical figure containing possible subplots of different
         PDOSs of different atoms, orbitals and spin state combinations.
@@ -267,96 +307,124 @@ class DOS:
         """
         import matplotlib.pyplot as plt
         from matplotlib.lines import Line2D
+
         if not spin_polarization:
-            spins = ['']
+            spins = [""]
         number_of_spins = len(spins)
         if orbital_list is None:
-            orbital_list = ['']
+            orbital_list = [""]
         number_of_atoms = 1
         number_of_orbitals = 1
-        p = ''
+        p = ""
         if pdos:
-            p = 'P'
+            p = "P"
             if atom_index_list is None:
                 atom_index_list = [i + 1 for i in range(len(atoms))]
             number_of_atoms = len(atom_index_list)
             number_of_orbitals = len(orbital_list)
-        figure, axes = plt.subplots(number_of_orbitals * number_of_spins,
-                                    number_of_atoms, sharex=True, sharey=False,
-                                    squeeze=False)
+        figure, axes = plt.subplots(
+            number_of_orbitals * number_of_spins,
+            number_of_atoms,
+            sharex=True,
+            sharey=False,
+            squeeze=False,
+        )
         for i in range(number_of_orbitals):
             for s in range(number_of_spins):
                 row_index = i * number_of_spins + s
                 for j in range(number_of_atoms):
-                    self.subplot_dos(fermi_level=fermi_level, density=density,
-                                     axis=axes[row_index][j], erange=erange,
-                                     atom_index=atom_index_list[j], pdos=pdos,
-                                     orbital=orbital_list[i], spin=spins[s],
-                                     cum=cum)
+                    self.subplot_dos(
+                        fermi_level=fermi_level,
+                        density=density,
+                        axis=axes[row_index][j],
+                        erange=erange,
+                        atom_index=atom_index_list[j],
+                        pdos=pdos,
+                        orbital=orbital_list[i],
+                        spin=spins[s],
+                        cum=cum,
+                    )
                     if j == 0 and pdos:
                         orbital = orbital_list[i]
-                        if orbital == '':
-                            orbital = 'All'
+                        if orbital == "":
+                            orbital = "All"
                         if spins[s]:
-                            orbital += ' ' + spins[s]
+                            orbital += " " + spins[s]
                         axes[row_index][j].set_ylabel(orbital)
                     if row_index == 0 and pdos:
-                        atom_symbol = ''
+                        atom_symbol = ""
                         if atoms:
-                            atom_symbol = ' (' + \
-                                atoms[atom_index_list[j]].symbol + ')'
+                            atom_symbol = " (" + atoms[atom_index_list[j]].symbol + ")"
                         axes[row_index][j].set_title(
-                            'Atom ' + str(atom_index_list[j]) + atom_symbol)
+                            "Atom " + str(atom_index_list[j]) + atom_symbol
+                        )
                     if row_index == number_of_orbitals * number_of_spins - 1:
-                        axes[row_index][j].set_xlabel(
-                            'Energy above Fermi Level (eV)')
+                        axes[row_index][j].set_xlabel("Energy above Fermi Level (eV)")
         plt.xlim(xmin=erange[0], xmax=erange[1])
         if density and cum:
             figure.suptitle(self.calc.label)
-            xdata = (0., 1.)
-            ydata = (0., 0.)
-            key_tuple = (Line2D(color='r', xdata=xdata, ydata=ydata),
-                         Line2D(color='b', xdata=xdata, ydata=ydata))
+            xdata = (0.0, 1.0)
+            ydata = (0.0, 0.0)
+            key_tuple = (
+                Line2D(color="r", xdata=xdata, ydata=ydata),
+                Line2D(color="b", xdata=xdata, ydata=ydata),
+            )
             if spin_polarization:
-                key_tuple = (Line2D(color='r', xdata=xdata, ydata=ydata),
-                             Line2D(color='b', xdata=xdata, ydata=ydata),
-                             Line2D(color='c', xdata=xdata, ydata=ydata),
-                             Line2D(color='m', xdata=xdata, ydata=ydata))
-            title_tuple = (p + 'DOS (eV^-1)', 'Number of States per Unit Cell')
+                key_tuple = (
+                    Line2D(color="r", xdata=xdata, ydata=ydata),
+                    Line2D(color="b", xdata=xdata, ydata=ydata),
+                    Line2D(color="c", xdata=xdata, ydata=ydata),
+                    Line2D(color="m", xdata=xdata, ydata=ydata),
+                )
+            title_tuple = (p + "DOS (eV^-1)", "Number of States per Unit Cell")
             if spin_polarization:
-                title_tuple = (p + 'DOS (eV^-1), spin up',
-                               'Number of States per Unit Cell, spin up',
-                               p + 'DOS (eV^-1), spin down',
-                               'Number of States per Unit Cell, spin down')
-            figure.legend(key_tuple, title_tuple, 'lower center')
+                title_tuple = (
+                    p + "DOS (eV^-1), spin up",
+                    "Number of States per Unit Cell, spin up",
+                    p + "DOS (eV^-1), spin down",
+                    "Number of States per Unit Cell, spin down",
+                )
+            figure.legend(key_tuple, title_tuple, "lower center")
         elif density:
-            figure.suptitle(self.calc.prefix + ': ' + p + 'DOS (eV^-1)')
+            figure.suptitle(self.calc.prefix + ": " + p + "DOS (eV^-1)")
         elif cum:
-            figure.suptitle(self.calc.prefix + ': Number of States')
+            figure.suptitle(self.calc.prefix + ": Number of States")
         extra_margin = 0
         if density and cum and spin_polarization:
             extra_margin = 0.1
-        plt.subplots_adjust(hspace=0., bottom=0.2 + extra_margin, wspace=0.29,
-                            left=0.09, right=0.95)
+        plt.subplots_adjust(
+            hspace=0.0, bottom=0.2 + extra_margin, wspace=0.29, left=0.09, right=0.95
+        )
         if file_format:
-            orbitals = ''
+            orbitals = ""
             if pdos:
                 atom_index_list = map(str, atom_index_list)
-                atoms = '&'.join(atom_index_list)
-                if '' in orbital_list:
-                    all_index = orbital_list.index('')
-                    orbital_list.remove('')
-                    orbital_list.insert(all_index, 'all')
-                orbitals = ''.join(orbital_list)
-            plt.savefig(filename=self.calc.label + '.' + p + 'DOS.' +
-                        method + '.atoms' + atoms + '.' + orbitals + '.' +
-                        file_format)
+                atoms = "&".join(atom_index_list)
+                if "" in orbital_list:
+                    all_index = orbital_list.index("")
+                    orbital_list.remove("")
+                    orbital_list.insert(all_index, "all")
+                orbitals = "".join(orbital_list)
+            plt.savefig(
+                filename=self.calc.label
+                + "."
+                + p
+                + "DOS."
+                + method
+                + ".atoms"
+                + atoms
+                + "."
+                + orbitals
+                + "."
+                + file_format
+            )
         if not file_format:
             plt.show()
         return figure, axes
 
-    def calc_dos(self, method='Tetrahedron', pdos=False, gaussian_width=0.1,
-                 atom_index_list=None):
+    def calc_dos(
+        self, method="Tetrahedron", pdos=False, gaussian_width=0.1, atom_index_list=None
+    ):
         """
         Python interface for DosMain (OpenMX's density of states calculator).
         Can automate the density of states
@@ -375,40 +443,52 @@ class DOS:
                                 specified atoms.
         :return: None
         """
-        method_code = '2\n'
-        if method == 'Tetrahedron':
-            method_code = '1\n'
-        pdos_code = '1\n'
+        method_code = "2\n"
+        if method == "Tetrahedron":
+            method_code = "1\n"
+        pdos_code = "1\n"
         if pdos:
-            pdos_code = '2\n'
-        with open(os.path.join(self.calc.directory, 'std_dos.in'), 'w') as fd:
+            pdos_code = "2\n"
+        with open(os.path.join(self.calc.directory, "std_dos.in"), "w") as fd:
             fd.write(method_code)
-            if method == 'Gaussian':
-                fd.write(str(gaussian_width) + '\n')
+            if method == "Gaussian":
+                fd.write(str(gaussian_width) + "\n")
             fd.write(pdos_code)
             if pdos:
-                atoms_code = ''
+                atoms_code = ""
                 if atom_index_list is None:
                     for i in range(len(self.calc.atoms)):
-                        atoms_code += str(i + 1) + ' '
+                        atoms_code += str(i + 1) + " "
                 else:
                     for i in atom_index_list:
-                        atoms_code += str(i) + ' '
-                atoms_code += '\n'
+                        atoms_code += str(i) + " "
+                atoms_code += "\n"
                 fd.write(atoms_code)
             fd.close()
-        executable_name = 'DosMain'
-        input_files = (self.calc.label + '.Dos.val', self.calc.label +
-                       '.Dos.vec', os.path.join(self.calc.directory,
-                                                'std_dos.in'))
-        argument_format = '%s %s < %s'
+        executable_name = "DosMain"
+        input_files = (
+            self.calc.label + ".Dos.val",
+            self.calc.label + ".Dos.vec",
+            os.path.join(self.calc.directory, "std_dos.in"),
+        )
+        argument_format = "%s %s < %s"
         input_command(self.calc, executable_name, input_files, argument_format)
 
-    def get_dos(self, atom_index_list=None, method='Tetrahedron',
-                gaussian_width=0.1, pdos=False, orbital_list=None,
-                spin_polarization=None, density=True, cum=False,
-                erange=(-25, 20), file_format=None, atoms=None,
-                fermi_level=True):
+    def get_dos(
+        self,
+        atom_index_list=None,
+        method="Tetrahedron",
+        gaussian_width=0.1,
+        pdos=False,
+        orbital_list=None,
+        spin_polarization=None,
+        density=True,
+        cum=False,
+        erange=(-25, 20),
+        file_format=None,
+        atoms=None,
+        fermi_level=True,
+    ):
         """
         Wraps all the density of states processing functions. Can go from
         .Dos.val and .Dos.vec files to a graphical figure showing many
@@ -438,59 +518,74 @@ class DOS:
         :return: matplotlib.figure.Figure object
         """
         if spin_polarization is None:
-            spin_polarization = bool(self.calc['initial_magnetic_moments'])
-        if spin_polarization and not self.calc['initial_magnetic_moments']:
-            warnings.warn('No spin polarization calculations provided')
+            spin_polarization = bool(self.calc["initial_magnetic_moments"])
+        if spin_polarization and not self.calc["initial_magnetic_moments"]:
+            warnings.warn("No spin polarization calculations provided")
             spin_polarization = False
         if atom_index_list is None:
             atom_index_list = [1]
-        if method == 'Tetrahedron' and self.calc['dos_kgrid'] == (1, 1, 1):
-            raise ValueError('Not enough k-space grid points.')
-        self.calc_dos(atom_index_list=atom_index_list, pdos=pdos,
-                      method=method, gaussian_width=gaussian_width)
+        if method == "Tetrahedron" and self.calc["dos_kgrid"] == (1, 1, 1):
+            raise ValueError("Not enough k-space grid points.")
+        self.calc_dos(
+            atom_index_list=atom_index_list,
+            pdos=pdos,
+            method=method,
+            gaussian_width=gaussian_width,
+        )
         if pdos:
             if orbital_list is None:
-                orbital_list = ['']
+                orbital_list = [""]
             orbital_list = list(orbital_list)
-            if 's' in orbital_list:
-                s_index = orbital_list.index('s')
-                orbital_list.remove('s')
-                orbital_list.insert(s_index, 's1')
-            if 'p' in orbital_list:
-                p_index = orbital_list.index('p')
-                orbital_list.remove('p')
-                orbital_list.insert(p_index, 'p3')
-                orbital_list.insert(p_index, 'p2')
-                orbital_list.insert(p_index, 'p1')
-            if 'd' in orbital_list:
-                d_index = orbital_list.index('d')
-                orbital_list.remove('d')
-                orbital_list.insert(d_index, 'd5')
-                orbital_list.insert(d_index, 'd4')
-                orbital_list.insert(d_index, 'd3')
-                orbital_list.insert(d_index, 'd2')
-                orbital_list.insert(d_index, 'd1')
-            if 'f' in orbital_list:
-                f_index = orbital_list.index('f')
-                orbital_list.remove('f')
-                orbital_list.insert(f_index, 'f7')
-                orbital_list.insert(f_index, 'f6')
-                orbital_list.insert(f_index, 'f5')
-                orbital_list.insert(f_index, 'f4')
-                orbital_list.insert(f_index, 'f3')
-                orbital_list.insert(f_index, 'f2')
-                orbital_list.insert(f_index, 'f1')
+            if "s" in orbital_list:
+                s_index = orbital_list.index("s")
+                orbital_list.remove("s")
+                orbital_list.insert(s_index, "s1")
+            if "p" in orbital_list:
+                p_index = orbital_list.index("p")
+                orbital_list.remove("p")
+                orbital_list.insert(p_index, "p3")
+                orbital_list.insert(p_index, "p2")
+                orbital_list.insert(p_index, "p1")
+            if "d" in orbital_list:
+                d_index = orbital_list.index("d")
+                orbital_list.remove("d")
+                orbital_list.insert(d_index, "d5")
+                orbital_list.insert(d_index, "d4")
+                orbital_list.insert(d_index, "d3")
+                orbital_list.insert(d_index, "d2")
+                orbital_list.insert(d_index, "d1")
+            if "f" in orbital_list:
+                f_index = orbital_list.index("f")
+                orbital_list.remove("f")
+                orbital_list.insert(f_index, "f7")
+                orbital_list.insert(f_index, "f6")
+                orbital_list.insert(f_index, "f5")
+                orbital_list.insert(f_index, "f4")
+                orbital_list.insert(f_index, "f3")
+                orbital_list.insert(f_index, "f2")
+                orbital_list.insert(f_index, "f1")
 
             for atom_index in atom_index_list:
                 for orbital in orbital_list:
-                    self.read_dos(method=method, atom_index=atom_index,
-                                  pdos=pdos, orbital=orbital,
-                                  spin_polarization=spin_polarization)
+                    self.read_dos(
+                        method=method,
+                        atom_index=atom_index,
+                        pdos=pdos,
+                        orbital=orbital,
+                        spin_polarization=spin_polarization,
+                    )
         else:
             self.read_dos(method=method, spin_polarization=spin_polarization)
-        return self.plot_dos(density=density, cum=cum, atoms=atoms,
-                             atom_index_list=atom_index_list, pdos=pdos,
-                             orbital_list=orbital_list, erange=erange,
-                             spin_polarization=spin_polarization,
-                             file_format=file_format, method=method,
-                             fermi_level=fermi_level)
+        return self.plot_dos(
+            density=density,
+            cum=cum,
+            atoms=atoms,
+            atom_index_list=atom_index_list,
+            pdos=pdos,
+            orbital_list=orbital_list,
+            erange=erange,
+            spin_polarization=spin_polarization,
+            file_format=file_format,
+            method=method,
+            fermi_level=fermi_level,
+        )

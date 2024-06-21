@@ -5,9 +5,9 @@ import pytest
 from ase import Atoms
 from ase.io.sdf import read_sdf, get_num_atoms_sdf_v2000
 
-DIFFICULT_BUT_VALID_FIRST_LINE = '184192  0  0  0  0  0  0  0  0999 V2000'
+DIFFICULT_BUT_VALID_FIRST_LINE = "184192  0  0  0  0  0  0  0  0999 V2000"
 
-VALID_SDF_V2000_COFFEE = '''
+VALID_SDF_V2000_COFFEE = """
      RDKit          3D
 
  24  0  0  0  0  0  0  0  0  0999 V2000
@@ -37,7 +37,7 @@ VALID_SDF_V2000_COFFEE = '''
    -2.9346    2.1021   -0.8849 H   0  0  0  0  0  0  0  0  0  0  0  0
 M  END
 $$$$
-'''
+"""
 
 
 def test_read_sdf() -> None:
@@ -46,14 +46,34 @@ def test_read_sdf() -> None:
         atoms: Atoms = read_sdf(file_obj)
 
     assert len(atoms) == 24
-    assert atoms.get_chemical_symbols() == ['O', 'O', 'N', 'N', 'N', 'N', 'C',
-                                            'C', 'C', 'C', 'C',
-                                            'C', 'C', 'C', 'H', 'H', 'H', 'H',
-                                            'H', 'H', 'H', 'H',
-                                            'H', 'H']
+    assert atoms.get_chemical_symbols() == [
+        "O",
+        "O",
+        "N",
+        "N",
+        "N",
+        "N",
+        "C",
+        "C",
+        "C",
+        "C",
+        "C",
+        "C",
+        "C",
+        "C",
+        "H",
+        "H",
+        "H",
+        "H",
+        "H",
+        "H",
+        "H",
+        "H",
+        "H",
+        "H",
+    ]
     assert atoms.get_positions()[0] == pytest.approx((0.4700, 2.5688, 0.0006))
-    assert atoms.get_positions()[-1] == pytest.approx(
-        (-2.9346, 2.1021, -0.8849))
+    assert atoms.get_positions()[-1] == pytest.approx((-2.9346, 2.1021, -0.8849))
 
 
 def test_get_num_atoms_sdf_v2000() -> None:

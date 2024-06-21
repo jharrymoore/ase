@@ -13,21 +13,21 @@ def op1(a, m):
 
 
 def op2(a, m):
-    a += Atom('C', m * np.array([0.2, 0.3, 0.1]))
+    a += Atom("C", m * np.array([0.2, 0.3, 0.1]))
     return a, a.positions[0]
 
 
 def test_sqlite(testdir):
-    CP = Checkpoint('checkpoints.db')
-    a = Diamond('Si', size=[2, 2, 2])
+    CP = Checkpoint("checkpoints.db")
+    a = Diamond("Si", size=[2, 2, 2])
     a = CP(op1)(a, 1.0)
     op1a = a.copy()
     a, ra = CP(op2)(a, 2.0)
     op2a = a.copy()
     op2ra = ra.copy()
 
-    CP = Checkpoint('checkpoints.db')
-    a = Diamond('Si', size=[2, 2, 2])
+    CP = Checkpoint("checkpoints.db")
+    a = Diamond("Si", size=[2, 2, 2])
     a = CP(op1)(a, 1.0)
     assert a == op1a
     a, ra = CP(op2)(a, 2.0)
@@ -69,5 +69,5 @@ def rattle_calc(atoms, calc):
 
 def test_new_style_interface(testdir):
     calc = LennardJones()
-    atoms = bulk('Cu')
+    atoms = bulk("Cu")
     rattle_calc(atoms, calc)

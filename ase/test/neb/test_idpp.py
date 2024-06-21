@@ -3,7 +3,7 @@ from ase.neb import NEB, idpp_interpolate
 
 
 def test_idpp(testdir):
-    initial = molecule('C2H6')
+    initial = molecule("C2H6")
     final = initial.copy()
     final.positions[2:5] = initial.positions[[3, 4, 2]]
 

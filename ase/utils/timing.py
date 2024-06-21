@@ -9,7 +9,7 @@ import time
 
 
 def function_timer(func, *args, **kwargs):
-    out = kwargs.pop('timeout', sys.stdout)
+    out = kwargs.pop("timeout", sys.stdout)
     t1 = time.time()
     r = func(*args, **kwargs)
     t2 = time.time()
@@ -59,9 +59,10 @@ class Timer:
         names = tuple(self.running)
         running = self.running.pop()
         if name != running:
-            raise RuntimeError('Must stop timers by stack order.  '
-                               'Requested stopping of %s but topmost is %s'
-                               % (name, running))
+            raise RuntimeError(
+                "Must stop timers by stack order.  "
+                "Requested stopping of %s but topmost is %s" % (name, running)
+            )
         self.timers[names] += time.time()
         return names
 
@@ -101,8 +102,8 @@ class Timer:
         tot = t0 - self.t0
 
         n = max([len(names[-1]) + len(names) for names in self.timers]) + 1
-        line = '-' * (n + 26) + '\n'
-        out.write('%-*s    incl.     excl.\n' % (n, 'Timing:'))
+        line = "-" * (n + 26) + "\n"
+        out.write("%-*s    incl.     excl.\n" % (n, "Timing:"))
         out.write(line)
         tother = tot
 
@@ -116,9 +117,9 @@ class Timer:
                     exclusive[names[:-1]] -= t
             else:
                 tother -= t
-        exclusive[('Other',)] = tother
-        inclusive[('Other',)] = tother
-        keys.append(('Other',))
+        exclusive[("Other",)] = tother
+        inclusive[("Other",)] = tother
+        keys.append(("Other",))
         for names in keys:
             t = exclusive[names]
             tinclusive = inclusive[names]
@@ -126,17 +127,16 @@ class Timer:
             p = 100 * r
             i = int(40 * r + 0.5)
             if i == 0:
-                bar = '|'
+                bar = "|"
             else:
-                bar = '|%s|' % ('-' * (i - 1))
+                bar = "|%s|" % ("-" * (i - 1))
             level = len(names)
             if level > self.print_levels:
                 continue
-            name = (level - 1) * ' ' + names[-1] + ':'
-            out.write('%-*s%9.3f %9.3f %5.1f%% %s\n' %
-                      (n, name, tinclusive, t, p, bar))
+            name = (level - 1) * " " + names[-1] + ":"
+            out.write("%-*s%9.3f %9.3f %5.1f%% %s\n" % (n, name, tinclusive, t, p, bar))
         out.write(line)
-        out.write('%-*s%9.3f %5.1f%%\n\n' % (n + 10, 'Total:', tot, 100.0))
+        out.write("%-*s%9.3f %5.1f%%\n\n" % (n + 10, "Total:", tot, 100.0))
 
         for name in were_running:
             self.start(name)
@@ -161,12 +161,14 @@ class timer:
             def add(self, x, y):
                 return x + y
 
-        """
+    """
+
     def __init__(self, name):
         self.name = name
 
     def __call__(self, method):
         if inspect.isgeneratorfunction(method):
+
             @functools.wraps(method)
             def new_method(slf, *args, **kwargs):
                 gen = method(slf, *args, **kwargs)
@@ -179,7 +181,9 @@ class timer:
                     finally:
                         slf.timer.stop()
                     yield x
+
         else:
+
             @functools.wraps(method)
             def new_method(slf, *args, **kwargs):
                 slf.timer.start(self.name)
@@ -189,4 +193,5 @@ class timer:
                 except IndexError:
                     pass
                 return x
+
         return new_method

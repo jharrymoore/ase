@@ -24,7 +24,7 @@ def read_atom_line(line_full):
     Read atom line from pdb format
     HETATM    1  H14 ORTE    0       6.301   0.693   1.919  1.00  0.00        H
     """
-    line = line_full.rstrip('\n')
+    line = line_full.rstrip("\n")
     type_atm = line[0:6]
     if type_atm == "ATOM  " or type_atm == "HETATM":
 
@@ -43,9 +43,10 @@ def read_atom_line(line_full):
 
         # atomic coordinates
         try:
-            coord = np.array([float(line[30:38]),
-                              float(line[38:46]),
-                              float(line[46:54])], dtype=np.float64)
+            coord = np.array(
+                [float(line[30:38]), float(line[38:46]), float(line[46:54])],
+                dtype=np.float64,
+            )
         except ValueError:
             raise ValueError("Invalid or missing coordinate(s)")
 
@@ -91,47 +92,50 @@ def read_proteindatabank(fileobj, index=-1, read_arrays=True):
     pbc = None
 
     def build_atoms():
-        atoms = Atoms(symbols=symbols,
-                      cell=cell, pbc=pbc,
-                      positions=positions)
+        atoms = Atoms(symbols=symbols, cell=cell, pbc=pbc, positions=positions)
 
         if not read_arrays:
             return atoms
 
-        info = {'occupancy': occ,
-                'bfactor': bfactor,
-                'residuenames': residuenames,
-                'atomtypes': atomtypes,
-                'residuenumbers': residuenumbers}
+        info = {
+            "occupancy": occ,
+            "bfactor": bfactor,
+            "residuenames": residuenames,
+            "atomtypes": atomtypes,
+            "residuenumbers": residuenumbers,
+        }
         for name, array in info.items():
             if len(array) == 0:
                 pass
             elif len(array) != len(atoms):
-                warnings.warn('Length of {} array, {}, '
-                              'different from number of atoms {}'.
-                              format(name, len(array), len(atoms)))
+                warnings.warn(
+                    "Length of {} array, {}, "
+                    "different from number of atoms {}".format(
+                        name, len(array), len(atoms)
+                    )
+                )
             else:
                 atoms.set_array(name, np.array(array))
         return atoms
 
     for line in fileobj.readlines():
-        if line.startswith('CRYST1'):
-            cellpar = [float(line[6:15]),  # a
-                       float(line[15:24]),  # b
-                       float(line[24:33]),  # c
-                       float(line[33:40]),  # alpha
-                       float(line[40:47]),  # beta
-                       float(line[47:54])]  # gamma
+        if line.startswith("CRYST1"):
+            cellpar = [
+                float(line[6:15]),  # a
+                float(line[15:24]),  # b
+                float(line[24:33]),  # c
+                float(line[33:40]),  # alpha
+                float(line[40:47]),  # beta
+                float(line[47:54]),
+            ]  # gamma
             cell = Cell.new(cellpar)
             pbc = True
         for c in range(3):
-            if line.startswith('ORIGX' + '123'[c]):
-                orig[c] = [float(line[10:20]),
-                           float(line[20:30]),
-                           float(line[30:40])]
+            if line.startswith("ORIGX" + "123"[c]):
+                orig[c] = [float(line[10:20]), float(line[20:30]), float(line[30:40])]
                 trans[c] = float(line[45:55])
 
-        if line.startswith('ATOM') or line.startswith('HETATM'):
+        if line.startswith("ATOM") or line.startswith("HETATM"):
             # Atom name is arbitrary and does not necessarily
             # contain the element symbol.  The specification
             # requires the element symbol to be in columns 77+78.
@@ -158,7 +162,7 @@ def read_proteindatabank(fileobj, index=-1, read_arrays=True):
             symbols.append(symbol)
             positions.append(position)
 
-        if line.startswith('END'):
+        if line.startswith("END"):
             # End of configuration reached
             # According to the latest PDB file format (v3.30),
             # this line should start with 'ENDMDL' (not 'END'),
@@ -186,12 +190,11 @@ def read_proteindatabank(fileobj, index=-1, read_arrays=True):
 def write_proteindatabank(fileobj, images, write_arrays=True):
     """Write images to PDB-file."""
     rot_t = None
-    if hasattr(images, 'get_positions'):
+    if hasattr(images, "get_positions"):
         images = [images]
 
     #     1234567 123 6789012345678901   89   67   456789012345678901234567 890
-    format = ('ATOM  %5d %4s MOL     1    %8.3f%8.3f%8.3f%6.2f%6.2f'
-              '          %2s  \n')
+    format = "ATOM  %5d %4s MOL     1    %8.3f%8.3f%8.3f%6.2f%6.2f" "          %2s  \n"
 
     # RasMol complains if the atom index exceeds 100000. There might
     # be a limit of 5 digit numbers in this field.
@@ -207,24 +210,35 @@ def write_proteindatabank(fileobj, images, write_arrays=True):
             _, rot_t = currentcell.standard_form()
             # ignoring Z-value, using P1 since we have all atoms defined
             # explicitly
-            cellformat = 'CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f P 1\n'
-            fileobj.write(cellformat % (cellpar[0], cellpar[1], cellpar[2],
-                                        cellpar[3], cellpar[4], cellpar[5]))
-        fileobj.write('MODEL     ' + str(n + 1) + '\n')
+            cellformat = "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f P 1\n"
+            fileobj.write(
+                cellformat
+                % (
+                    cellpar[0],
+                    cellpar[1],
+                    cellpar[2],
+                    cellpar[3],
+                    cellpar[4],
+                    cellpar[5],
+                )
+            )
+        fileobj.write("MODEL     " + str(n + 1) + "\n")
         p = atoms.get_positions()
         if rot_t is not None:
             p = p.dot(rot_t.T)
         occupancy = np.ones(len(atoms))
         bfactor = np.zeros(len(atoms))
         if write_arrays:
-            if 'occupancy' in atoms.arrays:
-                occupancy = atoms.get_array('occupancy')
-            if 'bfactor' in atoms.arrays:
-                bfactor = atoms.get_array('bfactor')
+            if "occupancy" in atoms.arrays:
+                occupancy = atoms.get_array("occupancy")
+            if "bfactor" in atoms.arrays:
+                bfactor = atoms.get_array("bfactor")
         for a in range(natoms):
             x, y, z = p[a]
             occ = occupancy[a]
             bf = bfactor[a]
-            fileobj.write(format % ((a + 1) % MAXNUM, symbols[a],
-                                    x, y, z, occ, bf, symbols[a].upper()))
-        fileobj.write('ENDMDL\n')
+            fileobj.write(
+                format
+                % ((a + 1) % MAXNUM, symbols[a], x, y, z, occ, bf, symbols[a].upper())
+            )
+        fileobj.write("ENDMDL\n")

@@ -9,7 +9,9 @@ from ase.calculators.gamess_us import GAMESSUS
 
 basis = dict()
 
-basis['Na'] = """S   2
+basis[
+    "Na"
+] = """S   2
 1         0.4972000             -0.2753574
 2         0.0560000              1.0989969
 S   1
@@ -20,7 +22,9 @@ P   2
 P   1
 1         0.0204000              1.0000000"""
 
-basis['Cl'] = """S   2
+basis[
+    "Cl"
+] = """S   2
 1         2.2310000             -0.4900589
 2         0.4720000              1.2542684
 S   1
@@ -33,7 +37,9 @@ P   1
 
 ecp = dict()
 
-ecp['Na'] = """NA-ECP GEN    10    2
+ecp[
+    "Na"
+] = """NA-ECP GEN    10    2
 5     ----- d-ul potential -----
     -10.0000000       1     175.5502590
     -47.4902024       2      35.0516791
@@ -54,7 +60,9 @@ ecp['Na'] = """NA-ECP GEN    10    2
      31.3701656       2       3.6813579
       7.1241813       2       0.9461106"""
 
-ecp['Cl'] = """CL-ECP GEN    10    2
+ecp[
+    "Cl"
+] = """CL-ECP GEN    10    2
 5     ----- d-ul potential -----
     -10.0000000       1      94.8130000
      66.2729170       2     165.6440000
@@ -77,7 +85,7 @@ ecp['Cl'] = """CL-ECP GEN    10    2
 
 
 def test_gamess_us_basis_ecp():
-    atoms = molecule('NaCl')
-    atoms.calc = GAMESSUS(basis=basis, ecp=ecp, label='NaCl')
+    atoms = molecule("NaCl")
+    atoms.calc = GAMESSUS(basis=basis, ecp=ecp, label="NaCl")
     e = atoms.get_potential_energy()
     np.testing.assert_allclose(e, -407.32054460869796, atol=1e-3, rtol=1e-3)

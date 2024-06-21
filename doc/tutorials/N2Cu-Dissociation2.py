@@ -7,14 +7,14 @@ from ase.optimize.fire import FIRE as QuasiNewton
 from ase.io import read
 
 # Read the previous configurations
-initial = read('N2.traj')
-final = read('2N.traj')
+initial = read("N2.traj")
+final = read("2N.traj")
 
 #  Make 9 images (note the use of copy)
 configs = [initial.copy() for i in range(8)] + [final]
 
 # As before, fix the Cu atoms
-constraint = FixAtoms(mask=[atom.symbol != 'N' for atom in initial])
+constraint = FixAtoms(mask=[atom.symbol != "N" for atom in initial])
 for config in configs:
     config.calc = EMT()
     config.set_constraint(constraint)

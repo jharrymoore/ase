@@ -14,15 +14,24 @@ class CLICommand:
 
     @staticmethod
     def add_arguments(parser):
-        parser.add_argument('filename', nargs='*',
-                            help='Name of file to determine format for.')
-        parser.add_argument('-v', '--verbose', action='store_true',
-                            help='Show more information about files.')
-        parser.add_argument('--formats', action='store_true',
-                            help='List file formats known to ASE.')
-        parser.add_argument('--calculators', action='store_true',
-                            help='List calculators known to ASE '
-                            'and whether they appear to be installed.')
+        parser.add_argument(
+            "filename", nargs="*", help="Name of file to determine format for."
+        )
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="store_true",
+            help="Show more information about files.",
+        )
+        parser.add_argument(
+            "--formats", action="store_true", help="List file formats known to ASE."
+        )
+        parser.add_argument(
+            "--calculators",
+            action="store_true",
+            help="List calculators known to ASE "
+            "and whether they appear to be installed.",
+        )
 
     @staticmethod
     def run(args):
@@ -37,14 +46,17 @@ class CLICommand:
                 print_formats()
             if args.calculators:
                 print()
-                from ase.calculators.autodetect import (detect_calculators,
-                                                        format_configs)
+                from ase.calculators.autodetect import (
+                    detect_calculators,
+                    format_configs,
+                )
+
                 configs = detect_calculators()
-                print('Calculators:')
+                print("Calculators:")
                 for message in format_configs(configs):
-                    print('  {}'.format(message))
+                    print("  {}".format(message))
                 print()
-                print('Available: {}'.format(','.join(sorted(configs))))
+                print("Available: {}".format(",".join(sorted(configs))))
             return
 
         n = max(len(filename) for filename in args.filename) + 2
@@ -53,24 +65,23 @@ class CLICommand:
             try:
                 format = filetype(filename)
             except FileNotFoundError:
-                format = '?'
-                description = 'No such file'
+                format = "?"
+                description = "No such file"
                 nfiles_not_found += 1
             except UnknownFileTypeError:
-                format = '?'
-                description = '?'
+                format = "?"
+                description = "?"
             else:
                 if format in ioformats:
                     description = ioformats[format].description
                 else:
-                    description = '?'
+                    description = "?"
 
-            print('{:{}}{} ({})'.format(filename + ':', n,
-                                        description, format))
+            print("{:{}}{} ({})".format(filename + ":", n, description, format))
             if args.verbose:
-                if format == 'traj':
+                if format == "traj":
                     print_ulm_info(filename)
-                elif format == 'bundletrajectory':
+                elif format == "bundletrajectory":
                     print_bundletrajectory_info(filename)
 
         raise SystemExit(nfiles_not_found)
@@ -81,33 +92,33 @@ def print_info():
     import sys
     from ase.dependencies import all_dependencies
 
-    versions = [('platform', platform.platform()),
-                ('python-' + sys.version.split()[0], sys.executable)]
+    versions = [
+        ("platform", platform.platform()),
+        ("python-" + sys.version.split()[0], sys.executable),
+    ]
 
     for name, path in versions + all_dependencies():
-        print('{:24} {}'.format(name, path))
+        print("{:24} {}".format(name, path))
 
 
 def print_formats():
     from ase.io.formats import ioformats
 
-    print('Supported formats:')
+    print("Supported formats:")
     for fmtname in sorted(ioformats):
         fmt = ioformats[fmtname]
 
-        infos = [fmt.modes, 'single' if fmt.single else 'multi']
+        infos = [fmt.modes, "single" if fmt.single else "multi"]
         if fmt.isbinary:
-            infos.append('binary')
+            infos.append("binary")
         if fmt.encoding is not None:
             infos.append(fmt.encoding)
-        infostring = '/'.join(infos)
+        infostring = "/".join(infos)
 
         moreinfo = [infostring]
         if fmt.extensions:
-            moreinfo.append('ext={}'.format('|'.join(fmt.extensions)))
+            moreinfo.append("ext={}".format("|".join(fmt.extensions)))
         if fmt.globs:
-            moreinfo.append('glob={}'.format('|'.join(fmt.globs)))
+            moreinfo.append("glob={}".format("|".join(fmt.globs)))
 
-        print('  {} [{}]: {}'.format(fmt.name,
-                                     ', '.join(moreinfo),
-                                     fmt.description))
+        print("  {} [{}]: {}".format(fmt.name, ", ".join(moreinfo), fmt.description))

@@ -12,15 +12,17 @@ from ase.utils import reader, writer
 @reader
 def read_gen(fileobj):
     """Read structure in GEN format (refer to DFTB+ manual).
-       Multiple snapshot are not allowed. """
+    Multiple snapshot are not allowed."""
     image = Atoms()
     lines = fileobj.readlines()
     line = lines[0].split()
     natoms = int(line[0])
     pb_flag = line[1]
-    if line[1] not in ['C', 'F', 'S']:
-        raise IOError('Error in line #1: only C (Cluster), S (Supercell) '
-                      'or F (Fraction) are valid options')
+    if line[1] not in ["C", "F", "S"]:
+        raise IOError(
+            "Error in line #1: only C (Cluster), S (Supercell) "
+            "or F (Fraction) are valid options"
+        )
 
     # Read atomic symbols
     line = lines[1].split()
@@ -44,7 +46,7 @@ def read_gen(fileobj):
 
     # If Supercell, parse periodic vectors.
     # If Fraction, translate into Supercell.
-    if pb_flag == 'C':
+    if pb_flag == "C":
         return image
     else:
         # Dummy line: line after atom positions is not uniquely defined
@@ -55,10 +57,14 @@ def read_gen(fileobj):
         for i in range(3):
             x, y, z = lines[i].split()[:3]
             p.append([float(x), float(y), float(z)])
-        image.set_cell([(p[0][0], p[0][1], p[0][2]),
-                        (p[1][0], p[1][1], p[1][2]),
-                        (p[2][0], p[2][1], p[2][2])])
-        if pb_flag == 'F':
+        image.set_cell(
+            [
+                (p[0][0], p[0][1], p[0][2]),
+                (p[1][0], p[1][1], p[1][2]),
+                (p[2][0], p[2][1], p[2][2]),
+            ]
+        )
+        if pb_flag == "F":
             frac_positions = image.get_positions()
             image.set_scaled_positions(frac_positions)
         return image
@@ -67,7 +73,7 @@ def read_gen(fileobj):
 @writer
 def write_gen(fileobj, images):
     """Write structure in GEN format (refer to DFTB+ manual).
-       Multiple snapshots are not allowed. """
+    Multiple snapshots are not allowed."""
     if not isinstance(images, (list, tuple)):
         images = [images]
 
@@ -76,8 +82,10 @@ def write_gen(fileobj, images):
     # Images is used as a list for consistency with the other
     # output modules
     if len(images) != 1:
-        raise ValueError('images contains more than one structure\n' +
-                         'GEN format supports only single snapshot output')
+        raise ValueError(
+            "images contains more than one structure\n"
+            + "GEN format supports only single snapshot output"
+        )
 
     symbols = images[0].get_chemical_symbols()
 
@@ -88,7 +96,7 @@ def write_gen(fileobj, images):
             symboldict[sym] = len(symboldict) + 1
     # An ordered symbol list is needed as ordered dictionary
     # is just available in python 2.7
-    orderedsymbols = list(['null'] * len(symboldict.keys()))
+    orderedsymbols = list(["null"] * len(symboldict.keys()))
     for sym in symboldict.keys():
         orderedsymbols[symboldict[sym] - 1] = sym
 
@@ -99,33 +107,46 @@ def write_gen(fileobj, images):
     # the directions, be sure you have set big periodicity
     # vectors in the non-periodic directions
     if images[0].pbc.any():
-        pb_flag = 'S'
+        pb_flag = "S"
     else:
-        pb_flag = 'C'
+        pb_flag = "C"
 
     natoms = len(symbols)
     ind = 0
     for atoms in images:
-        fileobj.write('%d  %-5s\n' % (natoms, pb_flag))
+        fileobj.write("%d  %-5s\n" % (natoms, pb_flag))
         for s in orderedsymbols:
-            fileobj.write('%-5s' % s)
-        fileobj.write('\n')
+            fileobj.write("%-5s" % s)
+        fileobj.write("\n")
         for sym, (x, y, z) in zip(symbols, atoms.get_positions()):
             ind += 1
             symbolid = symboldict[sym]
-            fileobj.write('%-6d %d %22.15f %22.15f %22.15f\n' % (ind,
-                          symbolid, x, y, z))
+            fileobj.write(
+                "%-6d %d %22.15f %22.15f %22.15f\n" % (ind, symbolid, x, y, z)
+            )
     if images[0].pbc.any():
-        fileobj.write('%22.15f %22.15f %22.15f \n' % (0.0, 0.0, 0.0))
-        fileobj.write('%22.15f %22.15f %22.15f \n' %
-                      (images[0].get_cell()[0][0],
-                       images[0].get_cell()[0][1],
-                       images[0].get_cell()[0][2]))
-        fileobj.write('%22.15f %22.15f %22.15f \n' %
-                      (images[0].get_cell()[1][0],
-                       images[0].get_cell()[1][1],
-                       images[0].get_cell()[1][2]))
-        fileobj.write('%22.15f %22.15f %22.15f \n' %
-                      (images[0].get_cell()[2][0],
-                       images[0].get_cell()[2][1],
-                       images[0].get_cell()[2][2]))
+        fileobj.write("%22.15f %22.15f %22.15f \n" % (0.0, 0.0, 0.0))
+        fileobj.write(
+            "%22.15f %22.15f %22.15f \n"
+            % (
+                images[0].get_cell()[0][0],
+                images[0].get_cell()[0][1],
+                images[0].get_cell()[0][2],
+            )
+        )
+        fileobj.write(
+            "%22.15f %22.15f %22.15f \n"
+            % (
+                images[0].get_cell()[1][0],
+                images[0].get_cell()[1][1],
+                images[0].get_cell()[1][2],
+            )
+        )
+        fileobj.write(
+            "%22.15f %22.15f %22.15f \n"
+            % (
+                images[0].get_cell()[2][0],
+                images[0].get_cell()[2][1],
+                images[0].get_cell()[2][2],
+            )
+        )

@@ -57,13 +57,13 @@ def test_cube_writing():
         assert re.match(comment_regex, comment_line)
 
         # Check constant string
-        assert outfil.readline() == ("OUTER LOOP: X, MIDDLE LOOP: Y, "
-                                     "INNER LOOP: Z\n")
+        assert outfil.readline() == (
+            "OUTER LOOP: X, MIDDLE LOOP: Y, " "INNER LOOP: Z\n"
+        )
 
         # Check origin
         origin_from_file = outfil.readline().split()[1:]
-        origin_from_file = tuple(
-            map(lambda p: float(p) * Bohr, origin_from_file))
+        origin_from_file = tuple(map(lambda p: float(p) * Bohr, origin_from_file))
         assert origin_from_file == origin_in
 
         # skip three lines
@@ -75,12 +75,10 @@ def test_cube_writing():
         atom1 = outfil.readline().split()
         assert atom1 == ["7", "0.000000", "0.000000", "0.000000", "0.000000"]
         atom2 = outfil.readline().split()
-        assert atom2 == ["7", "0.000000", "0.000000",
-                         "0.000000", "{:.6f}".format(d)]
+        assert atom2 == ["7", "0.000000", "0.000000", "0.000000", "{:.6f}".format(d)]
 
         # Check data
-        data_lines = list(
-            map(lambda l: float(l.rstrip("\n")), outfil.readlines()))
+        data_lines = list(map(lambda l: float(l.rstrip("\n")), outfil.readlines()))
         for idx, line in enumerate(data_lines):
             assert float(idx) == line
 
@@ -93,9 +91,7 @@ def test_cube_reading():
 
         # read data using cube reading
         result = read_cube(cubefil)
-        npt.assert_equal(
-            result[ATOMS].get_atomic_numbers(), np.array([6, 1, 1, 1, 1])
-        )
+        npt.assert_equal(result[ATOMS].get_atomic_numbers(), np.array([6, 1, 1, 1, 1]))
 
         assert isinstance(result, dict)
 
@@ -167,8 +163,7 @@ def test_cube_reading_multiple():
         # read data using cube reading
         result = read_cube(cubefil)
         npt.assert_equal(
-            result[ATOMS].get_atomic_numbers(),
-            [6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1]
+            result[ATOMS].get_atomic_numbers(), [6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1]
         )
 
         assert isinstance(result, dict)
@@ -178,8 +173,10 @@ def test_cube_reading_multiple():
 
         # and datas
         assert len(result["datas"]) == 2
-        assert result[DATA].shape == result["datas"][0].shape and \
-               result["datas"][0].shape == result["datas"][1].shape
+        assert (
+            result[DATA].shape == result["datas"][0].shape
+            and result["datas"][0].shape == result["datas"][1].shape
+        )
 
         # check labels
         assert result["labels"] == [21, 22]
@@ -223,5 +220,4 @@ def test_reading_using_io():
         assert result[0].shape == (5, 3, 5)
 
         assert isinstance(result[1], Atoms)
-        npt.assert_equal(result[1].get_atomic_numbers(),
-                         np.array([6, 1, 1, 1, 1]))
+        npt.assert_equal(result[1].get_atomic_numbers(), np.array([6, 1, 1, 1, 1]))

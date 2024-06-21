@@ -14,10 +14,10 @@ from ase.parallel import world
 from ase.utils import tokenize_version
 
 
-__all__ = ['Trajectory', 'PickleTrajectory']
+__all__ = ["Trajectory", "PickleTrajectory"]
 
 
-def Trajectory(filename, mode='r', atoms=None, properties=None, master=None):
+def Trajectory(filename, mode="r", atoms=None, properties=None, master=None):
     """A Trajectory can be created in read, write or append mode.
 
     Parameters:
@@ -46,7 +46,7 @@ def Trajectory(filename, mode='r', atoms=None, properties=None, master=None):
 
     The atoms, properties and master arguments are ignores in read mode.
     """
-    if mode == 'r':
+    if mode == "r":
         return TrajectoryReader(filename)
     return TrajectoryWriter(filename, mode, atoms, properties, master=master)
 
@@ -54,8 +54,9 @@ def Trajectory(filename, mode='r', atoms=None, properties=None, master=None):
 class TrajectoryWriter:
     """Writes Atoms objects to a .traj file."""
 
-    def __init__(self, filename, mode='w', atoms=None, properties=None,
-                 extra=[], master=None):
+    def __init__(
+        self, filename, mode="w", atoms=None, properties=None, extra=[], master=None
+    ):
         """A Trajectory writer, in write or append mode.
 
         Parameters:
@@ -83,7 +84,7 @@ class TrajectoryWriter:
             argument is given, processes where it is True will write.
         """
         if master is None:
-            master = (world.rank == 0)
+            master = world.rank == 0
         self.master = master
         self.atoms = atoms
         self.properties = properties
@@ -105,11 +106,12 @@ class TrajectoryWriter:
 
     def _open(self, filename, mode):
         import ase.io.ulm as ulm
-        if mode not in 'aw':
+
+        if mode not in "aw":
             raise ValueError('mode must be "w" or "a".')
         if self.master:
-            self.backend = ulm.open(filename, mode, tag='ASE-Trajectory')
-            if len(self.backend) > 0 and mode == 'a':
+            self.backend = ulm.open(filename, mode, tag="ASE-Trajectory")
+            if len(self.backend) > 0 and mode == "a":
                 with Trajectory(filename) as traj:
                     atoms = traj[0]
                 self.header_data = get_header_data(atoms)
@@ -150,8 +152,7 @@ class TrajectoryWriter:
         else:
             if not self.multiple_headers:
                 header_data = get_header_data(atoms)
-                self.multiple_headers = not headers_equal(self.header_data,
-                                                          header_data)
+                self.multiple_headers = not headers_equal(self.header_data, header_data)
             write_header = self.multiple_headers
 
         write_atoms(b, atoms, write_header=write_header)
@@ -162,11 +163,11 @@ class TrajectoryWriter:
             calc = SinglePointCalculator(atoms)
 
         if calc is not None:
-            if not hasattr(calc, 'get_property'):
+            if not hasattr(calc, "get_property"):
                 calc = OldCalculatorWrapper(calc)
-            c = b.child('calculator')
+            c = b.child("calculator")
             c.write(name=calc.name)
-            if hasattr(calc, 'todict'):
+            if hasattr(calc, "todict"):
                 c.write(parameters=calc.todict())
             for prop in all_properties:
                 if prop in kwargs:
@@ -179,14 +180,13 @@ class TrajectoryWriter:
                             x = None
                     else:
                         try:
-                            x = calc.get_property(prop, atoms,
-                                                  allow_calculation=False)
+                            x = calc.get_property(prop, atoms, allow_calculation=False)
                         except (PropertyNotImplementedError, KeyError):
                             # KeyError is needed for Jacapo.
                             # XXX We can perhaps remove this.
                             x = None
                 if x is not None:
-                    if prop in ['stress', 'dipole']:
+                    if prop in ["stress", "dipole"]:
                         x = x.tolist()
                     c.write(prop, x)
 
@@ -234,22 +234,23 @@ class TrajectoryReader:
 
     def _open(self, filename):
         import ase.io.ulm as ulm
-        self.backend = ulm.open(filename, 'r')
+
+        self.backend = ulm.open(filename, "r")
         self._read_header()
 
     def _read_header(self):
         b = self.backend
-        if b.get_tag() != 'ASE-Trajectory':
-            raise IOError('This is not a trajectory file!')
+        if b.get_tag() != "ASE-Trajectory":
+            raise IOError("This is not a trajectory file!")
 
         if len(b) > 0:
             self.pbc = b.pbc
             self.numbers = b.numbers
-            self.masses = b.get('masses')
-            self.constraints = b.get('constraints', '[]')
-            self.description = b.get('description')
+            self.masses = b.get("masses")
+            self.constraints = b.get("constraints", "[]")
+            self.description = b.get("description")
             self.version = b.version
-            self.ase_version = b.get('ase_version')
+            self.ase_version = b.get("ase_version")
 
     def close(self):
         """Close the trajectory file."""
@@ -259,16 +260,17 @@ class TrajectoryReader:
         if isinstance(i, slice):
             return SlicedTrajectory(self, i)
         b = self.backend[i]
-        if 'numbers' in b:
+        if "numbers" in b:
             # numbers and other header info was written alongside the image:
             atoms = read_atoms(b, traj=self)
         else:
             # header info was not written because they are the same:
-            atoms = read_atoms(b,
-                               header=[self.pbc, self.numbers, self.masses,
-                                       self.constraints],
-                               traj=self)
-        if 'calculator' in b:
+            atoms = read_atoms(
+                b,
+                header=[self.pbc, self.numbers, self.masses, self.constraints],
+                traj=self,
+            )
+        if "calculator" in b:
             results = {}
             implemented_properties = []
             c = b.calculator
@@ -280,7 +282,7 @@ class TrajectoryReader:
             calc.name = b.calculator.name
             calc.implemented_properties = implemented_properties
 
-            if 'parameters' in c:
+            if "parameters" in c:
                 calc.parameters.update(c.parameters)
             atoms.calc = calc
 
@@ -316,10 +318,12 @@ class SlicedTrajectory:
 
 
 def get_header_data(atoms):
-    return {'pbc': atoms.pbc.copy(),
-            'numbers': atoms.get_atomic_numbers(),
-            'masses': atoms.get_masses() if atoms.has('masses') else None,
-            'constraints': list(atoms.constraints)}
+    return {
+        "pbc": atoms.pbc.copy(),
+        "numbers": atoms.get_atomic_numbers(),
+        "masses": atoms.get_masses() if atoms.has("masses") else None,
+        "constraints": list(atoms.constraints),
+    }
 
 
 def headers_equal(headers1, headers2):
@@ -334,20 +338,25 @@ class VersionTooOldError(Exception):
     pass
 
 
-def read_atoms(backend,
-               header: Tuple = None,
-               traj: TrajectoryReader = None,
-               _try_except: bool = True) -> Atoms:
+def read_atoms(
+    backend,
+    header: Tuple = None,
+    traj: TrajectoryReader = None,
+    _try_except: bool = True,
+) -> Atoms:
 
     if _try_except:
         try:
             return read_atoms(backend, header, traj, False)
         except Exception as ex:
-            if (traj is not None and tokenize_version(__version__) <
-                    tokenize_version(traj.ase_version)):
-                msg = ('You are trying to read a trajectory file written '
-                       f'by ASE-{traj.ase_version} from ASE-{__version__}. '
-                       'It might help to update your ASE')
+            if traj is not None and tokenize_version(__version__) < tokenize_version(
+                traj.ase_version
+            ):
+                msg = (
+                    "You are trying to read a trajectory file written "
+                    f"by ASE-{traj.ase_version} from ASE-{__version__}. "
+                    "It might help to update your ASE"
+                )
                 raise VersionTooOldError(msg) from ex
             else:
                 raise
@@ -358,21 +367,22 @@ def read_atoms(backend,
     else:
         pbc = b.pbc
         numbers = b.numbers
-        masses = b.get('masses')
-        constraints = b.get('constraints', '[]')
+        masses = b.get("masses")
+        constraints = b.get("constraints", "[]")
 
-    atoms = Atoms(positions=b.positions,
-                  numbers=numbers,
-                  cell=b.cell,
-                  masses=masses,
-                  pbc=pbc,
-                  info=b.get('info'),
-                  constraint=[dict2constraint(d)
-                              for d in decode(constraints)],
-                  momenta=b.get('momenta'),
-                  magmoms=b.get('magmoms'),
-                  charges=b.get('charges'),
-                  tags=b.get('tags'))
+    atoms = Atoms(
+        positions=b.positions,
+        numbers=numbers,
+        cell=b.cell,
+        masses=masses,
+        pbc=pbc,
+        info=b.get("info"),
+        constraint=[dict2constraint(d) for d in decode(constraints)],
+        momenta=b.get("momenta"),
+        magmoms=b.get("magmoms"),
+        charges=b.get("charges"),
+        tags=b.get("tags"),
+    )
     return atoms
 
 
@@ -380,25 +390,23 @@ def write_atoms(backend, atoms, write_header=True):
     b = backend
 
     if write_header:
-        b.write(pbc=atoms.pbc.tolist(),
-                numbers=atoms.numbers)
+        b.write(pbc=atoms.pbc.tolist(), numbers=atoms.numbers)
         if atoms.constraints:
-            if all(hasattr(c, 'todict') for c in atoms.constraints):
+            if all(hasattr(c, "todict") for c in atoms.constraints):
                 b.write(constraints=encode(atoms.constraints))
 
-        if atoms.has('masses'):
+        if atoms.has("masses"):
             b.write(masses=atoms.get_masses())
 
-    b.write(positions=atoms.get_positions(),
-            cell=atoms.get_cell().tolist())
+    b.write(positions=atoms.get_positions(), cell=atoms.get_cell().tolist())
 
-    if atoms.has('tags'):
+    if atoms.has("tags"):
         b.write(tags=atoms.get_tags())
-    if atoms.has('momenta'):
+    if atoms.has("momenta"):
         b.write(momenta=atoms.get_momenta())
-    if atoms.has('initial_magmoms'):
+    if atoms.has("initial_magmoms"):
         b.write(magmoms=atoms.get_initial_magnetic_moments())
-    if atoms.has('initial_charges'):
+    if atoms.has("initial_charges"):
         b.write(charges=atoms.get_initial_charges())
 
 
@@ -427,16 +435,17 @@ class OldCalculatorWrapper:
 
     def get_property(self, prop, atoms, allow_calculation=True):
         try:
-            if (not allow_calculation and
-                    self.calc.calculation_required(atoms, [prop])):
+            if not allow_calculation and self.calc.calculation_required(atoms, [prop]):
                 return None
         except AttributeError:
             pass
 
-        method = 'get_' + {'energy': 'potential_energy',
-                           'magmom': 'magnetic_moment',
-                           'magmoms': 'magnetic_moments',
-                           'dipole': 'dipole_moment'}.get(prop, prop)
+        method = "get_" + {
+            "energy": "potential_energy",
+            "magmom": "magnetic_moment",
+            "magmoms": "magnetic_moments",
+            "dipole": "dipole_moment",
+        }.get(prop, prop)
         try:
             result = getattr(self.calc, method)(atoms)
         except AttributeError:
@@ -446,25 +455,28 @@ class OldCalculatorWrapper:
 
 def convert(name):
     import os
-    t = TrajectoryWriter(name + '.new')
+
+    t = TrajectoryWriter(name + ".new")
     for atoms in PickleTrajectory(name, _warn=False):
         t.write(atoms)
     t.close()
-    os.rename(name, name + '.old')
-    os.rename(name + '.new', name)
+    os.rename(name, name + ".old")
+    os.rename(name + ".new", name)
 
 
 def main():
     import optparse
-    parser = optparse.OptionParser(usage='python -m ase.io.trajectory '
-                                   'a1.traj [a2.traj ...]',
-                                   description='Convert old trajectory '
-                                   'file(s) to new format. '
-                                   'The old file is kept as a1.traj.old.')
+
+    parser = optparse.OptionParser(
+        usage="python -m ase.io.trajectory " "a1.traj [a2.traj ...]",
+        description="Convert old trajectory "
+        "file(s) to new format. "
+        "The old file is kept as a1.traj.old.",
+    )
     opts, args = parser.parse_args()
     for name in args:
         convert(name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

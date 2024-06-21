@@ -13,12 +13,12 @@ def test_jsonio():
     c = np.array([0.1j])
     assert (decode(encode(c)) == c).all()
 
-    c = np.array(['a'])
+    c = np.array(["a"])
     assert (decode(encode(c)) == c).all()
 
     fd = io.StringIO()
 
-    obj1 = {'hello': 'world'}
+    obj1 = {"hello": "world"}
     write_json(fd, obj1)
     fd.seek(0)
     obj2 = read_json(fd)
@@ -26,8 +26,7 @@ def test_jsonio():
     print(obj1)
     print(obj2)
 
-    for obj in [0.5 + 1.5j,
-                datetime.now()]:
+    for obj in [0.5 + 1.5j, datetime.now()]:
         s = encode(obj)
         o = decode(s)
         print(obj)

@@ -13,7 +13,7 @@ class Crossover(OffspringCreator):
 
     def __init__(self, rng=np.random):
         OffspringCreator.__init__(self, rng=rng)
-        self.descriptor = 'Crossover'
+        self.descriptor = "Crossover"
         self.min_inputs = 2
 
 
@@ -45,19 +45,19 @@ class CutSpliceCrossover(Crossover):
         Crossover.__init__(self, rng=rng)
         self.blmin = blmin
         self.keep_composition = keep_composition
-        self.descriptor = 'CutSpliceCrossover'
+        self.descriptor = "CutSpliceCrossover"
 
     def get_new_individual(self, parents):
         f, m = parents
 
         indi = self.initialize_individual(f)
-        indi.info['data']['parents'] = [i.info['confid'] for i in parents]
+        indi.info["data"]["parents"] = [i.info["confid"] for i in parents]
 
         theta = self.rng.random() * 2 * np.pi  # 0,2pi
         phi = self.rng.random() * np.pi  # 0,pi
-        e = np.array((np.sin(phi) * np.cos(theta),
-                      np.sin(theta) * np.sin(phi),
-                      np.cos(phi)))
+        e = np.array(
+            (np.sin(phi) * np.cos(theta), np.sin(theta) * np.sin(phi), np.cos(phi))
+        )
         eps = 0.0001
 
         f.translate(-f.get_center_of_mass())
@@ -67,10 +67,8 @@ class CutSpliceCrossover(Crossover):
         # We want one side from f and the other side from m
         fmap = [np.dot(x, e) for x in f.get_positions()]
         mmap = [-np.dot(x, e) for x in m.get_positions()]
-        ain = sorted([i for i in chain(fmap, mmap) if i > 0],
-                     reverse=True)
-        aout = sorted([i for i in chain(fmap, mmap) if i < 0],
-                      reverse=True)
+        ain = sorted([i for i in chain(fmap, mmap) if i > 0], reverse=True)
+        aout = sorted([i for i in chain(fmap, mmap) if i < 0], reverse=True)
 
         off = len(ain) - len(f)
 
@@ -79,13 +77,13 @@ class CutSpliceCrossover(Crossover):
         if off < 0:
             # too few
             # move f and m away from the plane
-            dist = (abs(aout[abs(off) - 1]) + abs(aout[abs(off)])) * .5
+            dist = (abs(aout[abs(off) - 1]) + abs(aout[abs(off)])) * 0.5
             f.translate(e * dist)
             m.translate(-e * dist)
         elif off > 0:
             # too many
             # move f and m towards the plane
-            dist = (abs(ain[-off - 1]) + abs(ain[-off])) * .5
+            dist = (abs(ain[-off - 1]) + abs(ain[-off])) * 0.5
             f.translate(-e * dist)
             m.translate(e * dist)
         if off != 0 and dist == 0:
@@ -132,13 +130,13 @@ class CutSpliceCrossover(Crossover):
                 correct_in[ai].number = add
 
         # Move the contributing apart if any distance is below blmin
-        maxl = 0.
+        maxl = 0.0
         for sv, min_dist in self.get_vectors_below_min_dist(tmpf + tmpm):
             lsv = np.linalg.norm(sv)  # length of shortest vector
             d = [-np.dot(e, sv)] * 2
-            d[0] += np.sqrt(np.dot(e, sv)**2 - lsv**2 + min_dist**2)
-            d[1] -= np.sqrt(np.dot(e, sv)**2 - lsv**2 + min_dist**2)
-            L = sorted([abs(i) for i in d])[0] / 2. + eps
+            d[0] += np.sqrt(np.dot(e, sv) ** 2 - lsv**2 + min_dist**2)
+            d[1] -= np.sqrt(np.dot(e, sv) ** 2 - lsv**2 + min_dist**2)
+            L = sorted([abs(i) for i in d])[0] / 2.0 + eps
             if L > maxl:
                 maxl = L
         tmpf.translate(e * maxl)
@@ -148,18 +146,15 @@ class CutSpliceCrossover(Crossover):
         for atom in chain(tmpf, tmpm):
             indi.append(atom)
 
-        parent_message = ':Parents {0} {1}'.format(f.info['confid'],
-                                                   m.info['confid'])
-        return (self.finalize_individual(indi),
-                self.descriptor + parent_message)
+        parent_message = ":Parents {0} {1}".format(f.info["confid"], m.info["confid"])
+        return (self.finalize_individual(indi), self.descriptor + parent_message)
 
     def get_numbers(self, atoms):
         """Returns the atomic numbers of the atoms object using only
         the elements defined in self.elements"""
         ac = atoms.copy()
         if self.elements is not None:
-            del ac[[a.index for a in ac
-                    if a.symbol in self.elements]]
+            del ac[[a.index for a in ac if a.symbol in self.elements]]
         return ac.numbers
 
     def get_vectors_below_min_dist(self, atoms):
@@ -180,7 +175,7 @@ class CutSpliceCrossover(Crossover):
 
     def get_shortest_dist_vector(self, atoms):
         norm = np.linalg.norm
-        mind = 10000.
+        mind = 10000.0
         ap = atoms.get_positions()
         for i in range(len(atoms)):
             pos = atoms[i].position

@@ -4,7 +4,7 @@ from ase.calculators.emt import EMT
 
 
 def test_loggingcalc(tmp_path, figure):
-    atoms = bulk('Au', orthorhombic=True)
+    atoms = bulk("Au", orthorhombic=True)
     calc = LoggingCalculator(EMT())
     atoms.calc = calc
 

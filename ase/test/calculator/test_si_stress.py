@@ -8,19 +8,18 @@ import ase.units as u
 # stress[4] and [5].
 # These references values are based on "consensus" between codes i.e.
 # whatever it takes to get them to pass this test.
-ref_stress = np.array([-0.22, -0.17, -0.17,
-                       -0.17, 0.18, 0.18])
+ref_stress = np.array([-0.22, -0.17, -0.17, -0.17, 0.18, 0.18])
 
 calc = pytest.mark.calculator
 
 
-@calc('aims', compute_analytical_stress=True)
-@calc('gpaw', mode={'name': 'pw', 'ecut': 350}, txt=None)
-@calc('abinit', chksymtnons=0, ecut=350)
-@calc('espresso', tprnfor=True, tstress=True, ecutwfc=350 / u.Ry)
-@calc('siesta')
+@calc("aims", compute_analytical_stress=True)
+@calc("gpaw", mode={"name": "pw", "ecut": 350}, txt=None)
+@calc("abinit", chksymtnons=0, ecut=350)
+@calc("espresso", tprnfor=True, tstress=True, ecutwfc=350 / u.Ry)
+@calc("siesta")
 def test_si_stress(factory):
-    atoms = bulk('Si')
+    atoms = bulk("Si")
     atoms.calc = factory.calc(kpts=[4, 4, 4])
     atoms.cell[0] *= 0.85
     stress = atoms.get_stress()

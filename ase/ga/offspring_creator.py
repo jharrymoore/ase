@@ -16,7 +16,7 @@ class OffspringCreator:
     """
 
     def __init__(self, verbose=False, num_muts=1, rng=np.random):
-        self.descriptor = 'OffspringCreator'
+        self.descriptor = "OffspringCreator"
         self.verbose = verbose
         self.min_inputs = 0
         self.num_muts = num_muts
@@ -35,7 +35,7 @@ class OffspringCreator:
 
     def finalize_individual(self, indi):
         """Call this function just before returning the new individual"""
-        indi.info['key_value_pairs']['origin'] = self.descriptor
+        indi.info["key_value_pairs"]["origin"] = self.descriptor
 
         return indi
 
@@ -50,9 +50,9 @@ class OffspringCreator:
         else:
             indi = indi.copy()
         # key_value_pairs for numbers and strings
-        indi.info['key_value_pairs'] = {'extinct': 0}
+        indi.info["key_value_pairs"] = {"extinct": 0}
         # data for lists and the like
-        indi.info['data'] = {}
+        indi.info["data"] = {}
 
         return indi
 
@@ -86,7 +86,7 @@ class OperationSelector:
                 return i
 
     def get_new_individual(self, candidate_list):
-        """Choose operator and use it on the candidate. """
+        """Choose operator and use it on the candidate."""
         to_use = self.__get_index__()
         return self.oplist[to_use].get_new_individual(candidate_list)
 
@@ -110,7 +110,7 @@ class CombinationMutation(OffspringCreator):
 
     def __init__(self, *mutations, verbose=False):
         super(CombinationMutation, self).__init__(verbose=verbose)
-        self.descriptor = 'CombinationMutation'
+        self.descriptor = "CombinationMutation"
 
         # Check that a combination mutation makes sense
         msg = "Too few operators supplied to a CombinationMutation"
@@ -123,13 +123,12 @@ class CombinationMutation(OffspringCreator):
 
         indi = self.mutate(f)
         if indi is None:
-            return indi, 'mutation: {}'.format(self.descriptor)
+            return indi, "mutation: {}".format(self.descriptor)
 
         indi = self.initialize_individual(f, indi)
-        indi.info['data']['parents'] = [f.info['confid']]
+        indi.info["data"]["parents"] = [f.info["confid"]]
 
-        return (self.finalize_individual(indi),
-                'mutation: {}'.format(self.descriptor))
+        return (self.finalize_individual(indi), "mutation: {}".format(self.descriptor))
 
     def mutate(self, atoms):
         """Perform the mutations one at a time."""

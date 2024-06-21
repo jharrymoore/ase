@@ -22,8 +22,7 @@ Zero-point energy: 0.078 eV
 
 def test_vibrations_example(testdir):
     """Test the example from the Vibrations.__init__() docstring"""
-    n2 = Atoms('N2', [(0, 0, 0), (0, 0, 1.1)],
-               calculator=EMT())
+    n2 = Atoms("N2", [(0, 0, 0), (0, 0, 1.1)], calculator=EMT())
     BFGS(n2).run(fmax=0.01)
 
     vib = Vibrations(n2)

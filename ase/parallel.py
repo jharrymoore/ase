@@ -9,21 +9,21 @@ import numpy as np
 
 
 def get_txt(txt, rank):
-    if hasattr(txt, 'write'):
+    if hasattr(txt, "write"):
         # Note: User-supplied object might write to files from many ranks.
         return txt
     elif rank == 0:
         if txt is None:
-            return open(os.devnull, 'w')
-        elif txt == '-':
+            return open(os.devnull, "w")
+        elif txt == "-":
             return sys.stdout
         else:
-            return open(txt, 'w', 1)
+            return open(txt, "w", 1)
     else:
-        return open(os.devnull, 'w')
+        return open(os.devnull, "w")
 
 
-def paropen(name, mode='r', buffering=-1, encoding=None, comm=None):
+def paropen(name, mode="r", buffering=-1, encoding=None, comm=None):
     """MPI-safe version of open function.
 
     In read mode, the file is opened on all nodes.  In write and
@@ -32,13 +32,13 @@ def paropen(name, mode='r', buffering=-1, encoding=None, comm=None):
     """
     if comm is None:
         comm = world
-    if comm.rank > 0 and mode[0] != 'r':
+    if comm.rank > 0 and mode[0] != "r":
         name = os.devnull
     return open(name, mode, buffering, encoding)
 
 
 def parprint(*args, **kwargs):
-    """MPI-safe print - prints only from master. """
+    """MPI-safe print - prints only from master."""
     if world.rank == 0:
         print(*args, **kwargs)
 
@@ -52,7 +52,7 @@ class DummyMPI:
         # returned, or on arrays, in-place.
         if np.isscalar(a):
             return a
-        if hasattr(a, '__array__'):
+        if hasattr(a, "__array__"):
             a = a.__array__()
         assert isinstance(a, np.ndarray)
         return None
@@ -93,7 +93,7 @@ class MPI:
         # RecursionError. This also affects modules that use pickling
         # e.g. multiprocessing.  For more details see:
         # https://gitlab.com/ase/ase/-/merge_requests/2695
-        if name == '__setstate__':
+        if name == "__setstate__":
             raise AttributeError(name)
 
         if self.comm is None:
@@ -103,15 +103,17 @@ class MPI:
 
 def _get_comm():
     """Get the correct MPI world object."""
-    if 'mpi4py' in sys.modules:
+    if "mpi4py" in sys.modules:
         return MPI4PY()
-    if '_gpaw' in sys.modules:
+    if "_gpaw" in sys.modules:
         import _gpaw
-        if hasattr(_gpaw, 'Communicator'):
+
+        if hasattr(_gpaw, "Communicator"):
             return _gpaw.Communicator()
-    if '_asap' in sys.modules:
+    if "_asap" in sys.modules:
         import _asap
-        if hasattr(_asap, 'Communicator'):
+
+        if hasattr(_asap, "Communicator"):
             return _asap.Communicator()
     return DummyMPI()
 
@@ -120,6 +122,7 @@ class MPI4PY:
     def __init__(self, mpi4py_comm=None):
         if mpi4py_comm is None:
             from mpi4py import MPI
+
             mpi4py_comm = MPI.COMM_WORLD
         self.comm = mpi4py_comm
 
@@ -181,32 +184,36 @@ class MPI4PY:
 world = None
 
 # Check for special MPI-enabled Python interpreters:
-if '_gpaw' in sys.builtin_module_names:
+if "_gpaw" in sys.builtin_module_names:
     # http://wiki.fysik.dtu.dk/gpaw
     import _gpaw
+
     world = _gpaw.Communicator()
-elif '_asap' in sys.builtin_module_names:
+elif "_asap" in sys.builtin_module_names:
     # Modern version of Asap
     # http://wiki.fysik.dtu.dk/asap
     # We cannot import asap3.mpi here, as that creates an import deadlock
     import _asap
+
     world = _asap.Communicator()
 
 # Check if MPI implementation has been imported already:
-elif '_gpaw' in sys.modules:
+elif "_gpaw" in sys.modules:
     # Same thing as above but for the module version
     import _gpaw
+
     try:
         world = _gpaw.Communicator()
     except AttributeError:
         pass
-elif '_asap' in sys.modules:
+elif "_asap" in sys.modules:
     import _asap
+
     try:
         world = _asap.Communicator()
     except AttributeError:
         pass
-elif 'mpi4py' in sys.modules:
+elif "mpi4py" in sys.modules:
     world = MPI4PY()
 
 if world is None:
@@ -247,9 +254,12 @@ def parallel_function(func):
 
     @functools.wraps(func)
     def new_func(*args, **kwargs):
-        if (world.size == 1 or
-            args and getattr(args[0], 'serial', False) or
-                not kwargs.pop('parallel', True)):
+        if (
+            world.size == 1
+            or args
+            and getattr(args[0], "serial", False)
+            or not kwargs.pop("parallel", True)
+        ):
             # Disable:
             return func(*args, **kwargs)
 
@@ -278,9 +288,12 @@ def parallel_generator(generator):
 
     @functools.wraps(generator)
     def new_generator(*args, **kwargs):
-        if (world.size == 1 or
-            args and getattr(args[0], 'serial', False) or
-                not kwargs.pop('parallel', True)):
+        if (
+            world.size == 1
+            or args
+            and getattr(args[0], "serial", False)
+            or not kwargs.pop("parallel", True)
+        ):
             # Disable:
             for result in generator(*args, **kwargs):
                 yield result
@@ -317,11 +330,13 @@ def register_parallel_cleanup_function():
         return
 
     def cleanup(sys=sys, time=time, world=world):
-        error = getattr(sys, 'last_type', None)
+        error = getattr(sys, "last_type", None)
         if error:
             sys.stdout.flush()
-            sys.stderr.write(('ASE CLEANUP (node %d): %s occurred.  ' +
-                              'Calling MPI_Abort!\n') % (world.rank, error))
+            sys.stderr.write(
+                ("ASE CLEANUP (node %d): %s occurred.  " + "Calling MPI_Abort!\n")
+                % (world.rank, error)
+            )
             sys.stderr.flush()
             # Give other nodes a moment to crash by themselves (perhaps
             # producing helpful error messages):

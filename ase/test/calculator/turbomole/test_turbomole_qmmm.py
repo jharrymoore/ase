@@ -17,33 +17,37 @@ def test_turbomole_qmmm():
     a = angleHOH * pi / 180
     D = np.linspace(2.5, 3.5, 30)
 
-    interaction = LJInteractions({('O', 'O'): (epsilon0, sigma0)})
-    qm_par = {'esp fit': 'kollman', 'multiplicity': 1}
+    interaction = LJInteractions({("O", "O"): (epsilon0, sigma0)})
+    qm_par = {"esp fit": "kollman", "multiplicity": 1}
 
     calcs = [
         TIP3P(),
         SimpleQMMM([0, 1, 2], Turbomole(**qm_par), TIP3P(), TIP3P()),
-        SimpleQMMM([0, 1, 2], Turbomole(**qm_par), TIP3P(), TIP3P(),
-                   vacuum=3.0),
+        SimpleQMMM([0, 1, 2], Turbomole(**qm_par), TIP3P(), TIP3P(), vacuum=3.0),
         EIQMMM([0, 1, 2], Turbomole(**qm_par), TIP3P(), interaction),
-        EIQMMM([3, 4, 5], Turbomole(**qm_par), TIP3P(), interaction,
-               vacuum=3.0),
-        EIQMMM([0, 1, 2], Turbomole(**qm_par), TIP3P(), interaction,
-               vacuum=3.0)]
-    refs = [(0.269, 0.283, 2.748, 25.6),
-            (2077.695, 2077.709, 2.749, 25.7),
-            (2077.695, 2077.709, 2.749, 25.7),
-            (2077.960, 2077.718, 2.701, 19.2),
-            (2077.891, 2077.724, 2.724, 53.0),
-            (2077.960, 2077.708, 2.725, 19.3)]
+        EIQMMM([3, 4, 5], Turbomole(**qm_par), TIP3P(), interaction, vacuum=3.0),
+        EIQMMM([0, 1, 2], Turbomole(**qm_par), TIP3P(), interaction, vacuum=3.0),
+    ]
+    refs = [
+        (0.269, 0.283, 2.748, 25.6),
+        (2077.695, 2077.709, 2.749, 25.7),
+        (2077.695, 2077.709, 2.749, 25.7),
+        (2077.960, 2077.718, 2.701, 19.2),
+        (2077.891, 2077.724, 2.724, 53.0),
+        (2077.960, 2077.708, 2.725, 19.3),
+    ]
     for calc, ref in zip(calcs, refs):
-        dimer = Atoms('H2OH2O',
-                      [(r * cos(a), 0, r * sin(a)),
-                       (r, 0, 0),
-                       (0, 0, 0),
-                       (r * cos(a / 2), r * sin(a / 2), 0),
-                       (r * cos(a / 2), -r * sin(a / 2), 0),
-                       (0, 0, 0)])
+        dimer = Atoms(
+            "H2OH2O",
+            [
+                (r * cos(a), 0, r * sin(a)),
+                (r, 0, 0),
+                (0, 0, 0),
+                (r * cos(a / 2), r * sin(a / 2), 0),
+                (r * cos(a / 2), -r * sin(a / 2), 0),
+                (0, 0, 0),
+            ],
+        )
         dimer.calc = calc
 
         E = []
@@ -60,13 +64,15 @@ def test_turbomole_qmmm():
         error = abs(F1 - F2).max()
         assert error < 0.9
 
-        dimer.set_constraint(FixInternals(
-            bonds=[(r, (0, 2)), (r, (1, 2)),
-                   (r, (3, 5)), (r, (4, 5))],
-            angles_deg=[(angleHOH, (0, 2, 1)), (angleHOH, (3, 5, 4))]))
-        with BFGS(dimer,
-                  trajectory=calc.name + '.traj',
-                  logfile=calc.name + 'd.log') as opt:
+        dimer.set_constraint(
+            FixInternals(
+                bonds=[(r, (0, 2)), (r, (1, 2)), (r, (3, 5)), (r, (4, 5))],
+                angles_deg=[(angleHOH, (0, 2, 1)), (angleHOH, (3, 5, 4))],
+            )
+        )
+        with BFGS(
+            dimer, trajectory=calc.name + ".traj", logfile=calc.name + "d.log"
+        ) as opt:
             opt.run(0.01)
 
         e0 = dimer.get_potential_energy()
@@ -74,8 +80,11 @@ def test_turbomole_qmmm():
         R = dimer.positions
         v1 = R[1] - R[5]
         v2 = R[5] - (R[3] + R[4]) / 2
-        a0 = np.arccos(np.dot(v1, v2) /
-                       (np.dot(v1, v1) * np.dot(v2, v2))**0.5) / np.pi * 180
+        a0 = (
+            np.arccos(np.dot(v1, v2) / (np.dot(v1, v1) * np.dot(v2, v2)) ** 0.5)
+            / np.pi
+            * 180
+        )
         # fmt = '{0:>20}: {1:.3f} {2:.3f} {3:.3f} {4:.1f}'
         # print(fmt.format(calc.name, -min(E), -e0, d0, a0))
         assert np.allclose([-min(E), -e0, d0, a0], ref, rtol=0.01)

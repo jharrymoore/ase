@@ -9,15 +9,13 @@ class DatabaseProject:
 
     For historical reasons called a "Project".
     """
-    _ase_templates = Path('ase/db/templates')
 
-    def __init__(self, name, title, *,
-                 key_descriptions,
-                 database,
-                 default_columns):
+    _ase_templates = Path("ase/db/templates")
+
+    def __init__(self, name, title, *, key_descriptions, database, default_columns):
         self.name = name
         self.title = title
-        self.uid_key = 'id'
+        self.uid_key = "id"
 
         # The templates loop over "key descriptions" when they want to
         # loop over keys.
@@ -30,13 +28,13 @@ class DatabaseProject:
         # available directly, and also, it uses
         # private variables of the row:
         all_keys = set()
-        for row in database.select(
-                columns=['key_value_pairs'], include_data=False):
+        for row in database.select(columns=["key_value_pairs"], include_data=False):
             all_keys |= set(row._keys)
 
         key_descriptions = {
             **{key: KeyDescription(key) for key in all_keys},
-            **key_descriptions}
+            **key_descriptions,
+        }
 
         for key, value in key_descriptions.items():
             assert isinstance(key, str), type(key)
@@ -47,26 +45,26 @@ class DatabaseProject:
         self.default_columns = default_columns
 
     def get_search_template(self):
-        return self._ase_templates / 'search.html'
+        return self._ase_templates / "search.html"
 
     def get_row_template(self):
-        return self._ase_templates / 'row.html'
+        return self._ase_templates / "row.html"
 
     def get_table_template(self):
-        return self._ase_templates / 'table.html'
+        return self._ase_templates / "table.html"
 
     def handle_query(self, args) -> str:
         """Convert request args to ase.db query string."""
-        return args['query']
+        return args["query"]
 
     def row_to_dict(self, row):
         """Convert row to dict for use in html template."""
         dct = row2dct(row, self.key_descriptions)
-        dct['formula'] = Formula(row.formula).convert('abc').format('html')
+        dct["formula"] = Formula(row.formula).convert("abc").format("html")
         return dct
 
     def uid_to_row(self, uid):
-        return self.database.get(f'{self.uid_key}={uid}')
+        return self.database.get(f"{self.uid_key}={uid}")
 
     @classmethod
     def dummyproject(cls, **kwargs):
@@ -75,11 +73,12 @@ class DatabaseProject:
                 return iter([])
 
         _kwargs = dict(
-            name='test',
-            title='test',
+            name="test",
+            title="test",
             key_descriptions={},
             database=DummyDatabase(),  # XXX
-            default_columns=[])
+            default_columns=[],
+        )
         _kwargs.update(kwargs)
         return cls(**_kwargs)
 
@@ -92,7 +91,8 @@ class DatabaseProject:
 
         return DatabaseProject(
             name=name,
-            title=database.metadata.get('title', ''),
+            title=database.metadata.get("title", ""),
             key_descriptions=get_key_descriptions(),
             database=database,
-            default_columns=all_columns)
+            default_columns=all_columns,
+        )

@@ -4,21 +4,21 @@ from ase import units
 from ase.calculators.calculator import Calculator, all_changes
 from ase.calculators.tip3p import rOH, angleHOH, TIP3P
 
-__all__ = ['rOH', 'angleHOH', 'TIP4P', 'sigma0', 'epsilon0']
+__all__ = ["rOH", "angleHOH", "TIP4P", "sigma0", "epsilon0"]
 
 # Electrostatic constant and parameters:
 k_c = units.Hartree * units.Bohr
 qH = 0.52
 A = 600e3 * units.kcal / units.mol
 B = 610 * units.kcal / units.mol
-sigma0 = (A / B)**(1 / 6.)
+sigma0 = (A / B) ** (1 / 6.0)
 epsilon0 = B**2 / (4 * A)
 # https://doi.org/10.1063/1.445869
 
 
 class TIP4P(TIP3P):
     def __init__(self, rc=7.0, width=1.0):
-        """ TIP4P potential for water.
+        """TIP4P potential for water.
 
         :doi:`10.1063/1.445869`
 
@@ -46,9 +46,9 @@ class TIP4P(TIP3P):
         self.energy = None
         self.forces = None
 
-    def calculate(self, atoms=None,
-                  properties=['energy', 'forces'],
-                  system_changes=all_changes):
+    def calculate(
+        self, atoms=None, properties=["energy", "forces"], system_changes=all_changes
+    ):
         Calculator.calculate(self, atoms, properties, system_changes)
 
         assert (atoms.numbers[::3] == 8).all()
@@ -68,28 +68,28 @@ class TIP4P(TIP3P):
         self.forces = np.zeros((4 * natoms // 3, 3))
 
         C = cell.diagonal()
-        assert (cell == np.diag(C)).all(), 'not orthorhombic'
-        assert ((C >= 2 * self.rc) | ~pbc).all(), 'cutoff too large'
+        assert (cell == np.diag(C)).all(), "not orthorhombic"
+        assert ((C >= 2 * self.rc) | ~pbc).all(), "cutoff too large"
 
         # Get dx,dy,dz from first atom of each mol to same atom of all other
         # and find min. distance. Everything moves according to this analysis.
         for a in range(nmol - 1):
-            D = xpos[(a + 1) * 4::4] - xpos[a * 4]
+            D = xpos[(a + 1) * 4 :: 4] - xpos[a * 4]
             shift = np.zeros_like(D)
             for i, periodic in enumerate(pbc):
                 if periodic:
                     shift[:, i] = np.rint(D[:, i] / C[i]) * C[i]
-            q_v = xcharges[(a + 1) * 4:]
+            q_v = xcharges[(a + 1) * 4 :]
 
             # Min. img. position list as seen for molecule !a!
             position_list = np.zeros(((nmol - 1 - a) * 4, 3))
 
             for j in range(4):
-                position_list[j::4] += xpos[(a + 1) * 4 + j::4] - shift
+                position_list[j::4] += xpos[(a + 1) * 4 + j :: 4] - shift
 
             # Make the smooth cutoff:
             pbcRoo = position_list[::4] - xpos[a * 4]
-            pbcDoo = np.sum(np.abs(pbcRoo)**2, axis=-1)**(1 / 2)
+            pbcDoo = np.sum(np.abs(pbcRoo) ** 2, axis=-1) ** (1 / 2)
             x1 = pbcDoo > self.rc - self.width
             x2 = pbcDoo < self.rc
             x12 = np.logical_and(x1, x2)
@@ -108,12 +108,12 @@ class TIP4P(TIP3P):
 
         f = self.redistribute_forces(self.forces)
 
-        self.results['energy'] = self.energy
-        self.results['forces'] = f
+        self.results["energy"] = self.energy
+        self.results["forces"] = f
 
     def energy_and_forces(self, a, xpos, position_list, q_v, nmol, t, dtdd):
-        """ energy and forces on molecule a from all other molecules.
-            cutoff is based on O-O Distance. """
+        """energy and forces on molecule a from all other molecules.
+        cutoff is based on O-O Distance."""
 
         # LJ part - only O-O interactions
         epsil = np.tile([epsilon0], nmol - 1 - a)
@@ -122,12 +122,17 @@ class TIP4P(TIP3P):
         d2 = (DOO**2).sum(1)
         d = np.sqrt(d2)
         e_lj = 4 * epsil * (sigma**12 / d**12 - sigma**6 / d**6)
-        f_lj = (4 * epsil * (12 * sigma**12 / d**13 -
-                             6 * sigma**6 / d**7) * t -
-                e_lj * dtdd)[:, np.newaxis] * DOO / d[:, np.newaxis]
+        f_lj = (
+            (
+                4 * epsil * (12 * sigma**12 / d**13 - 6 * sigma**6 / d**7) * t
+                - e_lj * dtdd
+            )[:, np.newaxis]
+            * DOO
+            / d[:, np.newaxis]
+        )
 
         self.forces[a * 4] -= f_lj.sum(0)
-        self.forces[(a + 1) * 4::4] += f_lj
+        self.forces[(a + 1) * 4 :: 4] += f_lj
 
         # Electrostatics
         e_elec = 0
@@ -141,9 +146,9 @@ class TIP4P(TIP3P):
             e_f = e.reshape(nmol - a - 1, 4).sum(1)
             F = (e / d_all * all_cut)[:, np.newaxis] * D / d_all[:, np.newaxis]
             FOO = -(e_f * dtdd)[:, np.newaxis] * DOO / d[:, np.newaxis]
-            self.forces[(a + 1) * 4 + 0::4] += FOO
+            self.forces[(a + 1) * 4 + 0 :: 4] += FOO
             self.forces[a * 4] -= FOO.sum(0)
-            self.forces[(a + 1) * 4:] += F
+            self.forces[(a + 1) * 4 :] += F
             self.forces[a * 4 + i] -= F.sum(0)
 
         self.energy += np.dot(e_lj, t) + e_elec
@@ -174,7 +179,7 @@ class TIP4P(TIP3P):
         charges[0::4] = 0.00  # O
         charges[1::4] = qH  # H1
         charges[2::4] = qH  # H2
-        charges[3::4] = - 2 * qH  # X1
+        charges[3::4] = -2 * qH  # X1
         return charges
 
     def redistribute_forces(self, forces):

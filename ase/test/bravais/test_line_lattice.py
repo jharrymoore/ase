@@ -1,7 +1,8 @@
 def test_line_lattice():
     from ase.cell import Cell
-    kx = Cell.new([5, 0, 0]).bandpath(path='GX', npoints=2).kpts
-    kz = Cell.new([0, 0, 5]).bandpath(path='GX', npoints=2).kpts
+
+    kx = Cell.new([5, 0, 0]).bandpath(path="GX", npoints=2).kpts
+    kz = Cell.new([0, 0, 5]).bandpath(path="GX", npoints=2).kpts
     print(kx)
     print(kz)
     kx[1, 0] -= 0.5

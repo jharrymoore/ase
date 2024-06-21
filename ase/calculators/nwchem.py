@@ -12,15 +12,20 @@ from ase.spectrum.band_structure import BandStructure
 
 
 class NWChem(FileIOCalculator):
-    implemented_properties = ['energy', 'free_energy',
-                              'forces', 'stress', 'dipole']
-    command = 'nwchem PREFIX.nwi > PREFIX.nwo'
+    implemented_properties = ["energy", "free_energy", "forces", "stress", "dipole"]
+    command = "nwchem PREFIX.nwi > PREFIX.nwo"
     accepts_bandpath_keyword = True
     discard_results_on_any_change = True
 
-    def __init__(self, restart=None,
-                 ignore_bad_restart_file=FileIOCalculator._deprecated,
-                 label='nwchem', atoms=None, command=None, **kwargs):
+    def __init__(
+        self,
+        restart=None,
+        ignore_bad_restart_file=FileIOCalculator._deprecated,
+        label="nwchem",
+        atoms=None,
+        command=None,
+        **kwargs
+    ):
         """
         NWChem keywords are specified using (potentially nested)
         dictionaries. Consider the following input file block:
@@ -116,39 +121,44 @@ class NWChem(FileIOCalculator):
             The band path to use for a band structure calculation.
             Implies ``theory='band'``.
         """
-        FileIOCalculator.__init__(self, restart, ignore_bad_restart_file,
-                                  label, atoms, command, **kwargs)
+        FileIOCalculator.__init__(
+            self, restart, ignore_bad_restart_file, label, atoms, command, **kwargs
+        )
         self.calc = None
 
     def write_input(self, atoms, properties=None, system_changes=None):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
 
         # Prepare perm and scratch directories
-        perm = os.path.abspath(self.parameters.get('perm', self.label))
-        scratch = os.path.abspath(self.parameters.get('scratch', self.label))
+        perm = os.path.abspath(self.parameters.get("perm", self.label))
+        scratch = os.path.abspath(self.parameters.get("scratch", self.label))
         os.makedirs(perm, exist_ok=True)
         os.makedirs(scratch, exist_ok=True)
 
-        io.write(self.label + '.nwi', atoms, properties=properties,
-                 label=self.label, **self.parameters)
+        io.write(
+            self.label + ".nwi",
+            atoms,
+            properties=properties,
+            label=self.label,
+            **self.parameters
+        )
 
     def read_results(self):
-        output = io.read(self.label + '.nwo')
+        output = io.read(self.label + ".nwo")
         self.calc = output.calc
         self.results = output.calc.results
 
     def band_structure(self):
         self.calculate()
-        perm = self.parameters.get('perm', self.label)
+        perm = self.parameters.get("perm", self.label)
         if self.calc.get_spin_polarized():
-            alpha = np.loadtxt(os.path.join(perm, self.label + '.alpha_band'))
-            beta = np.loadtxt(os.path.join(perm, self.label + '.beta_band'))
+            alpha = np.loadtxt(os.path.join(perm, self.label + ".alpha_band"))
+            beta = np.loadtxt(os.path.join(perm, self.label + ".beta_band"))
             energies = np.array([alpha[:, 1:], beta[:, 1:]]) * Hartree
         else:
-            data = np.loadtxt(os.path.join(perm,
-                                           self.label + '.restricted_band'))
+            data = np.loadtxt(os.path.join(perm, self.label + ".restricted_band"))
             energies = data[np.newaxis, :, 1:] * Hartree
         eref = self.calc.get_fermi_level()
         if eref is None:
-            eref = 0.
+            eref = 0.0
         return BandStructure(self.parameters.bandpath, energies, eref)

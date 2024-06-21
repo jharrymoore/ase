@@ -48,10 +48,10 @@ def test_h2_none(cp2k_factory):
         pseudo_potential=None,
         stress_tensor=False,
         xc=None,
-        label='test_H2_inp',
-        inp=inp
+        label="test_H2_inp",
+        inp=inp,
     )
-    h2 = molecule('H2', calculator=calc)
+    h2 = molecule("H2", calculator=calc)
     h2.center(vacuum=2.0)
     energy = h2.get_potential_energy()
     energy_ref = -30.6989595886

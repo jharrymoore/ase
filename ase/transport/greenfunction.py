@@ -19,7 +19,7 @@ class GreenFunction:
         """
         if energy != self.energy:
             self.energy = energy
-            z = energy + self.eta * 1.j
+            z = energy + self.eta * 1.0j
 
             if self.S is None:
                 self.Ginv[:] = 0.0

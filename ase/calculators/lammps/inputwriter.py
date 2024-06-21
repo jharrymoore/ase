@@ -24,18 +24,16 @@ def lammps_create_atoms(fileobj, parameters, atoms, prismobj):
         fileobj.write("## Original ase cell\n".encode("utf-8"))
         fileobj.write(
             "".join(
-                [
-                    "# {0:.16} {1:.16} {2:.16}\n".format(*x)
-                    for x in atoms.get_cell()
-                ]
+                ["# {0:.16} {1:.16} {2:.16}\n".format(*x) for x in atoms.get_cell()]
             ).encode("utf-8")
         )
 
     fileobj.write("lattice sc 1.0\n".encode("utf-8"))
 
     # Get cell parameters and convert from ASE units to LAMMPS units
-    xhi, yhi, zhi, xy, xz, yz = convert(prismobj.get_lammps_prism(),
-                                        "distance", "ASE", parameters.units)
+    xhi, yhi, zhi, xy, xz, yz = convert(
+        prismobj.get_lammps_prism(), "distance", "ASE", parameters.units
+    )
 
     if parameters["always_triclinic"] or prismobj.is_skewed():
         fileobj.write(
@@ -44,9 +42,7 @@ def lammps_create_atoms(fileobj, parameters, atoms, prismobj):
             ).encode("utf-8")
         )
         fileobj.write(
-            "{0} {1} {2} side in units box\n".format(xy, xz, yz).encode(
-                "utf-8"
-            )
+            "{0} {1} {2} side in units box\n".format(xy, xz, yz).encode("utf-8")
         )
     else:
         fileobj.write(
@@ -64,9 +60,7 @@ def lammps_create_atoms(fileobj, parameters, atoms, prismobj):
 
     species_i = {s: i + 1 for i, s in enumerate(species)}
 
-    fileobj.write(
-        "create_box {0} asecell\n" "".format(len(species)).encode("utf-8")
-    )
+    fileobj.write("create_box {0} asecell\n" "".format(len(species)).encode("utf-8"))
     for sym, pos in zip(symbols, atoms.get_positions()):
         # Convert position from ASE units to LAMMPS units
         pos = convert(pos, "distance", "ASE", parameters.units)
@@ -82,16 +76,17 @@ def lammps_create_atoms(fileobj, parameters, atoms, prismobj):
         )
 
 
-def write_lammps_in(lammps_in, parameters, atoms, prismobj,
-                    lammps_trj=None, lammps_data=None):
+def write_lammps_in(
+    lammps_in, parameters, atoms, prismobj, lammps_trj=None, lammps_data=None
+):
     """Write a LAMMPS in_ file with run parameters and settings."""
 
     def write_model_post_and_masses(fileobj, parameters):
         # write additional lines needed for some LAMMPS potentials
-        if 'model_post' in parameters:
-            mlines = parameters['model_post']
+        if "model_post" in parameters:
+            mlines = parameters["model_post"]
             for ii in range(0, len(mlines)):
-                fileobj.write(mlines[ii].encode('utf-8'))
+                fileobj.write(mlines[ii].encode("utf-8"))
 
         if "masses" in parameters:
             for mass in parameters["masses"]:
@@ -124,53 +119,43 @@ def write_lammps_in(lammps_in, parameters, atoms, prismobj,
     if "package" in parameters:
         fileobj.write(
             (
-                "\n".join(
-                    ["package {0}".format(p) for p in parameters["package"]]
-                )
+                "\n".join(["package {0}".format(p) for p in parameters["package"]])
                 + "\n"
             ).encode("utf-8")
         )
 
     # setup styles except 'pair_style'
-    for style_type in ("atom", "bond", "angle",
-                       "dihedral", "improper", "kspace"):
+    for style_type in ("atom", "bond", "angle", "dihedral", "improper", "kspace"):
         style = style_type + "_style"
         if style in parameters:
-            fileobj.write(
-                '{} {} \n'.format(
-                    style,
-                    parameters[style]).encode("utf-8"))
+            fileobj.write("{} {} \n".format(style, parameters[style]).encode("utf-8"))
 
     # write initialization lines needed for some LAMMPS potentials
-    if 'model_init' in parameters:
-        mlines = parameters['model_init']
+    if "model_init" in parameters:
+        mlines = parameters["model_init"]
         for ii in range(0, len(mlines)):
-            fileobj.write(mlines[ii].encode('utf-8'))
+            fileobj.write(mlines[ii].encode("utf-8"))
 
     # write units
-    if 'units' in parameters:
-        units_line = 'units ' + parameters['units'] + '\n'
-        fileobj.write(units_line.encode('utf-8'))
+    if "units" in parameters:
+        units_line = "units " + parameters["units"] + "\n"
+        fileobj.write(units_line.encode("utf-8"))
     else:
-        fileobj.write('units metal\n'.encode('utf-8'))
+        fileobj.write("units metal\n".encode("utf-8"))
 
     pbc = atoms.get_pbc()
     if "boundary" in parameters:
-        fileobj.write(
-            "boundary {0} \n".format(parameters["boundary"]).encode("utf-8")
-        )
+        fileobj.write("boundary {0} \n".format(parameters["boundary"]).encode("utf-8"))
     else:
         fileobj.write(
-            "boundary {0} {1} {2} \n".format(
-                *tuple("sp"[int(x)] for x in pbc)
-            ).encode("utf-8")
+            "boundary {0} {1} {2} \n".format(*tuple("sp"[int(x)] for x in pbc)).encode(
+                "utf-8"
+            )
         )
     fileobj.write("atom_modify sort 0 0.0 \n".encode("utf-8"))
     for key in ("neighbor", "newton"):
         if key in parameters:
-            fileobj.write(
-                "{0} {1} \n".format(key, parameters[key]).encode("utf-8")
-            )
+            fileobj.write("{0} {1} \n".format(key, parameters[key]).encode("utf-8"))
     fileobj.write("\n".encode("utf-8"))
 
     # write the simulation box and the atoms
@@ -183,18 +168,14 @@ def write_lammps_in(lammps_in, parameters, atoms, prismobj,
     # Write interaction stuff
     fileobj.write("\n### interactions\n".encode("utf-8"))
     if "kim_interactions" in parameters:
-        fileobj.write(
-            "{}\n".format(
-                parameters["kim_interactions"]).encode("utf-8"))
+        fileobj.write("{}\n".format(parameters["kim_interactions"]).encode("utf-8"))
         write_model_post_and_masses(fileobj, parameters)
 
     elif ("pair_style" in parameters) and ("pair_coeff" in parameters):
         pair_style = parameters["pair_style"]
         fileobj.write("pair_style {0} \n".format(pair_style).encode("utf-8"))
         for pair_coeff in parameters["pair_coeff"]:
-            fileobj.write(
-                "pair_coeff {0} \n" "".format(pair_coeff).encode("utf-8")
-            )
+            fileobj.write("pair_coeff {0} \n" "".format(pair_coeff).encode("utf-8"))
         write_model_post_and_masses(fileobj, parameters)
 
     else:
@@ -209,8 +190,7 @@ def write_lammps_in(lammps_in, parameters, atoms, prismobj,
     if "group" in parameters:
         fileobj.write(
             (
-                "\n".join(["group {0}".format(p) for p in parameters["group"]])
-                + "\n"
+                "\n".join(["group {0}".format(p) for p in parameters["group"]]) + "\n"
             ).encode("utf-8")
         )
 
@@ -218,10 +198,9 @@ def write_lammps_in(lammps_in, parameters, atoms, prismobj,
 
     if "fix" in parameters:
         fileobj.write(
-            (
-                "\n".join(["fix {0}".format(p) for p in parameters["fix"]])
-                + "\n"
-            ).encode("utf-8")
+            ("\n".join(["fix {0}".format(p) for p in parameters["fix"]]) + "\n").encode(
+                "utf-8"
+            )
         )
 
     fileobj.write(
@@ -232,28 +211,20 @@ def write_lammps_in(lammps_in, parameters, atoms, prismobj,
     fileobj.write(
         "thermo_style custom {0}\n"
         "thermo_modify flush yes format float %23.16g\n"
-        "thermo 1\n".format(" ".join(parameters["thermo_args"])).encode(
-            "utf-8"
-        )
+        "thermo 1\n".format(" ".join(parameters["thermo_args"])).encode("utf-8")
     )
 
     if "timestep" in parameters:
-        fileobj.write(
-            "timestep {0}\n".format(parameters["timestep"]).encode("utf-8")
-        )
+        fileobj.write("timestep {0}\n".format(parameters["timestep"]).encode("utf-8"))
 
     if "minimize" in parameters:
-        fileobj.write(
-            "minimize {0}\n".format(parameters["minimize"]).encode("utf-8")
-        )
+        fileobj.write("minimize {0}\n".format(parameters["minimize"]).encode("utf-8"))
     if "run" in parameters:
         fileobj.write("run {0}\n".format(parameters["run"]).encode("utf-8"))
     if not (("minimize" in parameters) or ("run" in parameters)):
         fileobj.write("run 0\n".encode("utf-8"))
 
-    fileobj.write(
-        'print "{0}" \n'.format(CALCULATION_END_MARK).encode("utf-8")
-    )
+    fileobj.write('print "{0}" \n'.format(CALCULATION_END_MARK).encode("utf-8"))
     # Force LAMMPS to flush log
     fileobj.write("log /dev/stdout\n".encode("utf-8"))
 

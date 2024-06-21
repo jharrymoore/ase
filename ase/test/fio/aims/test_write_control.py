@@ -7,6 +7,7 @@ and assert we find expected values.
 # Standard imports.
 import io
 import re
+
 # Third party imports.
 import pytest
 
@@ -27,11 +28,12 @@ def parameters_dict():
         "vdw_correction_hirshfeld": True,
         "compute_forces": True,
         "output_level": "MD_light",
-        "charge": 0.0}
+        "charge": 0.0,
+    }
 
 
 def contains(pattern, txt):
-    """"Regex search for pattern in the text."""
+    """ "Regex search for pattern in the text."""
     return re.search(pattern, txt, re.M)
 
 
@@ -46,8 +48,7 @@ def write_control_to_string(ase_atoms_obj, parameters):
             aims executable how the simulation should be run.
     """
     string_output = io.StringIO()
-    ase.io.aims.write_control(
-        string_output, ase_atoms_obj, parameters)
+    ase.io.aims.write_control(string_output, ase_atoms_obj, parameters)
     return string_output.getvalue()
 
 
@@ -195,11 +196,14 @@ def aims_species_dir_light(tmp_path):
         (None, ["    ion_occ     4  f   14.", "#     hydro 5 f 14.8"]),
         (0, ["    ion_occ     4  f   14.", "#     ionic 6 p auto"]),
         (1, ["     hydro 6 h 12.8", "#     hydro 5 f 14.8"]),
-        pytest.param("1", [None, None], marks=pytest.mark.xfail)])
+        pytest.param("1", [None, None], marks=pytest.mark.xfail),
+    ],
+)
 def test_manipulate_tiers(tier, expected_basis_functions):
     """Test manipulating the basis functions using manipulate_tiers."""
     output_basis_functions = ase.io.aims.manipulate_tiers(
-        AIMS_AU_SPECIES_LIGHT, tier=tier)
+        AIMS_AU_SPECIES_LIGHT, tier=tier
+    )
     for basis_function_line in expected_basis_functions:
         assert contains(basis_function_line, output_basis_functions)
 
@@ -211,7 +215,8 @@ def test_parse_species_path(aims_species_dir_light):
     basis_function_dict = ase.io.aims.parse_species_path(
         species_array=species_array,
         tier_array=tier_array,
-        species_dir=aims_species_dir_light)
+        species_dir=aims_species_dir_light,
+    )
     assert "Cl" in basis_function_dict
     assert "Au" in basis_function_dict
     # First tier basis function should now be uncommented.
@@ -224,22 +229,26 @@ def test_write_species(aims_species_dir_light):
     """Test writing species file."""
     parameters = {}
     file_handle = io.StringIO()
-    basis_function_dict = {'Au': "#     ionic 6 p auto"}
-    ase.io.aims.write_species(
-        file_handle, basis_function_dict, parameters)
+    basis_function_dict = {"Au": "#     ionic 6 p auto"}
+    ase.io.aims.write_species(file_handle, basis_function_dict, parameters)
     assert contains("#     ionic 6 p auto", file_handle.getvalue())
 
 
 @pytest.mark.parametrize(
-    "output_level,tier,expected_basis_set_re", [
+    "output_level,tier,expected_basis_set_re",
+    [
         ("tight", 0, "#     hydro 4 f 7.4"),
-        ("tight", 1, "ionic 6 p auto\n     hydro 4 f 7.4")])
+        ("tight", 1, "ionic 6 p auto\n     hydro 4 f 7.4"),
+    ],
+)
 def test_control_tier(
-        aims_species_dir_light,
-        bulk_au,
-        parameters_dict,
-        output_level: str, tier: int,
-        expected_basis_set_re: str):
+    aims_species_dir_light,
+    bulk_au,
+    parameters_dict,
+    output_level: str,
+    tier: int,
+    expected_basis_set_re: str,
+):
     """Test that the correct basis set functions are included.
 
     For a specific numerical settings (output_level) and basis set size (tier)
@@ -261,7 +270,7 @@ def test_control_tier(
     parameters = parameters_dict
     parameters["output_level"] = output_level
     parameters["species_dir"] = aims_species_dir_light
-    parameters['tier'] = tier
+    parameters["tier"] = tier
 
     control_file_as_string = write_control_to_string(bulk_au, parameters)
 
@@ -279,17 +288,15 @@ def test_control(bulk_au, parameters_dict, aims_species_dir_light):
     # Copy the global parameters dicitonary to avoid rewriting common
     # parameters.
     parameters = parameters_dict
-    parameters['species_dir'] = aims_species_dir_light
+    parameters["species_dir"] = aims_species_dir_light
     # Add AimsCube to the parameter dictionary.
-    parameters["cubes"] = ase.calculators.aims.AimsCube(
-        plots=("delta_density",))
+    parameters["cubes"] = ase.calculators.aims.AimsCube(plots=("delta_density",))
     # Write control.in file to a string which we can directly access for
     # testing.
     control_file_as_string = write_control_to_string(bulk_au, parameters)
 
     assert contains(r"k_grid\s+2 2 2", control_file_as_string)
-    assert contains(
-        r"k_offset\s+0.250000 0.250000 0.250000", control_file_as_string)
+    assert contains(r"k_offset\s+0.250000 0.250000 0.250000", control_file_as_string)
     assert contains(r"occupation_type\s+gaussian 0.1", control_file_as_string)
     assert contains(r"output\s+dos 0.0 10.0 101 0.05", control_file_as_string)
     assert contains(r"output\s+hirshfeld", control_file_as_string)
@@ -307,16 +314,24 @@ def test_control(bulk_au, parameters_dict, aims_species_dir_light):
 
 @pytest.mark.parametrize(
     "functional,expected_functional_expression",
-    [("PBE", r"xc\s+PBE"), ("LDA", r"xc\s+pw-lda"),
-     pytest.param("PBE_06_Fake", None, marks=pytest.mark.xfail)])
+    [
+        ("PBE", r"xc\s+PBE"),
+        ("LDA", r"xc\s+pw-lda"),
+        pytest.param("PBE_06_Fake", None, marks=pytest.mark.xfail),
+    ],
+)
 def test_control_functional(
-        aims_species_dir_light, bulk_au, parameters_dict, functional: str,
-        expected_functional_expression: str):
+    aims_species_dir_light,
+    bulk_au,
+    parameters_dict,
+    functional: str,
+    expected_functional_expression: str,
+):
     """Test that the functional written to the control.in file."""
     # Copy the global parameters dicitonary to avoid rewriting common
     # parameters. Then assign functional to parameter dictionary.
     parameters = parameters_dict
-    parameters['species_dir'] = aims_species_dir_light
+    parameters["species_dir"] = aims_species_dir_light
     parameters["xc"] = functional
 
     control_file_as_string = write_control_to_string(bulk_au, parameters)

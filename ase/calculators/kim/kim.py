@@ -144,7 +144,7 @@ def KIM(model_name, simulator=None, options=None, debug=False):
         else:
             raise KIMCalculatorError(
                 'Unsupported simulator "{}" requested to run KIM '
-                'Portable Model.'.format(simulator)
+                "Portable Model.".format(simulator)
             )
 
     #######################################################
@@ -186,8 +186,7 @@ def KIM(model_name, simulator=None, options=None, debug=False):
 
             elif simulator == "lammpslib":
                 return LAMMPSLibCalculator(
-                    model_name, sm.supported_species, sm.supported_units,
-                    options
+                    model_name, sm.supported_species, sm.supported_units, options
                 )
 
             else:

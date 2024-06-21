@@ -2,4 +2,4 @@
 import runpy
 
 
-runpy.run_path('write_lammps.py')
+runpy.run_path("write_lammps.py")

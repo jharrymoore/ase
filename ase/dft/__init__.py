@@ -3,7 +3,7 @@ import numpy as np
 from ase.dft.dos import DOS
 from ase.dft.kpoints import monkhorst_pack
 
-__all__ = ['DOS', 'monkhorst_pack']
+__all__ = ["DOS", "monkhorst_pack"]
 
 
 def get_distribution_moment(x, y, order=0):
@@ -22,7 +22,7 @@ def get_distribution_moment(x, y, order=0):
         return np.trapz(y, x)
     elif isinstance(order, int):
         return np.trapz(x**order * y, x) / np.trapz(y, x)
-    elif hasattr(order, '__iter__'):
+    elif hasattr(order, "__iter__"):
         return [get_distribution_moment(x, y, n) for n in order]
     else:
-        raise ValueError('Illegal order: %s' % order)
+        raise ValueError("Illegal order: %s" % order)

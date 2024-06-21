@@ -6,10 +6,10 @@ from ase.phasediagram import Pourbaix, solvated
 
 def test_pourbaix():
     """Test ZnO system from docs."""
-    refs = solvated('Zn')
+    refs = solvated("Zn")
     print(refs)
-    refs += [('Zn', 0.0), ('ZnO', -3.323), ('ZnO2(aq)', -2.921)]
-    pb = Pourbaix(refs, formula='ZnO')
+    refs += [("Zn", 0.0), ("ZnO", -3.323), ("ZnO2(aq)", -2.921)]
+    pb = Pourbaix(refs, formula="ZnO")
 
     _, e = pb.decompose(-1.0, 7.0)
     assert e == pytest.approx(-3.625, abs=0.001)
@@ -20,5 +20,12 @@ def test_pourbaix():
     print(d, names, text)
     assert d.shape == (3, 11)
     assert d.ptp() == 6
-    assert names == ['Zn', 'ZnO2(aq)', 'Zn++(aq)', 'HZnO2-(aq)',
-                     'ZnOH+(aq)', 'ZnO', 'ZnO2--(aq)']
+    assert names == [
+        "Zn",
+        "ZnO2(aq)",
+        "Zn++(aq)",
+        "HZnO2-(aq)",
+        "ZnOH+(aq)",
+        "ZnO",
+        "ZnO2--(aq)",
+    ]

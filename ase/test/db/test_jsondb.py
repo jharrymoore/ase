@@ -3,7 +3,7 @@ def test_jsondb():
     from io import StringIO
     from ase.io import read, write
 
-    s = u"""
+    s = """
     {"1":
          {"numbers": [1, 1],
           "positions": [[0.0, 0.0, 0.35],
@@ -11,12 +11,12 @@ def test_jsondb():
     """
 
     fd = StringIO(s)
-    a = read(fd, format='json')
-    assert a.get_chemical_formula() == 'H2'
+    a = read(fd, format="json")
+    assert a.get_chemical_formula() == "H2"
 
     fd = StringIO()
-    write(fd, a, format='json')
+    write(fd, a, format="json")
 
     fd.seek(0)
-    a = read(fd, format='json')
-    assert a.get_chemical_formula() == 'H2'
+    a = read(fd, format="json")
+    assert a.get_chemical_formula() == "H2"

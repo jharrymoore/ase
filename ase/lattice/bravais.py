@@ -45,10 +45,17 @@ class Bravais:
     # How small numbers should be considered zero in the unit cell?
     chop_tolerance = 1e-10
 
-    def __call__(self, symbol,
-                 directions=(None, None, None), miller=(None, None, None),
-                 size=(1, 1, 1), latticeconstant=None,
-                 pbc=True, align=True, debug=0):
+    def __call__(
+        self,
+        symbol,
+        directions=(None, None, None),
+        miller=(None, None, None),
+        size=(1, 1, 1),
+        latticeconstant=None,
+        pbc=True,
+        align=True,
+        debug=0,
+    ):
         "Create a lattice."
         self.size = size
         self.pbc = pbc
@@ -64,14 +71,11 @@ class Bravais:
             if self.element_basis is None:
                 self.latticeconstant = self.get_lattice_constant()
             else:
-                raise ValueError(
-                    "A lattice constant must be specified for a compound")
+                raise ValueError("A lattice constant must be specified for a compound")
         else:
             self.latticeconstant = latticeconstant
         if self.debug:
-            print(
-                "Expected number of atoms in unit cell:",
-                self.calc_num_atoms())
+            print("Expected number of atoms in unit cell:", self.calc_num_atoms())
         if self.debug >= 2:
             print("Bravais lattice basis:", self.bravais_basis)
             if self.bravais_basis is not None:
@@ -88,26 +92,26 @@ class Bravais:
         if self.debug >= 2:
             print("Basis before alignment:")
             print(self.basis)
-        if self.basis[0][0]**2 + \
-                self.basis[0][2]**2 < 0.01 * self.basis[0][1]**2:
+        if self.basis[0][0] ** 2 + self.basis[0][2] ** 2 < 0.01 * self.basis[0][1] ** 2:
             # First basis vector along y axis - rotate 90 deg along z
-            t = np.array([[0, -1, 0],
-                          [1, 0, 0],
-                          [0, 0, 1]], float)
+            t = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]], float)
             self.basis = np.dot(self.basis, t)
             transf = t
             if self.debug >= 2:
-                print("Rotating -90 degrees around z axis for numerical "
-                      "stability.")
+                print("Rotating -90 degrees around z axis for numerical " "stability.")
                 print(self.basis)
         else:
             transf = np.identity(3, float)
         assert abs(np.linalg.det(transf) - 1) < 1e-6
         # Rotate first basis vector into xy plane
         theta = math.atan2(self.basis[0, 2], self.basis[0, 0])
-        t = np.array([[np.cos(theta), 0, -np.sin(theta)],
-                      [0, 1, 0],
-                      [np.sin(theta), 0, np.cos(theta)]])
+        t = np.array(
+            [
+                [np.cos(theta), 0, -np.sin(theta)],
+                [0, 1, 0],
+                [np.sin(theta), 0, np.cos(theta)],
+            ]
+        )
         self.basis = np.dot(self.basis, t)
         transf = np.dot(transf, t)
         if self.debug >= 2:
@@ -116,9 +120,13 @@ class Bravais:
         assert abs(np.linalg.det(transf) - 1) < 1e-6
         # Rotate first basis vector to point along x axis
         theta = math.atan2(self.basis[0, 1], self.basis[0, 0])
-        t = np.array([[np.cos(theta), -np.sin(theta), 0],
-                      [np.sin(theta), np.cos(theta), 0],
-                      [0, 0, 1]])
+        t = np.array(
+            [
+                [np.cos(theta), -np.sin(theta), 0],
+                [np.sin(theta), np.cos(theta), 0],
+                [0, 0, 1],
+            ]
+        )
         self.basis = np.dot(self.basis, t)
         transf = np.dot(transf, t)
         if self.debug >= 2:
@@ -127,9 +135,13 @@ class Bravais:
         assert abs(np.linalg.det(transf) - 1) < 1e-6
         # Rotate second basis vector into xy plane
         theta = math.atan2(self.basis[1, 2], self.basis[1, 1])
-        t = np.array([[1, 0, 0],
-                      [0, np.cos(theta), -np.sin(theta)],
-                      [0, np.sin(theta), np.cos(theta)]])
+        t = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(theta), -np.sin(theta)],
+                [0, np.sin(theta), np.cos(theta)],
+            ]
+        )
         self.basis = np.dot(self.basis, t)
         transf = np.dot(transf, t)
         if self.debug >= 2:
@@ -145,8 +157,7 @@ class Bravais:
         "Repeat the unit cell."
         nrep = self.size[0] * self.size[1] * self.size[2]
         if nrep <= 0:
-            raise ValueError(
-                "Cannot create a non-positive number of unit cells")
+            raise ValueError("Cannot create a non-positive number of unit cells")
         # Now the unit cells must be merged.
         a2 = []
         e2 = []
@@ -174,19 +185,17 @@ class Bravais:
         elements = np.concatenate(e2)
         del a2, e2
         assert len(atoms) == nrep * len(self.atoms)
-        basis = np.array([[self.size[0], 0, 0],
-                          [0, self.size[1], 0],
-                          [0, 0, self.size[2]]])
+        basis = np.array(
+            [[self.size[0], 0, 0], [0, self.size[1], 0], [0, 0, self.size[2]]]
+        )
         basis = np.dot(basis, self.basis)
 
         # Tiny elements should be replaced by zero.  The cutoff is
         # determined by chop_tolerance which is a class attribute.
-        basis = np.where(np.abs(basis) < self.chop_tolerance,
-                         0.0, basis)
+        basis = np.where(np.abs(basis) < self.chop_tolerance, 0.0, basis)
 
         # None should be replaced, and memory should be freed.
-        lattice = Lattice(positions=atoms, cell=basis, numbers=elements,
-                          pbc=self.pbc)
+        lattice = Lattice(positions=atoms, cell=basis, numbers=elements, pbc=self.pbc)
         lattice.millerbasis = self.miller_basis
         # Add info for lattice.surface.AddAdsorbate
         lattice._addsorbate_info_size = np.array(self.size[:2])
@@ -202,7 +211,8 @@ class Bravais:
                 self.atomicnumber = element
             else:
                 raise TypeError(
-                    "The symbol argument must be a string or an atomic number.")
+                    "The symbol argument must be a string or an atomic number."
+                )
         else:
             atomicnumber = []
             try:
@@ -214,9 +224,12 @@ class Bravais:
                 oops = True
             if oops:
                 raise TypeError(
-                    ("The symbol argument must be a sequence of length %d"
-                     + " (one for each kind of lattice position")
-                    % (max(self.element_basis) + 1,))
+                    (
+                        "The symbol argument must be a sequence of length %d"
+                        + " (one for each kind of lattice position"
+                    )
+                    % (max(self.element_basis) + 1,)
+                )
             for e in element:
                 if isinstance(e, str):
                     atomicnumber.append(ase.data.atomic_numbers[e])
@@ -225,7 +238,8 @@ class Bravais:
                 else:
                     raise TypeError(
                         "The symbols argument must be a sequence of strings "
-                        "or atomic numbers.")
+                        "or atomic numbers."
+                    )
             self.atomicnumber = [atomicnumber[i] for i in self.element_basis]
             assert len(self.atomicnumber) == len(self.bravais_basis)
 
@@ -233,15 +247,14 @@ class Bravais:
         "Convert directions and miller indices to the natural basis."
         self.directions = np.dot(self.directions, self.inverse_basis)
         if self.bravais_basis is not None:
-            self.natural_bravais_basis = np.dot(self.bravais_basis,
-                                                self.inverse_basis)
+            self.natural_bravais_basis = np.dot(self.bravais_basis, self.inverse_basis)
         for i in (0, 1, 2):
             self.directions[i] = reduceindex(self.directions[i])
         for i in (0, 1, 2):
             (j, k) = self.other[i]
-            self.miller[i] = reduceindex(self.handedness *
-                                         cross(self.directions[j],
-                                               self.directions[k]))
+            self.miller[i] = reduceindex(
+                self.handedness * cross(self.directions[j], self.directions[k])
+            )
 
     def calc_num_atoms(self):
         v = int(round(abs(np.linalg.det(self.directions))))
@@ -266,9 +279,11 @@ class Bravais:
         for i in (0, 1):
             for j in (0, 1):
                 for k in (0, 1):
-                    vect = (i * self.directions[0] +
-                            j * self.directions[1] +
-                            k * self.directions[2])
+                    vect = (
+                        i * self.directions[0]
+                        + j * self.directions[1]
+                        + k * self.directions[2]
+                    )
                     if np.dot(vect, vect) > sqrad:
                         sqrad = np.dot(vect, vect)
         del i, j, k
@@ -317,12 +332,14 @@ class Bravais:
 
     def inside(self, point):
         "Is a point inside the unit cell?"
-        return (np.dot(self.miller[0], point) >= 0 and
-                np.dot(self.miller[0], point - self.farpoint) < 0 and
-                np.dot(self.miller[1], point) >= 0 and
-                np.dot(self.miller[1], point - self.farpoint) < 0 and
-                np.dot(self.miller[2], point) >= 0 and
-                np.dot(self.miller[2], point - self.farpoint) < 0)
+        return (
+            np.dot(self.miller[0], point) >= 0
+            and np.dot(self.miller[0], point - self.farpoint) < 0
+            and np.dot(self.miller[1], point) >= 0
+            and np.dot(self.miller[1], point - self.farpoint) < 0
+            and np.dot(self.miller[2], point) >= 0
+            and np.dot(self.miller[2], point - self.farpoint) < 0
+        )
 
     def put_atom(self, point):
         "Place an atom given its integer coordinates."
@@ -330,8 +347,10 @@ class Bravais:
             # No basis - just place a single atom
             pos = np.dot(point, self.crystal_basis)
             if self.debug >= 2:
-                print('Placing an atom at (%d,%d,%d) ~ (%.3f, %.3f, %.3f).' %
-                      (tuple(point) + tuple(pos)))
+                print(
+                    "Placing an atom at (%d,%d,%d) ~ (%.3f, %.3f, %.3f)."
+                    % (tuple(point) + tuple(pos))
+                )
             self.atoms[self.nput] = pos
             self.elements[self.nput] = self.atomicnumber
             self.nput += 1
@@ -339,10 +358,21 @@ class Bravais:
             for i, offset in enumerate(self.natural_bravais_basis):
                 pos = np.dot(point + offset, self.crystal_basis)
                 if self.debug >= 2:
-                    print('Placing an atom at (%d+%f, %d+%f, %d+%f) ~ '
-                          '(%.3f, %.3f, %.3f).' %
-                          (point[0], offset[0], point[1], offset[1],
-                           point[2], offset[2], pos[0], pos[1], pos[2]))
+                    print(
+                        "Placing an atom at (%d+%f, %d+%f, %d+%f) ~ "
+                        "(%.3f, %.3f, %.3f)."
+                        % (
+                            point[0],
+                            offset[0],
+                            point[1],
+                            offset[1],
+                            point[2],
+                            offset[2],
+                            pos[0],
+                            pos[1],
+                            pos[2],
+                        )
+                    )
                 self.atoms[self.nput] = pos
                 if self.element_basis is None:
                     self.elements[self.nput] = self.atomicnumber
@@ -370,24 +400,23 @@ class Bravais:
                 if directions[i] is None:
                     missing += 1
                     if miller[j] is not None and miller[k] is not None:
-                        directions[i] = reduceindex(cross(miller[j],
-                                                          miller[k]))
+                        directions[i] = reduceindex(cross(miller[j], miller[k]))
                         change = True
                         if self.debug >= 2:
                             print(
-                                "Calculating directions[%d] from miller "
-                                "indices" % i)
+                                "Calculating directions[%d] from miller " "indices" % i
+                            )
                 if miller[i] is None:
                     missing += 1
                     if directions[j] is not None and directions[k] is not None:
-                        miller[i] = reduceindex(cross(directions[j],
-                                                      directions[k]))
+                        miller[i] = reduceindex(cross(directions[j], directions[k]))
                         change = True
                         if self.debug >= 2:
                             print("Calculating miller[%d] from directions" % i)
         if missing:
             raise ValueError(
-                "Specification of directions and miller indices is incomplete.")
+                "Specification of directions and miller indices is incomplete."
+            )
         # Make sure that everything is Numeric arrays
         self.directions = np.array(directions)
         self.miller = np.array(miller)
@@ -395,7 +424,8 @@ class Bravais:
         if abs(np.linalg.det(self.directions)) < 1e-10:
             raise ValueError(
                 "The direction vectors are linearly dependent "
-                "(unit cell volume would be zero)")
+                "(unit cell volume would be zero)"
+            )
         # Check for left-handed coordinate system
         if np.linalg.det(self.directions) < 0:
             print("WARNING: Creating a left-handed coordinate system!")
@@ -406,19 +436,21 @@ class Bravais:
         # Now check for consistency
         for i in (0, 1, 2):
             (j, k) = self.other[i]
-            m = reduceindex(self.handedness *
-                            cross(self.directions[j], self.directions[k]))
+            m = reduceindex(
+                self.handedness * cross(self.directions[j], self.directions[k])
+            )
             if sum(np.not_equal(m, self.miller[i])):
                 print(
                     "ERROR: Miller index %s is inconsisten with "
-                    "directions %d and %d" % (i, j, k))
+                    "directions %d and %d" % (i, j, k)
+                )
                 print("Miller indices:")
                 print(str(self.miller))
                 print("Directions:")
                 print(str(self.directions))
                 raise ValueError(
-                    "Inconsistent specification of miller indices and "
-                    "directions.")
+                    "Inconsistent specification of miller indices and " "directions."
+                )
 
     def print_directions_and_miller(self, txt=""):
         "Print direction vectors and Miller indices."
@@ -445,15 +477,20 @@ class Lattice(Atoms, MillerInfo):
     also has a method, `miller_to_direction`, used to convert from Miller
     indices to directions in the coordinate system of the lattice.
     """
+
     pass
 
 
 # Helper functions
 def cross(a, b):
     """The cross product of two vectors."""
-    return np.array((a[1] * b[2] - b[1] * a[2],
-                     a[2] * b[0] - b[2] * a[0],
-                     a[0] * b[1] - b[0] * a[1]))
+    return np.array(
+        (
+            a[1] * b[2] - b[1] * a[2],
+            a[2] * b[0] - b[2] * a[0],
+            a[0] * b[1] - b[0] * a[1],
+        )
+    )
 
 
 def reduceindex(M):
@@ -464,7 +501,8 @@ def reduceindex(M):
     while h != 1:
         if h == 0:
             raise ValueError(
-                "Division by zero: Are the miller indices linearly dependent?")
+                "Division by zero: Are the miller indices linearly dependent?"
+            )
         M = M // h
         g = math.gcd(M[0], M[1])
         h = math.gcd(g, M[2])

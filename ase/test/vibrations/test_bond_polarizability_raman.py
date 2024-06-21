@@ -10,9 +10,9 @@ from ase.calculators.bond_polarizability import BondPolarizability
 from ase.calculators.emt import EMT
 
 
-@fixture(scope='module')
+@fixture(scope="module")
 def Cbulk():
-    Cbulk = bulk('C', crystalstructure='fcc', a=2 * 1.221791471)
+    Cbulk = bulk("C", crystalstructure="fcc", a=2 * 1.221791471)
     Cbulk = Cbulk.repeat([2, 1, 1])
     Cbulk.calc = EMT()
     return Cbulk
@@ -22,9 +22,8 @@ def test_bulk(Cbulk, testdir):
     """Bulk FCC carbon (for EMT) self consistency"""
     delta = 0.02
 
-    name = 'bp'
-    rm = StaticRamanCalculator(Cbulk, BondPolarizability, name=name,
-                               delta=delta)
+    name = "bp"
+    rm = StaticRamanCalculator(Cbulk, BondPolarizability, name=name, delta=delta)
     rm.run()
 
     pz = PlaczekStatic(Cbulk, name=name)
@@ -33,11 +32,15 @@ def test_bulk(Cbulk, testdir):
     assert len(e_vib) == 6
     pz.summary()
 
-    name = 'phbp'
-    rm = StaticRamanPhononsCalculator(Cbulk, BondPolarizability,
-                                      calc=EMT(),
-                                      name=name,
-                                      delta=delta, supercell=(1, 1, 1))
+    name = "phbp"
+    rm = StaticRamanPhononsCalculator(
+        Cbulk,
+        BondPolarizability,
+        calc=EMT(),
+        name=name,
+        delta=delta,
+        supercell=(1, 1, 1),
+    )
     rm.run()
 
     pz = PlaczekStaticPhonons(Cbulk, name=name)
@@ -54,10 +57,15 @@ def test_bulk(Cbulk, testdir):
 def test_bulk_kpts(Cbulk, testdir):
     """Bulk FCC carbon (for EMT) for phonons"""
 
-    name = 'phbp'
-    rm = StaticRamanPhononsCalculator(Cbulk, BondPolarizability,
-                                      calc=EMT(), name=name,
-                                      delta=0.05, supercell=(2, 1, 1))
+    name = "phbp"
+    rm = StaticRamanPhononsCalculator(
+        Cbulk,
+        BondPolarizability,
+        calc=EMT(),
+        name=name,
+        delta=0.05,
+        supercell=(2, 1, 1),
+    )
     rm.run()
 
     pz = PlaczekStaticPhonons(Cbulk, name=name, supercell=(2, 1, 1))
@@ -73,12 +81,13 @@ def test_bulk_kpts(Cbulk, testdir):
 def test_c3(testdir):
     """Can we calculate triangular (EMT groundstate) C3?"""
     y, z = 0.30646191, 1.14411339  # emt relaxed
-    atoms = Atoms('C3', positions=[[0, 0, 0], [0, y, z], [0, z, y]])
+    atoms = Atoms("C3", positions=[[0, 0, 0], [0, y, z], [0, z, y]])
     atoms.calc = EMT()
 
-    name = 'bp'
-    rm = StaticRamanCalculator(atoms, BondPolarizability,
-                               name=name, exname=name, txt='-')
+    name = "bp"
+    rm = StaticRamanCalculator(
+        atoms, BondPolarizability, name=name, exname=name, txt="-"
+    )
     rm.run()
 
     pz = PlaczekStatic(atoms, name=name)

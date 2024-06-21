@@ -8,7 +8,7 @@ from ase.calculators.vasp import Vasp
 def atoms_co():
     """Simple atoms object for testing with a single CO molecule"""
     d = 1.14
-    atoms = Atoms('CO', positions=[(0, 0, 0), (0, 0, d)], pbc=True)
+    atoms = Atoms("CO", positions=[(0, 0, 0), (0, 0, d)], pbc=True)
     atoms.center(vacuum=5)
     return atoms
 
@@ -17,10 +17,10 @@ def atoms_co():
 def atoms_2co():
     """Simple atoms object for testing with 2x CO molecules"""
     d = 1.14
-    atoms = Atoms('CO', positions=[(0, 0, 0), (0, 0, d)], pbc=True)
-    atoms.extend(Atoms('CO', positions=[(0, 2, 0), (0, 2, d)]))
+    atoms = Atoms("CO", positions=[(0, 0, 0), (0, 0, d)], pbc=True)
+    atoms.extend(Atoms("CO", positions=[(0, 2, 0), (0, 2, d)]))
 
-    atoms.center(vacuum=5.)
+    atoms.center(vacuum=5.0)
     return atoms
 
 
@@ -30,8 +30,8 @@ def atoms_nh3():
     d1 = 0.5
     d2 = 0.87
     atoms = Atoms(
-        'NH3', positions=[
-            (0, 0, 0), (0, d1, d2), (0, -d1, d2), (0, 0, -1.)], pbc=True)
+        "NH3", positions=[(0, 0, 0), (0, d1, d2), (0, -d1, d2), (0, 0, -1.0)], pbc=True
+    )
     atoms.center(vacuum=5)
     return atoms
 
@@ -43,11 +43,11 @@ def mock_vasp_calculate(mocker):
     but avoid accidentally launching a calculation"""
 
     def _mock_run(self, command=None, out=None, directory=None):
-        assert False, 'Test attempted to launch a calculation'
+        assert False, "Test attempted to launch a calculation"
 
     # Patch the calculate and run methods, so we're certain
     # calculations aren't accidentally launched
-    mocker.patch('ase.calculators.vasp.Vasp._run', _mock_run)
+    mocker.patch("ase.calculators.vasp.Vasp._run", _mock_run)
     yield
 
 

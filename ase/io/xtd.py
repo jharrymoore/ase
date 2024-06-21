@@ -5,16 +5,16 @@ from xml.dom import minidom
 from ase.io.xsd import SetChild, _write_xsd_html
 from ase import Atoms
 
-_image_header = ' ' * 74 + '0.0000\n!DATE     Jan 01 00:00:00 2000\n'
-_image_footer = 'end\nend\n'
+_image_header = " " * 74 + "0.0000\n!DATE     Jan 01 00:00:00 2000\n"
+_image_footer = "end\nend\n"
 
 
 def _get_atom_str(an, xyz):
-    s = '{:<5}'.format(an)
-    s += '{:>15.9f}{:>15.9f}{:>15.9f}'.format(xyz[0], xyz[1], xyz[2])
-    s += ' XXXX 1      xx      '
-    s += '{:<2}'.format(an)
-    s += '  0.000\n'
+    s = "{:<5}".format(an)
+    s += "{:>15.9f}{:>15.9f}{:>15.9f}".format(xyz[0], xyz[1], xyz[2])
+    s += " XXXX 1      xx      "
+    s += "{:<2}".format(an)
+    s += "  0.000\n"
     return s
 
 
@@ -28,13 +28,13 @@ def write_xtd(filename, images, connectivity=None, moviespeed=10):
     perodic system was inputted, full periodicity was assumed.
     """
     if moviespeed < 0 or moviespeed > 10:
-        raise ValueError('moviespeed only between 0 and 10 allowed')
+        raise ValueError("moviespeed only between 0 and 10 allowed")
 
-    if hasattr(images, 'get_positions'):
+    if hasattr(images, "get_positions"):
         images = [images]
 
     XSD, ATR = _write_xsd_html(images, connectivity)
-    ATR.attrib['NumChildren'] = '2'
+    ATR.attrib["NumChildren"] = "2"
     natoms = len(images[0])
 
     bonds = list()
@@ -45,23 +45,27 @@ def write_xtd(filename, images, connectivity=None, moviespeed=10):
                     bonds.append([i, j])
 
     # non-periodic system
-    s = '!BIOSYM archive 3\n'
+    s = "!BIOSYM archive 3\n"
     if not images[0].pbc.all():
         # Write trajectory
-        SetChild(ATR, 'Trajectory', dict(
-            ID=str(natoms + 3 + len(bonds)),
-            Increment='-1',
-            End=str(len(images)),
-            Type='arc',
-            Speed=str(moviespeed),
-            FrameClassType='Atom',
-        ))
+        SetChild(
+            ATR,
+            "Trajectory",
+            dict(
+                ID=str(natoms + 3 + len(bonds)),
+                Increment="-1",
+                End=str(len(images)),
+                Type="arc",
+                Speed=str(moviespeed),
+                FrameClassType="Atom",
+            ),
+        )
 
         # write frame information file
-        s += 'PBC=OFF\n'
+        s += "PBC=OFF\n"
         for image in images:
             s += _image_header
-            s += '\n'
+            s += "\n"
             an = image.get_chemical_symbols()
             xyz = image.get_positions()
             for i in range(natoms):
@@ -70,36 +74,40 @@ def write_xtd(filename, images, connectivity=None, moviespeed=10):
 
     # periodic system
     else:
-        SetChild(ATR, 'Trajectory', dict(
-            ID=str(natoms + 9 + len(bonds)),
-            Increment='-1',
-            End=str(len(images)),
-            Type='arc',
-            Speed=str(moviespeed),
-            FrameClassType='Atom',
-        ))
+        SetChild(
+            ATR,
+            "Trajectory",
+            dict(
+                ID=str(natoms + 9 + len(bonds)),
+                Increment="-1",
+                End=str(len(images)),
+                Type="arc",
+                Speed=str(moviespeed),
+                FrameClassType="Atom",
+            ),
+        )
 
         # write frame information file
-        s += 'PBC=ON\n'
+        s += "PBC=ON\n"
         for image in images:
             s += _image_header
-            s += 'PBC'
+            s += "PBC"
             vec = image.cell.lengths()
-            s += '{:>10.4f}{:>10.4f}{:>10.4f}'.format(vec[0], vec[1], vec[2])
+            s += "{:>10.4f}{:>10.4f}{:>10.4f}".format(vec[0], vec[1], vec[2])
             angles = image.cell.angles()
-            s += '{:>10.4f}{:>10.4f}{:>10.4f}'.format(*angles)
-            s += '\n'
+            s += "{:>10.4f}{:>10.4f}{:>10.4f}".format(*angles)
+            s += "\n"
             an = image.get_chemical_symbols()
 
             angrad = np.deg2rad(angles)
             cell = np.zeros((3, 3))
             cell[0, :] = [vec[0], 0, 0]
-            cell[1, :] = (np.array([np.cos(angrad[2]), np.sin(angrad[2]), 0])
-                          * vec[1])
+            cell[1, :] = np.array([np.cos(angrad[2]), np.sin(angrad[2]), 0]) * vec[1]
             cell[2, 0] = vec[2] * np.cos(angrad[1])
-            cell[2, 1] = ((vec[1] * vec[2] * np.cos(angrad[0])
-                           - cell[1, 0] * cell[2, 0]) / cell[1, 1])
-            cell[2, 2] = np.sqrt(vec[2]**2 - cell[2, 0]**2 - cell[2, 1]**2)
+            cell[2, 1] = (
+                vec[1] * vec[2] * np.cos(angrad[0]) - cell[1, 0] * cell[2, 0]
+            ) / cell[1, 1]
+            cell[2, 2] = np.sqrt(vec[2] ** 2 - cell[2, 0] ** 2 - cell[2, 1] ** 2)
             xyz = np.dot(image.get_scaled_positions(), cell)
             for i in range(natoms):
                 s += _get_atom_str(an[i], xyz[i, :])
@@ -107,26 +115,26 @@ def write_xtd(filename, images, connectivity=None, moviespeed=10):
 
     # print arc file
     if isinstance(filename, str):
-        farcname = filename[:-3] + 'arc'
+        farcname = filename[:-3] + "arc"
     else:
-        farcname = filename.name[:-3] + 'arc'
+        farcname = filename.name[:-3] + "arc"
 
-    with open(farcname, 'w') as farc:
+    with open(farcname, "w") as farc:
         farc.write(s)
 
     # check if file is an object or not.
     openandclose = False
     try:
         if isinstance(filename, str):
-            fd = open(filename, 'w')
+            fd = open(filename, "w")
             openandclose = True
         else:  # Assume it's a 'file-like object'
             fd = filename
 
         # Return a pretty-printed XML string for the Element.
-        rough_string = ET.tostring(XSD, 'utf-8')
+        rough_string = ET.tostring(XSD, "utf-8")
         reparsed = minidom.parseString(rough_string)
-        Document = reparsed.toprettyxml(indent='\t')
+        Document = reparsed.toprettyxml(indent="\t")
 
         # write
         fd.write(Document)
@@ -143,13 +151,13 @@ def read_xtd(filename, index=-1):
     so only Arc file needs to be read
     """
     if isinstance(filename, str):
-        arcfilename = filename[:-3] + 'arc'
+        arcfilename = filename[:-3] + "arc"
     else:
-        arcfilename = filename.name[:-3] + 'arc'
+        arcfilename = filename.name[:-3] + "arc"
 
     # This trick with opening a totally different file is a gross violation of
     # common sense.
-    with open(arcfilename, 'r') as fd:
+    with open(arcfilename, "r") as fd:
         return read_arcfile(fd, index)
 
 
@@ -158,10 +166,10 @@ def read_arcfile(fd, index):
 
     # the first line is comment
     fd.readline()
-    pbc = 'ON' in fd.readline()
+    pbc = "ON" in fd.readline()
     L = fd.readline()
-    while L != '':
-        if '!' not in L:  # flag for the start of an image
+    while L != "":
+        if "!" not in L:  # flag for the start of an image
             L = fd.readline()
             continue
         if pbc:
@@ -174,7 +182,7 @@ def read_arcfile(fd, index):
         while True:
             line = fd.readline()
             L = line.split()
-            if not line or 'end' in L:
+            if not line or "end" in L:
                 break
             symbols.append(L[0])
             coords.append([float(x) for x in L[1:4]])

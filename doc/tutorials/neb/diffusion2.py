@@ -4,8 +4,8 @@ from ase.calculators.emt import EMT
 from ase.neb import NEB
 from ase.optimize import BFGS
 
-initial = read('initial.traj')
-final = read('final.traj')
+initial = read("initial.traj")
+final = read("final.traj")
 
 constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial])
 
@@ -20,5 +20,5 @@ images.append(final)
 
 neb = NEB(images)
 neb.interpolate()
-qn = BFGS(neb, trajectory='neb.traj')
+qn = BFGS(neb, trajectory="neb.traj")
 qn.run(fmax=0.05)

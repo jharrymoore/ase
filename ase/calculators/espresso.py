@@ -6,14 +6,18 @@ Run pw.x jobs.
 
 import os
 from ase.calculators.genericfileio import (
-    GenericFileIOCalculator, CalculatorTemplate, read_stdout)
+    GenericFileIOCalculator,
+    CalculatorTemplate,
+    read_stdout,
+)
 from ase.io import read, write
 
 
 compatibility_msg = (
-    'Espresso calculator is being restructured.  Please use e.g. '
-    'Espresso(profile=EspressoProfile(argv=[\'mpiexec\', \'pw.x\'])) '
-    'to customize command-line arguments.')
+    "Espresso calculator is being restructured.  Please use e.g. "
+    "Espresso(profile=EspressoProfile(argv=['mpiexec', 'pw.x'])) "
+    "to customize command-line arguments."
+)
 
 
 # XXX We should find a way to display this warning.
@@ -30,7 +34,8 @@ class EspressoProfile:
     @staticmethod
     def parse_version(stdout):
         import re
-        match = re.match(r'\s*Program PWSCF\s*v\.(\S+)', stdout, re.M)
+
+        match = re.match(r"\s*Program PWSCF\s*v\.(\S+)", stdout, re.M)
         assert match is not None
         return match.group(1)
 
@@ -41,48 +46,49 @@ class EspressoProfile:
     def run(self, directory, inputfile, outputfile):
         from subprocess import check_call
         import os
-        argv = list(self.argv) + ['-in', str(inputfile)]
-        with open(directory / outputfile, 'wb') as fd:
+
+        argv = list(self.argv) + ["-in", str(inputfile)]
+        with open(directory / outputfile, "wb") as fd:
             check_call(argv, cwd=directory, stdout=fd, env=os.environ)
 
     def socketio_argv_unix(self, socket):
         template = EspressoTemplate()
         # It makes sense to know the template for this kind of choices,
         # but is there a better way?
-        return list(self.argv) + ['--ipi', f'{socket}:UNIX', '-in',
-                                  template.inputname]
+        return list(self.argv) + ["--ipi", f"{socket}:UNIX", "-in", template.inputname]
 
 
 class EspressoTemplate(CalculatorTemplate):
     def __init__(self):
         super().__init__(
-            'espresso',
-            ['energy', 'free_energy', 'forces', 'stress', 'magmoms'])
-        self.inputname = 'espresso.pwi'
-        self.outputname = 'espresso.pwo'
+            "espresso", ["energy", "free_energy", "forces", "stress", "magmoms"]
+        )
+        self.inputname = "espresso.pwi"
+        self.outputname = "espresso.pwo"
 
     def write_input(self, directory, atoms, parameters, properties):
         dst = directory / self.inputname
-        write(dst, atoms, format='espresso-in', properties=properties,
-              **parameters)
+        write(dst, atoms, format="espresso-in", properties=properties, **parameters)
 
     def execute(self, directory, profile):
-        profile.run(directory,
-                    self.inputname,
-                    self.outputname)
+        profile.run(directory, self.inputname, self.outputname)
 
     def read_results(self, directory):
         path = directory / self.outputname
-        atoms = read(path, format='espresso-out')
+        atoms = read(path, format="espresso-out")
         return dict(atoms.calc.properties())
 
 
 class Espresso(GenericFileIOCalculator):
-    def __init__(self, *, profile=None,
-                 command=GenericFileIOCalculator._deprecated,
-                 label=GenericFileIOCalculator._deprecated,
-                 directory='.',
-                 **kwargs):
+    def __init__(
+        self,
+        *,
+        profile=None,
+        command=GenericFileIOCalculator._deprecated,
+        label=GenericFileIOCalculator._deprecated,
+        directory=".",
+        **kwargs,
+    ):
         """
         All options for pw.x are copied verbatim to the input file, and put
         into the correct section. Use ``input_data`` for parameters that are
@@ -162,16 +168,17 @@ class Espresso(GenericFileIOCalculator):
 
         if label is not self._deprecated:
             import warnings
-            warnings.warn('Ignoring label, please use directory instead',
-                          FutureWarning)
 
-        if 'ASE_ESPRESSO_COMMAND' in os.environ and profile is None:
+            warnings.warn("Ignoring label, please use directory instead", FutureWarning)
+
+        if "ASE_ESPRESSO_COMMAND" in os.environ and profile is None:
             import warnings
+
             warnings.warn(compatibility_msg, FutureWarning)
 
         template = EspressoTemplate()
         if profile is None:
-            profile = EspressoProfile(argv=['pw.x'])
-        super().__init__(profile=profile, template=template,
-                         directory=directory,
-                         parameters=kwargs)
+            profile = EspressoProfile(argv=["pw.x"])
+        super().__init__(
+            profile=profile, template=template, directory=directory, parameters=kwargs
+        )

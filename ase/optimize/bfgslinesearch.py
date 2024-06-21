@@ -18,13 +18,24 @@ from ase.optimize.optimize import Optimizer
 abs = absolute
 pymin = min
 pymax = max
-__version__ = '0.1'
+__version__ = "0.1"
 
 
 class BFGSLineSearch(Optimizer):
-    def __init__(self, atoms, restart=None, logfile='-', maxstep=None,
-                 trajectory=None, c1=0.23, c2=0.46, alpha=10.0, stpmax=50.0,
-                 master=None, force_consistent=None):
+    def __init__(
+        self,
+        atoms,
+        restart=None,
+        logfile="-",
+        maxstep=None,
+        trajectory=None,
+        c1=0.23,
+        c2=0.46,
+        alpha=10.0,
+        stpmax=50.0,
+        master=None,
+        force_consistent=None,
+    ):
         """Optimize atomic positions in the BFGSLineSearch algorithm, which
         uses both forces and potential energy information.
 
@@ -60,7 +71,7 @@ class BFGSLineSearch(Optimizer):
             falls back to force_consistent=False if not.
         """
         if maxstep is None:
-            self.maxstep = self.defaults['maxstep']
+            self.maxstep = self.defaults["maxstep"]
         else:
             self.maxstep = maxstep
         self.stpmax = stpmax
@@ -74,15 +85,22 @@ class BFGSLineSearch(Optimizer):
         self.g0 = None
         self.e0 = None
         self.load_restart = False
-        self.task = 'START'
+        self.task = "START"
         self.rep_count = 0
         self.p = None
         self.alpha_k = None
         self.no_update = False
         self.replay = False
 
-        Optimizer.__init__(self, atoms, restart, logfile, trajectory,
-                           master, force_consistent=force_consistent)
+        Optimizer.__init__(
+            self,
+            atoms,
+            restart,
+            logfile,
+            trajectory,
+            master,
+            force_consistent=force_consistent,
+        )
 
     def read(self):
         self.r0, self.g0, self.e0, self.task, self.H = self.load()
@@ -102,9 +120,12 @@ class BFGSLineSearch(Optimizer):
             forces = atoms.get_forces()
 
         from ase.neb import NEB
+
         if isinstance(atoms, NEB):
-            raise TypeError('NEB calculations cannot use the BFGSLineSearch'
-                            ' optimizer. Use BFGS or another optimizer.')
+            raise TypeError(
+                "NEB calculations cannot use the BFGSLineSearch"
+                " optimizer. Use BFGS or another optimizer."
+            )
         r = atoms.get_positions()
         r = r.reshape(-1)
         g = -forces.reshape(-1) / self.alpha
@@ -116,12 +137,21 @@ class BFGSLineSearch(Optimizer):
         self.p = -np.dot(self.H, g)
         p_size = np.sqrt((self.p**2).sum())
         if p_size <= np.sqrt(len(atoms) * 1e-10):
-            self.p /= (p_size / np.sqrt(len(atoms) * 1e-10))
+            self.p /= p_size / np.sqrt(len(atoms) * 1e-10)
         ls = LineSearch()
-        self.alpha_k, e, self.e0, self.no_update = \
-            ls._line_search(self.func, self.fprime, r, self.p, g, e, self.e0,
-                            maxstep=self.maxstep, c1=self.c1,
-                            c2=self.c2, stpmax=self.stpmax)
+        self.alpha_k, e, self.e0, self.no_update = ls._line_search(
+            self.func,
+            self.fprime,
+            r,
+            self.p,
+            g,
+            e,
+            self.e0,
+            maxstep=self.maxstep,
+            c1=self.c1,
+            c2=self.c2,
+            stpmax=self.stpmax,
+        )
         if self.alpha_k is None:
             raise RuntimeError("LineSearch failed!")
 
@@ -141,12 +171,16 @@ class BFGSLineSearch(Optimizer):
             dr = r - r0
             dg = g - g0
             # self.alpha_k can be None!!!
-            if not (((self.alpha_k or 0) > 0 and
-                    abs(np.dot(g, p0)) - abs(np.dot(g0, p0)) < 0) or
-                    self.replay):
+            if not (
+                (
+                    (self.alpha_k or 0) > 0
+                    and abs(np.dot(g, p0)) - abs(np.dot(g0, p0)) < 0
+                )
+                or self.replay
+            ):
                 return
             if self.no_update is True:
-                print('skip update')
+                print("skip update")
                 return
 
             try:  # this was handled in numeric, let it remain for more safety
@@ -159,8 +193,10 @@ class BFGSLineSearch(Optimizer):
                 print("Divide-by-zero encountered: rhok assumed large")
             A1 = self.I - dr[:, np.newaxis] * dg[np.newaxis, :] * rhok
             A2 = self.I - dg[:, np.newaxis] * dr[np.newaxis, :] * rhok
-            self.H = (np.dot(A1, np.dot(self.H, A2)) +
-                      rhok * dr[:, np.newaxis] * dr[np.newaxis, :])
+            self.H = (
+                np.dot(A1, np.dot(self.H, A2))
+                + rhok * dr[:, np.newaxis] * dr[np.newaxis, :]
+            )
             # self.B = np.linalg.inv(self.H)
 
     def func(self, x):
@@ -168,8 +204,10 @@ class BFGSLineSearch(Optimizer):
         self.atoms.set_positions(x.reshape(-1, 3))
         self.function_calls += 1
         # Scale the problem as SciPy uses I as initial Hessian.
-        return (self.atoms.get_potential_energy(
-                force_consistent=self.force_consistent) / self.alpha)
+        return (
+            self.atoms.get_potential_energy(force_consistent=self.force_consistent)
+            / self.alpha
+        )
 
     def fprime(self, x):
         """Gradient of the objective function for use of the optimizers"""
@@ -178,7 +216,7 @@ class BFGSLineSearch(Optimizer):
         # Remember that forces are minus the gradient!
         # Scale the problem as SciPy uses I as initial Hessian.
         forces = self.atoms.get_forces().reshape(-1)
-        return - forces / self.alpha
+        return -forces / self.alpha
 
     def replay_trajectory(self, traj):
         """Initialize hessian from old trajectory."""
@@ -188,13 +226,14 @@ class BFGSLineSearch(Optimizer):
         with IOContext() as files:
             if isinstance(traj, str):
                 from ase.io.trajectory import Trajectory
-                traj = files.closelater(Trajectory(traj, mode='r'))
+
+                traj = files.closelater(Trajectory(traj, mode="r"))
 
             r0 = None
             g0 = None
             for i in range(0, len(traj) - 1):
                 r = traj[i].get_positions().ravel()
-                g = - traj[i].get_forces().ravel() / self.alpha
+                g = -traj[i].get_forces().ravel() / self.alpha
                 self.update(r, g, r0, g0, self.p)
                 self.p = -np.dot(self.H, g)
                 r0 = r.copy()
@@ -208,19 +247,31 @@ class BFGSLineSearch(Optimizer):
         if forces is None:
             forces = self.atoms.get_forces()
         fmax = sqrt((forces**2).sum(axis=1).max())
-        e = self.atoms.get_potential_energy(
-            force_consistent=self.force_consistent)
+        e = self.atoms.get_potential_energy(force_consistent=self.force_consistent)
         T = time.localtime()
         name = self.__class__.__name__
         w = self.logfile.write
         if self.nsteps == 0:
-            w('%s  %4s[%3s] %8s %15s  %12s\n' %
-              (' ' * len(name), 'Step', 'FC', 'Time', 'Energy', 'fmax'))
+            w(
+                "%s  %4s[%3s] %8s %15s  %12s\n"
+                % (" " * len(name), "Step", "FC", "Time", "Energy", "fmax")
+            )
             if self.force_consistent:
-                w('*Force-consistent energies used in optimization.\n')
-        w('%s:  %3d[%3d] %02d:%02d:%02d %15.6f%1s %12.4f\n'
-            % (name, self.nsteps, self.force_calls, T[3], T[4], T[5], e,
-               {1: '*', 0: ''}[self.force_consistent], fmax))
+                w("*Force-consistent energies used in optimization.\n")
+        w(
+            "%s:  %3d[%3d] %02d:%02d:%02d %15.6f%1s %12.4f\n"
+            % (
+                name,
+                self.nsteps,
+                self.force_calls,
+                T[3],
+                T[4],
+                T[5],
+                e,
+                {1: "*", 0: ""}[self.force_consistent],
+                fmax,
+            )
+        )
         self.logfile.flush()
 
 
@@ -230,4 +281,5 @@ def wrap_function(function, args):
     def function_wrapper(x):
         ncalls[0] += 1
         return function(x, *args)
+
     return ncalls, function_wrapper

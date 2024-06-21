@@ -15,7 +15,7 @@ def get_vasp_version(string):
       '6.1.2'
 
     """
-    match = re.search(r'vasp\.(\S+)', string, re.M)
+    match = re.search(r"vasp\.(\S+)", string, re.M)
     return match.group(1)
 
 
@@ -23,6 +23,7 @@ class VaspChargeDensity:
     """Class for representing VASP charge density.
 
     Filename is normally CHG."""
+
     # Can the filename be CHGCAR?  There's a povray tutorial
     # in doc/tutorials where it's CHGCAR as of January 2021.  --askhl
 
@@ -31,8 +32,8 @@ class VaspChargeDensity:
         self.atoms = []  # List of Atoms objects
         self.chg = []  # Charge density
         self.chgdiff = []  # Charge density difference, if spin polarized
-        self.aug = ''  # Augmentation charges, not parsed just a big string
-        self.augdiff = ''  # Augmentation charge differece, is spin polarized
+        self.aug = ""  # Augmentation charges, not parsed just a big string
+        self.augdiff = ""  # Augmentation charge differece, is spin polarized
 
         # Note that the augmentation charge is not a list, since they
         # are needed only for CHGCAR files which store only a single
@@ -61,7 +62,7 @@ class VaspChargeDensity:
         # First, just read it in
         for zz in range(chg.shape[2]):
             for yy in range(chg.shape[1]):
-                chg[:, yy, zz] = np.fromfile(fobj, count=chg.shape[0], sep=' ')
+                chg[:, yy, zz] = np.fromfile(fobj, count=chg.shape[0], sep=" ")
         chg /= volume
 
     def read(self, filename):
@@ -81,12 +82,13 @@ class VaspChargeDensity:
 
         """
         import ase.io.vasp as aiv
+
         fd = open(filename)
         self.atoms = []
         self.chg = []
         self.chgdiff = []
-        self.aug = ''
-        self.augdiff = ''
+        self.aug = ""
+        self.augdiff = ""
         while True:
             try:
                 atoms = aiv.read_vasp(fd)
@@ -107,27 +109,27 @@ class VaspChargeDensity:
             # First check if the file has an augmentation charge part (CHGCAR
             # file.)
             line1 = fd.readline()
-            if line1 == '':
+            if line1 == "":
                 break
-            elif line1.find('augmentation') != -1:
+            elif line1.find("augmentation") != -1:
                 augs = [line1]
                 while True:
                     line2 = fd.readline()
                     if line2.split() == ngr:
-                        self.aug = ''.join(augs)
+                        self.aug = "".join(augs)
                         augs = []
                         chgdiff = np.empty(ng)
                         self._read_chg(fd, chgdiff, atoms.get_volume())
                         self.chgdiff.append(chgdiff)
-                    elif line2 == '':
+                    elif line2 == "":
                         break
                     else:
                         augs.append(line2)
                 if len(self.aug) == 0:
-                    self.aug = ''.join(augs)
+                    self.aug = "".join(augs)
                     augs = []
                 else:
-                    self.augdiff = ''.join(augs)
+                    self.augdiff = "".join(augs)
                     augs = []
             elif line1.split() == ngr:
                 chgdiff = np.empty(ng)
@@ -137,7 +139,7 @@ class VaspChargeDensity:
                 fd.seek(fl)
         fd.close()
 
-    def _write_chg(self, fobj, chg, volume, format='chg'):
+    def _write_chg(self, fobj, chg, volume, format="chg"):
         """Write charge density
 
         Utility function similar to _read_chg but for writing.
@@ -150,40 +152,51 @@ class VaspChargeDensity:
         # Must be a tuple to pass to string conversion
         chgtmp = tuple(chgtmp)
         # CHG format - 10 columns
-        if format.lower() == 'chg':
+        if format.lower() == "chg":
             # Write all but the last row
             for ii in range((len(chgtmp) - 1) // 10):
-                fobj.write(' %#11.5G %#11.5G %#11.5G %#11.5G %#11.5G\
- %#11.5G %#11.5G %#11.5G %#11.5G %#11.5G\n' % chgtmp[ii * 10:(ii + 1) * 10])
+                fobj.write(
+                    " %#11.5G %#11.5G %#11.5G %#11.5G %#11.5G\
+ %#11.5G %#11.5G %#11.5G %#11.5G %#11.5G\n"
+                    % chgtmp[ii * 10 : (ii + 1) * 10]
+                )
             # If the last row contains 10 values then write them without a
             # newline
             if len(chgtmp) % 10 == 0:
-                fobj.write(' %#11.5G %#11.5G %#11.5G %#11.5G %#11.5G'
-                           ' %#11.5G %#11.5G %#11.5G %#11.5G %#11.5G' %
-                           chgtmp[len(chgtmp) - 10:len(chgtmp)])
+                fobj.write(
+                    " %#11.5G %#11.5G %#11.5G %#11.5G %#11.5G"
+                    " %#11.5G %#11.5G %#11.5G %#11.5G %#11.5G"
+                    % chgtmp[len(chgtmp) - 10 : len(chgtmp)]
+                )
             # Otherwise write fewer columns without a newline
             else:
                 for ii in range(len(chgtmp) % 10):
-                    fobj.write((' %#11.5G') %
-                               chgtmp[len(chgtmp) - len(chgtmp) % 10 + ii])
+                    fobj.write(
+                        (" %#11.5G") % chgtmp[len(chgtmp) - len(chgtmp) % 10 + ii]
+                    )
         # Other formats - 5 columns
         else:
             # Write all but the last row
             for ii in range((len(chgtmp) - 1) // 5):
-                fobj.write(' %17.10E %17.10E %17.10E %17.10E %17.10E\n' %
-                           chgtmp[ii * 5:(ii + 1) * 5])
+                fobj.write(
+                    " %17.10E %17.10E %17.10E %17.10E %17.10E\n"
+                    % chgtmp[ii * 5 : (ii + 1) * 5]
+                )
             # If the last row contains 5 values then write them without a
             # newline
             if len(chgtmp) % 5 == 0:
-                fobj.write(' %17.10E %17.10E %17.10E %17.10E %17.10E' %
-                           chgtmp[len(chgtmp) - 5:len(chgtmp)])
+                fobj.write(
+                    " %17.10E %17.10E %17.10E %17.10E %17.10E"
+                    % chgtmp[len(chgtmp) - 5 : len(chgtmp)]
+                )
             # Otherwise write fewer columns without a newline
             else:
                 for ii in range(len(chgtmp) % 5):
-                    fobj.write((' %17.10E') %
-                               chgtmp[len(chgtmp) - len(chgtmp) % 5 + ii])
+                    fobj.write(
+                        (" %17.10E") % chgtmp[len(chgtmp) - len(chgtmp) % 5 + ii]
+                    )
         # Write a newline whatever format it is
-        fobj.write('\n')
+        fobj.write("\n")
 
     def write(self, filename, format=None):
         """Write VASP charge density in CHG format.
@@ -196,43 +209,41 @@ class VaspChargeDensity:
 
         """
         import ase.io.vasp as aiv
+
         if format is None:
-            if filename.lower().find('chgcar') != -1:
-                format = 'chgcar'
-            elif filename.lower().find('chg') != -1:
-                format = 'chg'
+            if filename.lower().find("chgcar") != -1:
+                format = "chgcar"
+            elif filename.lower().find("chg") != -1:
+                format = "chg"
             elif len(self.chg) == 1:
-                format = 'chgcar'
+                format = "chgcar"
             else:
-                format = 'chg'
-        with open(filename, 'w') as fd:
+                format = "chg"
+        with open(filename, "w") as fd:
             for ii, chg in enumerate(self.chg):
-                if format == 'chgcar' and ii != len(self.chg) - 1:
+                if format == "chgcar" and ii != len(self.chg) - 1:
                     continue  # Write only the last image for CHGCAR
-                aiv.write_vasp(fd,
-                               self.atoms[ii],
-                               direct=True,
-                               long_format=False)
-                fd.write('\n')
+                aiv.write_vasp(fd, self.atoms[ii], direct=True, long_format=False)
+                fd.write("\n")
                 for dim in chg.shape:
-                    fd.write(' %4i' % dim)
-                fd.write('\n')
+                    fd.write(" %4i" % dim)
+                fd.write("\n")
                 vol = self.atoms[ii].get_volume()
                 self._write_chg(fd, chg, vol, format)
-                if format == 'chgcar':
+                if format == "chgcar":
                     fd.write(self.aug)
                 if self.is_spin_polarized():
-                    if format == 'chg':
-                        fd.write('\n')
+                    if format == "chg":
+                        fd.write("\n")
                     for dim in chg.shape:
-                        fd.write(' %4i' % dim)
-                    fd.write('\n')  # a new line after dim is required
+                        fd.write(" %4i" % dim)
+                    fd.write("\n")  # a new line after dim is required
                     self._write_chg(fd, self.chgdiff[ii], vol, format)
-                    if format == 'chgcar':
+                    if format == "chgcar":
                         # a new line is always provided self._write_chg
                         fd.write(self.augdiff)
-                if format == 'chg' and len(self.chg) > 1:
-                    fd.write('\n')
+                if format == "chg" and len(self.chg) > 1:
+                    fd.write("\n")
 
 
 class VaspDos:
@@ -252,7 +263,7 @@ class VaspDos:
 
     """
 
-    def __init__(self, doscar='DOSCAR', efermi=0.0):
+    def __init__(self, doscar="DOSCAR", efermi=0.0):
         """Initialize"""
         self._efermi = 0.0
         self.read_doscar(doscar)
@@ -262,8 +273,8 @@ class VaspDos:
         # POSCAR.
         self.sort = []
         self.resort = []
-        if os.path.isfile('ase-sort.dat'):
-            file = open('ase-sort.dat', 'r')
+        if os.path.isfile("ase-sort.dat"):
+            file = open("ase-sort.dat", "r")
             lines = file.readlines()
             file.close()
             for line in lines:
@@ -322,6 +333,7 @@ class VaspDos:
         n = self._site_dos.shape[1]
 
         from .vasp_data import PDOS_orbital_names_and_DOSCAR_column
+
         norb = PDOS_orbital_names_and_DOSCAR_column[n]
 
         return self._site_dos[atom, norb[orbital.lower()], :]
@@ -332,7 +344,7 @@ class VaspDos:
         elif self._total_dos.shape[0] == 5:
             return self._total_dos[1:3, :]
 
-    dos = property(_get_dos, None, None, 'Average DOS in cell')
+    dos = property(_get_dos, None, None, "Average DOS in cell")
 
     def _get_integrated_dos(self):
         if self._total_dos.shape[0] == 3:
@@ -340,8 +352,9 @@ class VaspDos:
         elif self._total_dos.shape[0] == 5:
             return self._total_dos[3:5, :]
 
-    integrated_dos = property(_get_integrated_dos, None, None,
-                              'Integrated average DOS in cell')
+    integrated_dos = property(
+        _get_integrated_dos, None, None, "Integrated average DOS in cell"
+    )
 
     def read_doscar(self, fname="DOSCAR"):
         """Read a VASP DOSCAR file"""
@@ -359,7 +372,7 @@ class VaspDos:
         dos = []
         for na in range(natoms):
             line = fd.readline()
-            if line == '':
+            if line == "":
                 # No site-projected DOS
                 break
             ndos = int(line.split()[2])
@@ -375,25 +388,27 @@ class VaspDos:
 
 
 class xdat2traj:
-    def __init__(self,
-                 trajectory=None,
-                 atoms=None,
-                 poscar=None,
-                 xdatcar=None,
-                 sort=None,
-                 calc=None):
+    def __init__(
+        self,
+        trajectory=None,
+        atoms=None,
+        poscar=None,
+        xdatcar=None,
+        sort=None,
+        calc=None,
+    ):
         """
         trajectory is the name of the file to write the trajectory to
         poscar is the name of the poscar file to read. Default: POSCAR
         """
         if not poscar:
-            self.poscar = 'POSCAR'
+            self.poscar = "POSCAR"
         else:
             self.poscar = poscar
 
         if not atoms:
             # This reads the atoms sorted the way VASP wants
-            self.atoms = ase.io.read(self.poscar, format='vasp')
+            self.atoms = ase.io.read(self.poscar, format="vasp")
             resort_reqd = True
         else:
             # Assume if we pass atoms that it is sorted the way we want
@@ -405,7 +420,7 @@ class xdat2traj:
         else:
             self.calc = calc
         if not sort:
-            if not hasattr(self.calc, 'sort'):
+            if not hasattr(self.calc, "sort"):
                 self.calc.sort = list(range(len(self.atoms)))
         else:
             self.calc.sort = sort
@@ -414,16 +429,16 @@ class xdat2traj:
             self.calc.resort[self.calc.sort[n]] = n
 
         if not xdatcar:
-            self.xdatcar = 'XDATCAR'
+            self.xdatcar = "XDATCAR"
         else:
             self.xdatcar = xdatcar
 
         if not trajectory:
-            self.trajectory = 'out.traj'
+            self.trajectory = "out.traj"
         else:
             self.trajectory = trajectory
 
-        self.out = ase.io.trajectory.Trajectory(self.trajectory, mode='w')
+        self.out = ase.io.trajectory.Trajectory(self.trajectory, mode="w")
 
         if resort_reqd:
             self.atoms = self.atoms[self.calc.resort]
@@ -434,13 +449,13 @@ class xdat2traj:
     def convert(self):
         lines = open(self.xdatcar).readlines()
         if len(lines[7].split()) == 0:
-            del (lines[0:8])
+            del lines[0:8]
         elif len(lines[5].split()) == 0:
-            del (lines[0:6])
+            del lines[0:6]
         elif len(lines[4].split()) == 0:
-            del (lines[0:5])
-        elif lines[7].split()[0] == 'Direct':
-            del (lines[0:8])
+            del lines[0:5]
+        elif lines[7].split()[0] == "Direct":
+            del lines[0:8]
         step = 0
         iatom = 0
         scaled_pos = []
@@ -452,19 +467,18 @@ class xdat2traj:
                 # Now resort the positions to match self.atoms
                 self.atoms.set_scaled_positions(scaled_pos[self.calc.resort])
 
-                calc = SinglePointCalculator(self.atoms,
-                                             energy=self.energies[step],
-                                             forces=self.forces[step])
+                calc = SinglePointCalculator(
+                    self.atoms, energy=self.energies[step], forces=self.forces[step]
+                )
                 self.atoms.calc = calc
                 self.out.write(self.atoms)
                 scaled_pos = []
                 iatom = 0
                 step += 1
             else:
-                if not line.split()[0] == 'Direct':
+                if not line.split()[0] == "Direct":
                     iatom += 1
-                    scaled_pos.append(
-                        [float(line.split()[n]) for n in range(3)])
+                    scaled_pos.append([float(line.split()[n]) for n in range(3)])
 
         # Write also the last image
         # I'm sure there is also more clever fix...
@@ -472,9 +486,9 @@ class xdat2traj:
             self.out.write_header(self.atoms[self.calc.resort])
         scaled_pos = np.array(scaled_pos)[self.calc.resort]
         self.atoms.set_scaled_positions(scaled_pos)
-        calc = SinglePointCalculator(self.atoms,
-                                     energy=self.energies[step],
-                                     forces=self.forces[step])
+        calc = SinglePointCalculator(
+            self.atoms, energy=self.energies[step], forces=self.forces[step]
+        )
         self.atoms.calc = calc
         self.out.write(self.atoms)
 

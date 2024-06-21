@@ -17,12 +17,20 @@ class CLICommand:
     @staticmethod
     def add_arguments(parser):
         add = parser.add_argument
-        add('filename', help='Name of ULM-file.')
-        add('-n', '--index', type=int,
-            help='Show only one index.  Default is to show all.')
-        add('-d', '--delete', metavar='key1,key2,...',
-            help='Remove key(s) from ULM-file.')
-        add('-v', '--verbose', action='store_true', help='More output.')
+        add("filename", help="Name of ULM-file.")
+        add(
+            "-n",
+            "--index",
+            type=int,
+            help="Show only one index.  Default is to show all.",
+        )
+        add(
+            "-d",
+            "--delete",
+            metavar="key1,key2,...",
+            help="Remove key(s) from ULM-file.",
+        )
+        add("-v", "--verbose", action="store_true", help="More output.")
 
     @staticmethod
     def run(args):
@@ -30,8 +38,8 @@ class CLICommand:
         from ase.io.ulm import copy, print_ulm_info
 
         if args.delete:
-            exclude = set('.' + key for key in args.delete.split(','))
-            copy(args.filename, args.filename + '.temp', exclude)
-            os.rename(args.filename + '.temp', args.filename)
+            exclude = set("." + key for key in args.delete.split(","))
+            copy(args.filename, args.filename + ".temp", exclude)
+            os.rename(args.filename + ".temp", args.filename)
         else:
             print_ulm_info(args.filename, args.index, verbose=args.verbose)

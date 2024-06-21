@@ -14,7 +14,7 @@ import numpy as np
 
 
 @writer
-def write_x3d(fd, atoms, format='X3D', style=None):
+def write_x3d(fd, atoms, format="X3D", style=None):
     """Writes to html using X3DOM.
 
     Args:
@@ -36,7 +36,7 @@ def write_html(fd, atoms):
         filename - str or file-like object, filename or output file object
         atoms - Atoms object to be rendered
     """
-    write_x3d(fd, atoms, format='X3DOM')
+    write_x3d(fd, atoms, format="X3DOM")
 
 
 class X3D:
@@ -63,12 +63,12 @@ class X3D:
             x3d_style = {}
         x3dstyle = " ".join(f'{k}="{v}";' for k, v in x3d_style.items())
 
-        if datatype == 'X3DOM':
+        if datatype == "X3DOM":
             template = X3DOM_template
-        elif datatype == 'X3D':
+        elif datatype == "X3D":
             template = X3D_template
         else:
-            raise ValueError(f'datatype not supported: {datatype}')
+            raise ValueError(f"datatype not supported: {datatype}")
 
         scene = x3d_atoms(self._atoms)
         document = template.format(scene=pretty_print(scene), style=x3dstyle)
@@ -82,12 +82,12 @@ def x3d_atom(atom):
     r, g, b = jmol_colors[atom.number]
     radius = covalent_radii[atom.number]
 
-    material = element('material', diffuseColor=f'{r} {g} {b}')
+    material = element("material", diffuseColor=f"{r} {g} {b}")
 
-    appearance = element('appearance', child=material)
-    sphere = element('sphere', radius=f'{radius}')
+    appearance = element("appearance", child=material)
+    sphere = element("sphere", radius=f"{radius}")
 
-    shape = element('shape', children=(appearance, sphere))
+    shape = element("shape", children=(appearance, sphere))
     return translate(shape, x, y, z)
 
 
@@ -119,8 +119,8 @@ def wireframe_face(vec1, vec2, origin=(0, 0, 0)):
     x1, y1, z1 = vec1
     x2, y2, z2 = vec2
 
-    material = element('material', diffuseColor='0 0 0')
-    appearance = element('appearance', child=material)
+    material = element("material", diffuseColor="0 0 0")
+    appearance = element("appearance", child=material)
 
     points = [
         (0, 0, 0),
@@ -129,11 +129,11 @@ def wireframe_face(vec1, vec2, origin=(0, 0, 0)):
         (x2, y2, z2),
         (0, 0, 0),
     ]
-    points = ' '.join(f'{x} {y} {z}' for x, y, z in points)
+    points = " ".join(f"{x} {y} {z}" for x, y, z in points)
 
-    coordinates = element('coordinate', point=points)
-    lineset = element('lineset', vertexCount='5', child=coordinates)
-    shape = element('shape', children=(appearance, lineset))
+    coordinates = element("coordinate", point=points)
+    lineset = element("lineset", vertexCount="5", child=coordinates)
+    shape = element("shape", children=(appearance, lineset))
 
     x, y, z = origin
     return translate(shape, x, y, z)
@@ -165,11 +165,11 @@ def x3d_atoms(atoms):
     # the largest separation between two points in any of x, y or z
     max_dim = max(max_xyz_extent)
     # put the camera twice as far away as the largest extent
-    pos = f'0 0 {max_dim * 2}'
+    pos = f"0 0 {max_dim * 2}"
     # NB. viewpoint needs to contain an (empty) child to be valid x3d
-    viewpoint = element('viewpoint', position=pos, child=element('group'))
+    viewpoint = element("viewpoint", position=pos, child=element("group"))
 
-    return element('scene', children=(viewpoint, cell))
+    return element("scene", children=(viewpoint, cell))
 
 
 def element(name, child=None, children=None, **attributes) -> ET.Element:
@@ -181,7 +181,7 @@ def element(name, child=None, children=None, **attributes) -> ET.Element:
 
     # make sure we don't specify both child and children
     if child is not None:
-        assert children is None, 'Cannot specify both child and children'
+        assert children is None, "Cannot specify both child and children"
         children = [child]
     else:
         children = children or []
@@ -194,23 +194,23 @@ def element(name, child=None, children=None, **attributes) -> ET.Element:
 
 def translate(thing, x, y, z):
     """Translate a x3d element by x, y, z."""
-    return element('transform', translation=f'{x} {y} {z}', child=thing)
+    return element("transform", translation=f"{x} {y} {z}", child=thing)
 
 
 def group(things):
     """Group a (list of) x3d elements."""
-    return element('group', children=things)
+    return element("group", children=things)
 
 
 def pretty_print(element: ET.Element, indent: int = 2):
     """Pretty print an XML element."""
 
-    byte_string = ET.tostring(element, 'utf-8')
+    byte_string = ET.tostring(element, "utf-8")
     parsed = minidom.parseString(byte_string)
-    prettied = parsed.toprettyxml(indent=' ' * indent)
+    prettied = parsed.toprettyxml(indent=" " * indent)
     # remove first line - contains an extra, un-needed xml declaration
     lines = prettied.splitlines()[1:]
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def get_maximum_extent(xyz):

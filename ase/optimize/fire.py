@@ -5,11 +5,27 @@ from ase.optimize.optimize import Optimizer
 
 
 class FIRE(Optimizer):
-    def __init__(self, atoms, restart=None, logfile='-', trajectory=None,
-                 dt=0.1, maxstep=None, maxmove=None, dtmax=1.0, Nmin=5,
-                 finc=1.1, fdec=0.5,
-                 astart=0.1, fa=0.99, a=0.1, master=None, downhill_check=False,
-                 position_reset_callback=None, force_consistent=None):
+    def __init__(
+        self,
+        atoms,
+        restart=None,
+        logfile="-",
+        trajectory=None,
+        dt=0.1,
+        maxstep=None,
+        maxmove=None,
+        dtmax=1.0,
+        Nmin=5,
+        finc=1.1,
+        fdec=0.5,
+        astart=0.1,
+        fa=0.99,
+        a=0.1,
+        master=None,
+        downhill_check=False,
+        position_reset_callback=None,
+        force_consistent=None,
+    ):
         """Parameters:
 
         atoms: Atoms object
@@ -51,8 +67,15 @@ class FIRE(Optimizer):
             falls back to force_consistent=False if not.  Only meaningful
             when downhill_check is True.
         """
-        Optimizer.__init__(self, atoms, restart, logfile, trajectory,
-                           master, force_consistent=force_consistent)
+        Optimizer.__init__(
+            self,
+            atoms,
+            restart,
+            logfile,
+            trajectory,
+            master,
+            force_consistent=force_consistent,
+        )
 
         self.dt = dt
 
@@ -62,10 +85,12 @@ class FIRE(Optimizer):
             self.maxstep = maxstep
         elif maxmove is not None:
             self.maxstep = maxmove
-            warnings.warn('maxmove is deprecated; please use maxstep',
-                          np.VisibleDeprecationWarning)
+            warnings.warn(
+                "maxmove is deprecated; please use maxstep",
+                np.VisibleDeprecationWarning,
+            )
         else:
-            self.maxstep = self.defaults['maxstep']
+            self.maxstep = self.defaults["maxstep"]
 
         self.dtmax = dtmax
         self.Nmin = Nmin
@@ -93,31 +118,32 @@ class FIRE(Optimizer):
             self.v = np.zeros((len(atoms), 3))
             if self.downhill_check:
                 self.e_last = atoms.get_potential_energy(
-                    force_consistent=self.force_consistent)
+                    force_consistent=self.force_consistent
+                )
                 self.r_last = atoms.get_positions().copy()
                 self.v_last = self.v.copy()
         else:
             is_uphill = False
             if self.downhill_check:
-                e = atoms.get_potential_energy(
-                    force_consistent=self.force_consistent)
+                e = atoms.get_potential_energy(force_consistent=self.force_consistent)
                 # Check if the energy actually decreased
                 if e > self.e_last:
                     # If not, reset to old positions...
                     if self.position_reset_callback is not None:
-                        self.position_reset_callback(atoms, self.r_last, e,
-                                                     self.e_last)
+                        self.position_reset_callback(atoms, self.r_last, e, self.e_last)
                     atoms.set_positions(self.r_last)
                     is_uphill = True
                 self.e_last = atoms.get_potential_energy(
-                    force_consistent=self.force_consistent)
+                    force_consistent=self.force_consistent
+                )
                 self.r_last = atoms.get_positions().copy()
                 self.v_last = self.v.copy()
 
             vf = np.vdot(f, self.v)
             if vf > 0.0 and not is_uphill:
                 self.v = (1.0 - self.a) * self.v + self.a * f / np.sqrt(
-                    np.vdot(f, f)) * np.sqrt(np.vdot(self.v, self.v))
+                    np.vdot(f, f)
+                ) * np.sqrt(np.vdot(self.v, self.v))
                 if self.Nsteps > self.Nmin:
                     self.dt = min(self.dt * self.finc, self.dtmax)
                     self.a *= self.fa

@@ -15,10 +15,10 @@ def view_x3d(atoms):
     Args:
         atoms - ase.Atoms, atoms to be rendered"""
 
-    notebook_style = {'width': '400px', 'height': '300px'}
+    notebook_style = {"width": "400px", "height": "300px"}
 
     temp = StringIO()
-    write_x3d(temp, atoms, format='X3DOM', style=notebook_style)
+    write_x3d(temp, atoms, format="X3DOM", style=notebook_style)
     data = temp.getvalue()
     temp.close()
     return HTML(data)

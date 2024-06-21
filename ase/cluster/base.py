@@ -18,9 +18,9 @@ class ClusterBase:
                 for k in range(size[1]):
                     for l_ in range(size[2]):
                         i = h * (size[1] * size[2]) + k * size[2] + l_
-                        p[m * i:m * (i + 1)] = np.dot([h, k, l_] +
-                                                      self.atomic_basis,
-                                                      self.lattice_basis)
+                        p[m * i : m * (i + 1)] = np.dot(
+                            [h, k, l_] + self.atomic_basis, self.lattice_basis
+                        )
 
             # Project lattice positions on the miller direction.
             n = self.miller_to_direction(miller)
@@ -41,20 +41,22 @@ class ClusterBase:
             pattern = None
             for i in range(len(d)):
                 for n in range(1, (len(d) - i) // 2 + 1):
-                    if np.all(np.abs(d[i:i + n] - d[i + n:i + 2 * n]) < tol):
+                    if np.all(np.abs(d[i : i + n] - d[i + n : i + 2 * n]) < tol):
                         counts = 2
                         for j in range(i + 2 * n, len(d), n):
-                            if np.all(np.abs(d[j:j + n] - d[i:i + n]) < tol):
+                            if np.all(np.abs(d[j : j + n] - d[i : i + n]) < tol):
                                 counts += 1
                         if counts * n * 1.0 / len(d) > 0.5:
-                            pattern = d[i:i + n].copy()
+                            pattern = d[i : i + n].copy()
                             break
                 if pattern is not None:
                     break
 
             if pattern is None:
-                raise RuntimeError('Could not find layer distance for the ' +
-                                   '(%i,%i,%i) surface.' % miller)
+                raise RuntimeError(
+                    "Could not find layer distance for the "
+                    + "(%i,%i,%i) surface." % miller
+                )
             if reverse:
                 pattern = pattern[::-1]
 
@@ -96,7 +98,7 @@ class ClusterBase:
             elif np.abs(d1 - 2 * d2) < 1e-10:
                 ld = np.array([d2])
             else:
-                assert d1 > d2, 'Something is wrong with the layer distance.'
+                assert d1 > d2, "Something is wrong with the layer distance."
                 ld = np.array([d2, d1 - d2])
         else:
             ld = np.array([d1])

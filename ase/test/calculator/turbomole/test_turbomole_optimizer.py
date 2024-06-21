@@ -8,19 +8,19 @@ from ase.build import molecule
 
 @pytest.fixture
 def atoms():
-    return molecule('H2O')
+    return molecule("H2O")
 
 
 @pytest.fixture
 def calc():
     params = {
-        'title': 'water',
-        'basis set name': 'sto-3g hondo',
-        'total charge': 0,
-        'multiplicity': 1,
-        'use dft': True,
-        'density functional': 'b-p',
-        'use resolution of identity': True,
+        "title": "water",
+        "basis set name": "sto-3g hondo",
+        "total charge": 0,
+        "multiplicity": 1,
+        "use dft": True,
+        "density functional": "b-p",
+        "use resolution of identity": True,
     }
     return Turbomole(**params)
 

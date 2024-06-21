@@ -13,7 +13,7 @@ reference_potential_energy = pytest.approx(-1.0)
 def systems_minimum():
     """two atoms at potential minimum"""
 
-    atoms = Atoms('H2', positions=[[0, 0, 0], [0, 0, 2 ** (1.0 / 6.0)]])
+    atoms = Atoms("H2", positions=[[0, 0, 0], [0, 0, 2 ** (1.0 / 6.0)]])
     calc = LennardJones(rc=1.0e5)
     atoms.calc = calc
     yield atoms
@@ -30,8 +30,7 @@ def test_minimum_energy():
 
     for atoms in systems_minimum():
         assert atoms.get_potential_energy() == reference_potential_energy
-        assert atoms.get_potential_energies().sum() == \
-            reference_potential_energy
+        assert atoms.get_potential_energies().sum() == reference_potential_energy
 
 
 def test_minimum_forces():
@@ -44,7 +43,7 @@ def test_system_changes():
     # https://gitlab.com/ase/ase/-/merge_requests/1817
 
     for atoms in systems_minimum():
-        atoms.calc.calculate(atoms, system_changes=['positions'])
+        atoms.calc.calculate(atoms, system_changes=["positions"])
         assert atoms.get_potential_energy() == reference_potential_energy
 
 
@@ -53,13 +52,12 @@ def test_finite_difference():
     h = 1e-10
     r = 8.0
     calc = LennardJones(smooth=True, ro=6, rc=10, sigma=3)
-    atoms = Atoms('H2', positions=[[0, 0, 0], [r, 0, 0]])
-    atoms2 = Atoms('H2', positions=[[0, 0, 0], [r + h, 0, 0]])
+    atoms = Atoms("H2", positions=[[0, 0, 0], [r, 0, 0]])
+    atoms2 = Atoms("H2", positions=[[0, 0, 0], [r + h, 0, 0]])
     atoms.calc = calc
     atoms2.calc = calc
 
-    fd_force = (atoms2.get_potential_energy() -
-                atoms.get_potential_energy()) / h
+    fd_force = (atoms2.get_potential_energy() - atoms.get_potential_energy()) / h
     force = atoms.get_forces()[0, 0]
 
     np.testing.assert_allclose(fd_force, force)

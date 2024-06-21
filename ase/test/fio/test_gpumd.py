@@ -40,72 +40,83 @@ def gpumd_input_text():
 
 @pytest.fixture
 def rocksalt():
-    return bulk('NiO', 'rocksalt', 4.813, cubic=True)
+    return bulk("NiO", "rocksalt", 4.813, cubic=True)
 
 
 def check_against_example_xyz(atoms):
     """Check atoms object against example structure
     (defined in gpumd_input_text)"""
     assert len(atoms) == 16
-    assert set(atoms.symbols) == {'Si', 'C'}
+    assert set(atoms.symbols) == {"Si", "C"}
     assert all(atoms.get_pbc())
     assert len(atoms.info) == len(atoms)
     assert len(atoms.get_velocities()) == len(atoms)
 
     # Check groups
-    groupings = [[[i] for i in range(len(atoms))],
-                 [[i for i, s in
-                   enumerate(atoms.get_chemical_symbols()) if s == 'Si'],
-                  [i for i, s in
-                   enumerate(atoms.get_chemical_symbols()) if s == 'C']]]
-    groups = [[[j for j, group in enumerate(grouping) if i in group][0]
-               for grouping in groupings] for i in range(len(atoms))]
-    assert all(np.array_equal(
-        atoms.info[i]['groups'], np.array(groups[i])) for i in
-        range(len(atoms)))
+    groupings = [
+        [[i] for i in range(len(atoms))],
+        [
+            [i for i, s in enumerate(atoms.get_chemical_symbols()) if s == "Si"],
+            [i for i, s in enumerate(atoms.get_chemical_symbols()) if s == "C"],
+        ],
+    ]
+    groups = [
+        [
+            [j for j, group in enumerate(grouping) if i in group][0]
+            for grouping in groupings
+        ]
+        for i in range(len(atoms))
+    ]
+    assert all(
+        np.array_equal(atoms.info[i]["groups"], np.array(groups[i]))
+        for i in range(len(atoms))
+    )
 
 
 def test_read_gpumd(gpumd_input_text):
     """Test GPUMD default read."""
-    with open('xyz.in', 'w') as fd:
+    with open("xyz.in", "w") as fd:
         fd.write(gpumd_input_text)
-    atoms = io.read('xyz.in', format='gpumd')
+    atoms = io.read("xyz.in", format="gpumd")
     check_against_example_xyz(atoms)
 
 
 def test_read_gpumd_with_specified_species(gpumd_input_text):
     """Test GPUMD read when species are specified."""
-    with open('xyz.in', 'w') as fd:
+    with open("xyz.in", "w") as fd:
         fd.write(gpumd_input_text)
 
-    species = ['Si', 'C']
-    atoms = io.read('xyz.in', format='gpumd', species=species)
+    species = ["Si", "C"]
+    atoms = io.read("xyz.in", format="gpumd", species=species)
     check_against_example_xyz(atoms)
 
 
 def test_read_gpumd_with_specified_masses(gpumd_input_text):
     """Test GPUMD read when isotope masses are specified."""
-    with open('xyz.in', 'w') as fd:
+    with open("xyz.in", "w") as fd:
         fd.write(gpumd_input_text)
 
-    isotope_masses = {'Si': [28.085], 'C': [12.011]}
-    atoms = io.read('xyz.in', format='gpumd',
-                    isotope_masses=isotope_masses)
+    isotope_masses = {"Si": [28.085], "C": [12.011]}
+    atoms = io.read("xyz.in", format="gpumd", isotope_masses=isotope_masses)
     check_against_example_xyz(atoms)
 
 
 def test_load_gpumd_input(gpumd_input_text):
     """Load all information from a GPUMD input file."""
-    with open('xyz.in', 'w') as fd:
+    with open("xyz.in", "w") as fd:
         fd.write(gpumd_input_text)
 
-    species_ref = ['Si', 'C']
-    with open('xyz.in', 'r') as fd:
-        atoms, input_parameters, species =\
-            load_xyz_input_gpumd(fd, species=species_ref)
-    input_parameters_ref = {'N': 16, 'M': 4, 'cutoff': 1.1,
-                            'triclinic': 0, 'has_velocity': 1,
-                            'num_of_groups': 2}
+    species_ref = ["Si", "C"]
+    with open("xyz.in", "r") as fd:
+        atoms, input_parameters, species = load_xyz_input_gpumd(fd, species=species_ref)
+    input_parameters_ref = {
+        "N": 16,
+        "M": 4,
+        "cutoff": 1.1,
+        "triclinic": 0,
+        "has_velocity": 1,
+        "num_of_groups": 2,
+    }
     assert input_parameters == input_parameters_ref
     assert species == species_ref
     check_against_example_xyz(atoms)
@@ -113,10 +124,10 @@ def test_load_gpumd_input(gpumd_input_text):
 
 def test_gpumd_write_cubic(rocksalt):
     """Test write and load with triclinic cell."""
-    rocksalt.write('xyz.in')
+    rocksalt.write("xyz.in")
 
     # Ensure that we get the same structure back when reading
-    readback = io.read('xyz.in')
+    readback = io.read("xyz.in")
     assert np.allclose(rocksalt.positions, readback.positions)
     assert np.allclose(rocksalt.cell, readback.cell)
     assert np.array_equal(rocksalt.numbers, readback.numbers)
@@ -124,10 +135,10 @@ def test_gpumd_write_cubic(rocksalt):
 
 def test_gpumd_write_triclinic(rocksalt):
     """Test write and load with triclinic cell."""
-    rocksalt.write('xyz.in', use_triclinic=True)
-    with open('xyz.in', 'r') as fd:
+    rocksalt.write("xyz.in", use_triclinic=True)
+    with open("xyz.in", "r") as fd:
         readback, input_parameters, _ = load_xyz_input_gpumd(fd)
-    assert input_parameters['triclinic'] == 1
+    assert input_parameters["triclinic"] == 1
     assert np.allclose(rocksalt.positions, readback.positions)
     assert np.allclose(rocksalt.cell, readback.cell)
     assert np.array_equal(rocksalt.numbers, readback.numbers)
@@ -135,41 +146,57 @@ def test_gpumd_write_triclinic(rocksalt):
 
 def test_gpumd_write_with_groupings(rocksalt):
     """Test write and load with groupings."""
-    groupings = [[[i for i, s in
-                   enumerate(rocksalt.get_chemical_symbols()) if s == 'Ni'],
-                  [i for i, s in
-                   enumerate(rocksalt.get_chemical_symbols()) if s == 'O']],
-                 [[i] for i in range(len(rocksalt))]]
-    groups = [[[j for j, group in enumerate(grouping) if i in group][0]
-               for grouping in groupings] for i in range(len(rocksalt))]
-    rocksalt.write('xyz.in', groupings=groupings)
-    with open('xyz.in', 'r') as fd:
+    groupings = [
+        [
+            [i for i, s in enumerate(rocksalt.get_chemical_symbols()) if s == "Ni"],
+            [i for i, s in enumerate(rocksalt.get_chemical_symbols()) if s == "O"],
+        ],
+        [[i] for i in range(len(rocksalt))],
+    ]
+    groups = [
+        [
+            [j for j, group in enumerate(grouping) if i in group][0]
+            for grouping in groupings
+        ]
+        for i in range(len(rocksalt))
+    ]
+    rocksalt.write("xyz.in", groupings=groupings)
+    with open("xyz.in", "r") as fd:
         readback, input_parameters, _ = load_xyz_input_gpumd(fd)
-    assert input_parameters['num_of_groups'] == 2
+    assert input_parameters["num_of_groups"] == 2
     assert len(readback.info) == len(rocksalt)
-    assert all(np.array_equal(
-        readback.info[i]['groups'], np.array(groups[i])) for i in
-        range(len(rocksalt)))
+    assert all(
+        np.array_equal(readback.info[i]["groups"], np.array(groups[i]))
+        for i in range(len(rocksalt))
+    )
 
 
 def test_gpumd_write_with_velocities(rocksalt):
     """Test write and load with velocities."""
-    velocities = np.array([[-0.3, 2.3, 0.7], [0.0, 0.3, 0.8],
-                           [-0.6, 0.9, 0.1], [-1.7, -0.1, -0.5],
-                           [-0.5, 0.0, 0.6], [-0.2, 0.1, 0.5],
-                           [-0.1, 1.4, -1.9], [-1.0, -0.5, -1.2]])
+    velocities = np.array(
+        [
+            [-0.3, 2.3, 0.7],
+            [0.0, 0.3, 0.8],
+            [-0.6, 0.9, 0.1],
+            [-1.7, -0.1, -0.5],
+            [-0.5, 0.0, 0.6],
+            [-0.2, 0.1, 0.5],
+            [-0.1, 1.4, -1.9],
+            [-1.0, -0.5, -1.2],
+        ]
+    )
     rocksalt.set_velocities(velocities)
-    rocksalt.write('xyz.in')
-    with open('xyz.in', 'r') as fd:
+    rocksalt.write("xyz.in")
+    with open("xyz.in", "r") as fd:
         readback, input_parameters, _ = load_xyz_input_gpumd(fd)
-    assert input_parameters['has_velocity'] == 1
+    assert input_parameters["has_velocity"] == 1
     assert np.allclose(readback.get_velocities(), rocksalt.get_velocities())
 
 
 def test_gpumd_write_with_custom_species(rocksalt):
     """Test write and read with custom species definitions."""
-    rocksalt.write('xyz.in', species=['O', 'Ni'])
-    readback = io.read('xyz.in', species=['O', 'Ni'])
+    rocksalt.write("xyz.in", species=["O", "Ni"])
+    readback = io.read("xyz.in", species=["O", "Ni"])
     assert np.allclose(rocksalt.positions, readback.positions)
     assert np.allclose(rocksalt.cell, readback.cell)
     assert np.array_equal(rocksalt.numbers, readback.numbers)
@@ -179,4 +206,4 @@ def test_gpumd_write_raises_exception_on_species_mismatch(rocksalt):
     """Test that writing raises an exception when there is a
     mismatch between species and atoms object."""
     with pytest.raises(ValueError):
-        rocksalt.write('xyz.in', species=['O', 'H'])
+        rocksalt.write("xyz.in", species=["O", "H"])

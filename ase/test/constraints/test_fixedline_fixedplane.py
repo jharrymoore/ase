@@ -13,34 +13,36 @@ def fixture_test_class(request):
 
 
 @pytest.mark.parametrize(
-    'indices', [
+    "indices",
+    [
         0,
         [0],
         [0, 1],
         np.array([0, 1], dtype=np.int64),
-    ]
+    ],
 )
 def test_valid_inputs_indices(fixture_test_class, indices):
     _ = fixture_test_class(indices, [1, 0, 0])
 
 
 @pytest.mark.parametrize(
-    'indices', [
+    "indices",
+    [
         [0, 1, 1],
         [[0, 1], [0, 1]],
-    ]
+    ],
 )
 def test_invalid_inputs_indices(fixture_test_class, indices):
     with pytest.raises(ValueError) as _:
         _ = fixture_test_class(indices, [1, 0, 0])
 
 
-@pytest.mark.parametrize('direction', [[0, 0, 1], (0, 0, 1)])
+@pytest.mark.parametrize("direction", [[0, 0, 1], (0, 0, 1)])
 def test_valid_inputs_direction(fixture_test_class, direction):
     _ = fixture_test_class(0, direction)
 
 
-@pytest.mark.parametrize('direction', [[0, 1], None, "42"])
+@pytest.mark.parametrize("direction", [[0, 1], None, "42"])
 def test_invalid_inputs_direction(fixture_test_class, direction):
     with pytest.raises(Exception) as _:
         _ = FixedLine(0, direction)
@@ -64,20 +66,20 @@ def _check_simple_constraints(constraints, indices):
     return cold_positions, cnew_positions
 
 
-@pytest.mark.parametrize('indices', [0, [0], [0, 1]])
+@pytest.mark.parametrize("indices", [0, [0], [0, 1]])
 def test_repr_fixedline(fixture_test_class, indices):
     repr(FixedLine(indices, [1, 0, 0])) == (
-        "<FixedLine: "
-        "{'indices': " + str(indices) + ", 'direction': [1. 0. 0.]}>"
+        "<FixedLine: " "{'indices': " + str(indices) + ", 'direction': [1. 0. 0.]}>"
     )
 
 
 @pytest.mark.parametrize(
-    'indices,expected', [
+    "indices,expected",
+    [
         (0, 2),
         ([0], 2),
         ([0, 1], 4),
-    ]
+    ],
 )
 def test_removed_dof_fixedline(indices, expected):
     mol = molecule("butadiene")  # `get_removed_dof` requires an `Atoms` object
@@ -85,7 +87,7 @@ def test_removed_dof_fixedline(indices, expected):
     assert constraints.get_removed_dof(atoms=mol) == expected
 
 
-@pytest.mark.parametrize('indices', [[0], [0, 1]])
+@pytest.mark.parametrize("indices", [[0], [0, 1]])
 def test_constrained_optimization_fixedline(indices):
     """
     A single int is not tested as that changes the call from Atoms.positions
@@ -93,27 +95,25 @@ def test_constrained_optimization_fixedline(indices):
     """
     constraints = FixedLine(indices, [1, 0, 0])
 
-    cold_positions, cnew_positions = _check_simple_constraints(
-        constraints, indices
-    )
+    cold_positions, cnew_positions = _check_simple_constraints(constraints, indices)
     assert np.max(np.abs(cnew_positions[:, 1:] - cold_positions[:, 1:])) < 1e-8
     assert np.max(np.abs(cnew_positions[:, 0] - cold_positions[:, 0])) > 1e-8
 
 
-@pytest.mark.parametrize('indices', [0, [0], [0, 1]])
+@pytest.mark.parametrize("indices", [0, [0], [0, 1]])
 def test_repr_fixedplane(fixture_test_class, indices):
     repr(FixedPlane(indices, [1, 0, 0])) == (
-        "<FixedPlane: "
-        "{'indices': " + str(indices) + ", 'direction': [1. 0. 0.]}>"
+        "<FixedPlane: " "{'indices': " + str(indices) + ", 'direction': [1. 0. 0.]}>"
     )
 
 
 @pytest.mark.parametrize(
-    'indices,expected', [
+    "indices,expected",
+    [
         (0, 1),
         ([0], 1),
         ([0, 1], 2),
-    ]
+    ],
 )
 def test_removed_dof_fixedplane(indices, expected):
     mol = molecule("butadiene")  # `get_removed_dof` requires an `Atoms` object
@@ -121,7 +121,7 @@ def test_removed_dof_fixedplane(indices, expected):
     assert constraints.get_removed_dof(atoms=mol) == expected
 
 
-@pytest.mark.parametrize('indices', [[0], [0, 1]])
+@pytest.mark.parametrize("indices", [[0], [0, 1]])
 def test_constrained_optimization_fixedplane(indices):
     """
     A single int is not tested as that changes the call from Atoms.positions
@@ -129,8 +129,6 @@ def test_constrained_optimization_fixedplane(indices):
     """
     constraints = FixedPlane(indices, [1, 0, 0])
 
-    cold_positions, cnew_positions = _check_simple_constraints(
-        constraints, indices
-    )
+    cold_positions, cnew_positions = _check_simple_constraints(constraints, indices)
     assert np.max(np.abs(cnew_positions[:, 1:] - cold_positions[:, 1:])) > 1e-8
     assert np.max(np.abs(cnew_positions[:, 0] - cold_positions[:, 0])) < 1e-8

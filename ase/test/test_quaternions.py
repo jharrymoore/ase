@@ -14,8 +14,11 @@ def axang_rotm(u, theta):
     ucpm = np.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]])
 
     # Rotation matrix
-    rotm = (np.cos(theta) * np.identity(3) + np.sin(theta) * ucpm +
-            (1 - np.cos(theta)) * np.kron(u[:, None], u[None, :]))
+    rotm = (
+        np.cos(theta) * np.identity(3)
+        + np.sin(theta) * ucpm
+        + (1 - np.cos(theta)) * np.kron(u[:, None], u[None, :])
+    )
 
     return rotm
 
@@ -28,14 +31,14 @@ def rand_rotm(rng=np.random.RandomState(0)):
     return axang_rotm(u, theta)
 
 
-def eulang_rotm(a, b, c, mode='zyz'):
+def eulang_rotm(a, b, c, mode="zyz"):
 
     rota = axang_rotm([0, 0, 1], a)
     rotc = axang_rotm([0, 0, 1], c)
 
-    if mode == 'zyz':
+    if mode == "zyz":
         rotb = axang_rotm([0, 1, 0], b)
-    elif mode == 'zxz':
+    elif mode == "zxz":
         rotb = axang_rotm([1, 0, 0], b)
 
     return np.dot(rotc, np.dot(rotb, rota))
@@ -71,7 +74,7 @@ def test_quaternions_gimbal(rng):
     # Second: test the special case of a PI rotation
 
     rotm = np.identity(3)
-    rotm[:2, :2] *= -1               # Rotate PI around z axis
+    rotm[:2, :2] *= -1  # Rotate PI around z axis
 
     q = Quaternion.from_matrix(rotm)
 
@@ -89,8 +92,7 @@ def test_quaternions_overload(rng):
         q1 = Quaternion.from_matrix(rotm1)
         q2 = Quaternion.from_matrix(rotm2)
 
-        assert np.allclose(np.dot(rotm2, rotm1),
-                           (q2 * q1).rotation_matrix())
+        assert np.allclose(np.dot(rotm2, rotm1), (q2 * q1).rotation_matrix())
         # Now test this with a vector
         v = rng.random(3)
 
@@ -103,7 +105,7 @@ def test_quaternions_overload(rng):
 def test_quaternions_euler(rng):
 
     # Fourth: test Euler angles
-    for mode in ['zyz', 'zxz']:
+    for mode in ["zyz", "zxz"]:
         for i in range(TEST_N):
 
             abc = rng.random(3) * 2 * np.pi

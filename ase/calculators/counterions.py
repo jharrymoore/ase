@@ -6,11 +6,10 @@ k_c = units.Hartree * units.Bohr
 
 
 class AtomicCounterIon(Calculator):
-    implemented_properties = ['energy', 'forces']
+    implemented_properties = ["energy", "forces"]
 
-    def __init__(self, charge, epsilon, sigma, sites_per_mol=1,
-                 rc=7.0, width=1.0):
-        """ Counter Ion Calculator.
+    def __init__(self, charge, epsilon, sigma, sites_per_mol=1, rc=7.0, width=1.0):
+        """Counter Ion Calculator.
 
         A very simple, nonbonded (Coulumb and LJ)
         interaction calculator meant for single atom ions
@@ -45,7 +44,7 @@ class AtomicCounterIon(Calculator):
         forces = np.zeros_like(atoms.get_positions())
 
         for m in range(len(atoms)):
-            D = R[m + 1:] - R[m]
+            D = R[m + 1 :] - R[m]
             shift = np.zeros_like(D)
             for i, periodic in enumerate(pbc):
                 if periodic:
@@ -65,25 +64,25 @@ class AtomicCounterIon(Calculator):
             dtdd = np.zeros(len(d))
             dtdd[x12] -= 6.0 / self.width * y * (1.0 - y)
 
-            c6 = (self.sigma**2 / d2)**3
+            c6 = (self.sigma**2 / d2) ** 3
             c12 = c6**2
             e_lj = 4 * self.epsilon * (c12 - c6)
-            e_c = k_c * charges[m + 1:] * charges[m] / d
+            e_c = k_c * charges[m + 1 :] * charges[m] / d
 
             energy += np.dot(t, e_lj)
             energy += np.dot(t, e_c)
 
-            F = (24 * self.epsilon * (2 * c12 - c6) / d2 * t -
-                 e_lj * dtdd / d)[:, None] * D
+            F = (24 * self.epsilon * (2 * c12 - c6) / d2 * t - e_lj * dtdd / d)[
+                :, None
+            ] * D
 
             forces[m] -= F.sum(0)
-            forces[m + 1:] += F
+            forces[m + 1 :] += F
 
-            F = (e_c / d2 * t)[:, None] * D \
-                - (e_c * dtdd / d)[:, None] * D
+            F = (e_c / d2 * t)[:, None] * D - (e_c * dtdd / d)[:, None] * D
 
             forces[m] -= F.sum(0)
-            forces[m + 1:] += F
+            forces[m + 1 :] += F
 
-        self.results['energy'] = energy
-        self.results['forces'] = forces
+        self.results["energy"] = energy
+        self.results["forces"] = forces

@@ -16,11 +16,11 @@ class Calculator:
         return atoms
 
     def get_name(self):
-        """Return the name of the calculator (string).  """
+        """Return the name of the calculator (string)."""
         return self.name
 
     def get_version(self):
-        """Return the version of the calculator (string).  """
+        """Return the version of the calculator (string)."""
         raise NotImplementedError
 
     def get_potential_energy(self, atoms, force_consistent=False):
@@ -43,7 +43,7 @@ class Calculator:
 
     def initialize(self, atoms):
         """Prepare the input files required to
-        start the program (calculator).  """
+        start the program (calculator)."""
         raise NotImplementedError
 
     def read(self, atoms):

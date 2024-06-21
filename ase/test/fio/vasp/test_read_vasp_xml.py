@@ -13,14 +13,24 @@ def test_parse_dfpt_dielectric(testdir):
     outfile = parent / "testdata/vasp/vasprun_dfpt.xml"
     atoms = read(outfile, format="vasp-xml")
 
-    diel = atoms.calc.results['dielectric_tensor']
+    diel = atoms.calc.results["dielectric_tensor"]
 
-    diel_0 = np.diag(3 * [2.6958435, ])
+    diel_0 = np.diag(
+        3
+        * [
+            2.6958435,
+        ]
+    )
     assert np.allclose(diel, diel_0)
 
-    bec = atoms.calc.results['born_effective_charges']
+    bec = atoms.calc.results["born_effective_charges"]
 
-    _bec = np.diag(3 * [1.14672091, ])
+    _bec = np.diag(
+        3
+        * [
+            1.14672091,
+        ]
+    )
 
     bec_0 = np.array([_bec, -_bec])
     assert np.allclose(bec, bec_0)
@@ -83,28 +93,31 @@ def calculation():
     def factory(test_case_index=0):
         # list of dictionaries with the expected values for
         # test calculation xml strings
-        expected_values = [{"e_0_energy": -29.67691672,
-                            "e_fr_energy": -29.67243317,
-                            "forces": np.array([[7.58587457,
-                                                 -5.22590317,
-                                                 6.88227285],
-                                                [-7.58587457,
-                                                 5.22590317,
-                                                 -6.88227285]]),
-                            "stress": np.array([[4300.36902090,
-                                                 -284.50040544,
-                                                 -1468.20603140],
-                                                [-284.50040595,
-                                                 4824.17435683,
-                                                 -1625.37541639],
-                                                [-1468.20603158,
-                                                 -1625.37541697,
-                                                 5726.84189498]])},
-                           {"e_0_energy": -2.0,
-                            "e_fr_energy": -3.0,
-                            "forces": np.full((2, 3), np.pi),
-                            "stress": np.full((3, 3), 2.0 * np.pi)}
-                           ]
+        expected_values = [
+            {
+                "e_0_energy": -29.67691672,
+                "e_fr_energy": -29.67243317,
+                "forces": np.array(
+                    [
+                        [7.58587457, -5.22590317, 6.88227285],
+                        [-7.58587457, 5.22590317, -6.88227285],
+                    ]
+                ),
+                "stress": np.array(
+                    [
+                        [4300.36902090, -284.50040544, -1468.20603140],
+                        [-284.50040595, 4824.17435683, -1625.37541639],
+                        [-1468.20603158, -1625.37541697, 5726.84189498],
+                    ]
+                ),
+            },
+            {
+                "e_0_energy": -2.0,
+                "e_fr_energy": -3.0,
+                "forces": np.full((2, 3), np.pi),
+                "stress": np.full((3, 3), 2.0 * np.pi),
+            },
+        ]
 
         e_fr_energy = expected_values[test_case_index]["e_fr_energy"]
         e_0_energy = expected_values[test_case_index]["e_0_energy"]
@@ -169,7 +182,7 @@ def calculation():
 
 def test_atoms(vasprun):
 
-    atoms = read(StringIO(vasprun), index=-1, format='vasp-xml')
+    atoms = read(StringIO(vasprun), index=-1, format="vasp-xml")
 
     # check number of atoms
     assert len(atoms) == 2
@@ -178,40 +191,34 @@ def test_atoms(vasprun):
     assert all(np.array(atoms.get_chemical_symbols()) == "W")
 
     # check scaled_positions
-    expected_scaled_positions = np.array([[0.0, 0.0, 0.0],
-                                          [0.5, 0.5, 0.5]])
+    expected_scaled_positions = np.array([[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]])
 
-    np.testing.assert_allclose(atoms.get_scaled_positions(),
-                               expected_scaled_positions)
+    np.testing.assert_allclose(atoms.get_scaled_positions(), expected_scaled_positions)
 
-    expected_cell = np.array([[3.16, 0.0, 0.0],
-                              [0.0, 3.16, 0.0],
-                              [0.0, 0.0, 3.16]])
+    expected_cell = np.array([[3.16, 0.0, 0.0], [0.0, 3.16, 0.0], [0.0, 0.0, 3.16]])
 
     # check cell
     np.testing.assert_allclose(atoms.cell, expected_cell)
 
     # check real positions
-    np.testing.assert_allclose(atoms.positions,
-                               expected_scaled_positions @
-                               atoms.cell.complete())
+    np.testing.assert_allclose(
+        atoms.positions, expected_scaled_positions @ atoms.cell.complete()
+    )
 
 
 def check_calculation(vasprun_record, expected_values, index=-1):
 
     from ase.units import GPa
 
-    atoms = read(StringIO(vasprun_record), index=index,
-                 format='vasp-xml')
+    atoms = read(StringIO(vasprun_record), index=index, format="vasp-xml")
 
-    assert atoms.get_potential_energy() == \
-        pytest.approx(expected_values["e_0_energy"])
+    assert atoms.get_potential_energy() == pytest.approx(expected_values["e_0_energy"])
 
-    assert (atoms.get_potential_energy(force_consistent=True) ==
-            pytest.approx(expected_values["e_fr_energy"]))
+    assert atoms.get_potential_energy(force_consistent=True) == pytest.approx(
+        expected_values["e_fr_energy"]
+    )
 
-    np.testing.assert_allclose(atoms.get_forces(),
-                               expected_values["forces"])
+    np.testing.assert_allclose(atoms.get_forces(), expected_values["forces"])
 
     assertion_stress = -0.1 * GPa * expected_values["stress"]
     assertion_stress = assertion_stress.reshape(9)[[0, 4, 8, 5, 2, 1]]
@@ -227,47 +234,46 @@ def test_calculation(vasprun, calculation):
 
 def test_two_calculations(vasprun, calculation):
 
-    (first_calculation_record,
-     first_expected_values) = calculation(test_case_index=0)
+    (first_calculation_record, first_expected_values) = calculation(test_case_index=0)
 
-    (second_calculation_record,
-     second_expected_values) = calculation(test_case_index=1)
+    (second_calculation_record, second_expected_values) = calculation(test_case_index=1)
 
-    extended_vasprun = (vasprun +
-                        first_calculation_record + second_calculation_record)
+    extended_vasprun = vasprun + first_calculation_record + second_calculation_record
     # make sure we have two atoms objects in the list if we read all records
-    images = read(StringIO(extended_vasprun), index=':', format="vasp-xml")
+    images = read(StringIO(extended_vasprun), index=":", format="vasp-xml")
     assert len(images) == 2
     check_calculation(extended_vasprun, second_expected_values)
 
     # make sure we can read the first (second from the end)
     # calculation by passing index=-2
-    check_calculation(extended_vasprun, first_expected_values,
-                      index=-2)
+    check_calculation(extended_vasprun, first_expected_values, index=-2)
 
 
 def test_corrupted_calculation(vasprun, calculation):
 
-    (first_calculation_record,
-     first_expected_values) = calculation(test_case_index=0)
+    (first_calculation_record, first_expected_values) = calculation(test_case_index=0)
 
     second_calculation_record, _ = calculation(test_case_index=1)
 
     # corrupted calculation that does not have energy record.
     # Thus the parser is expected to read the previous one.
-    corrupted_record = '\n'.join(second_calculation_record.split('\n')[:-6])
+    corrupted_record = "\n".join(second_calculation_record.split("\n")[:-6])
     # assert that we actually do have two calculations in the set up
     xml_string = vasprun + first_calculation_record + corrupted_record
-    images = read(StringIO(xml_string), index=':', format="vasp-xml")
+    images = read(StringIO(xml_string), index=":", format="vasp-xml")
     assert len(images) == 1
-    check_calculation(vasprun + first_calculation_record + corrupted_record,
-                      expected_values=first_expected_values,
-                      index=-2)
+    check_calculation(
+        vasprun + first_calculation_record + corrupted_record,
+        expected_values=first_expected_values,
+        index=-2,
+    )
     # check that the parser skips the corrupted last one
     # Should there be a warning in this case?
-    check_calculation(vasprun + first_calculation_record + corrupted_record,
-                      expected_values=first_expected_values,
-                      index=-1)
+    check_calculation(
+        vasprun + first_calculation_record + corrupted_record,
+        expected_values=first_expected_values,
+        index=-1,
+    )
 
 
 def test_vasp_parameters(vasprun, calculation):
@@ -324,24 +330,45 @@ def test_vasp_parameters(vasprun, calculation):
  </parameters>
     """
     calculation_record, _ = calculation()
-    atoms = read(StringIO(vasprun + calculation_record + vasp_parameters),
-                 index=-1, format="vasp-xml")
+    atoms = read(
+        StringIO(vasprun + calculation_record + vasp_parameters),
+        index=-1,
+        format="vasp-xml",
+    )
 
-    expected_parameters = \
-        OrderedDict([('kpoints_generation',
-                      OrderedDict([('divisions', [1, 1, 1]),
-                                   ('usershift', [0.0, 0.0, 0.0]),
-                                   ('genvec1', [1.0, 0.0, 0.0]),
-                                   ('genvec2', [0.0, 1.0, 0.0]),
-                                   ('genvec3', [0.0, 0.0, 1.0]),
-                                   ('shift', [0.0, 0.0, 0.0])])),
-                     ('prec', 'medium'), ('enmax', 500.0),
-                     ('enaug', 373.438), ('ediff', 1.0),
-                     ('ismear', 1), ('sigma', 0.1),
-                     ('kspacing', 0.5), ('istart', 0),
-                     ('icharg', 2), ('iniwav', 1),
-                     ('lasph', False), ('lmetagga', False),
-                     ('nsw', 10000), ('ibrion', 11), ('ediffg', 10.0),
-                     ('isym', 0), ('symprec', 1e-05)])
+    expected_parameters = OrderedDict(
+        [
+            (
+                "kpoints_generation",
+                OrderedDict(
+                    [
+                        ("divisions", [1, 1, 1]),
+                        ("usershift", [0.0, 0.0, 0.0]),
+                        ("genvec1", [1.0, 0.0, 0.0]),
+                        ("genvec2", [0.0, 1.0, 0.0]),
+                        ("genvec3", [0.0, 0.0, 1.0]),
+                        ("shift", [0.0, 0.0, 0.0]),
+                    ]
+                ),
+            ),
+            ("prec", "medium"),
+            ("enmax", 500.0),
+            ("enaug", 373.438),
+            ("ediff", 1.0),
+            ("ismear", 1),
+            ("sigma", 0.1),
+            ("kspacing", 0.5),
+            ("istart", 0),
+            ("icharg", 2),
+            ("iniwav", 1),
+            ("lasph", False),
+            ("lmetagga", False),
+            ("nsw", 10000),
+            ("ibrion", 11),
+            ("ediffg", 10.0),
+            ("isym", 0),
+            ("symprec", 1e-05),
+        ]
+    )
 
     assert atoms.calc.parameters == expected_parameters

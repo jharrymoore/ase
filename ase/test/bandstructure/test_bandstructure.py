@@ -8,25 +8,25 @@ from ase.spectrum.band_structure import BandStructure
 
 
 def test_bandstructure(testdir, plt):
-    atoms = bulk('Cu')
-    path = special_paths['fcc']
-    atoms.calc = FreeElectrons(nvalence=1,
-                               kpts={'path': path, 'npoints': 200})
+    atoms = bulk("Cu")
+    path = special_paths["fcc"]
+    atoms.calc = FreeElectrons(nvalence=1, kpts={"path": path, "npoints": 200})
     atoms.get_potential_energy()
     bs = atoms.calc.band_structure()
     coords, labelcoords, labels = bs.get_labels()
     print(labels)
-    bs.write('hmm.json')
-    bs = BandStructure.read('hmm.json')
+    bs.write("hmm.json")
+    bs = BandStructure.read("hmm.json")
     coords, labelcoords, labels = bs.get_labels()
     print(labels)
-    assert ''.join(labels) == 'GXWKGLUWLKUX'
-    bs.plot(emax=10, filename='bs.png')
+    assert "".join(labels) == "GXWKGLUWLKUX"
+    bs.plot(emax=10, filename="bs.png")
 
 
 @pytest.fixture
 def bs():
     from ase.lattice import RHL
+
     rhl = RHL(4.0, 65.0)
     path = rhl.bandpath()
     return path.free_electron_band_structure()

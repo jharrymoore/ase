@@ -10,7 +10,7 @@ from ase.optimize.precon import Exp, PreconLBFGS
 @pytest.mark.slow
 def test_precon_amin():
     cu0 = bulk("Cu") * (2, 2, 2)
-    sigma = cu0.get_distance(0, 1) * (2. ** (-1. / 6))
+    sigma = cu0.get_distance(0, 1) * (2.0 ** (-1.0 / 6))
     lj = LennardJones(sigma=sigma)
 
     # perturb the cell
@@ -25,8 +25,13 @@ def test_precon_amin():
         for a_min in [None, 1e-3]:
             atoms = cu0.copy()
             atoms.calc = lj
-            opt = PreconLBFGS(atoms, precon=Exp(A=3), use_armijo=use_armijo,
-                              a_min=a_min, variable_cell=True)
+            opt = PreconLBFGS(
+                atoms,
+                precon=Exp(A=3),
+                use_armijo=use_armijo,
+                a_min=a_min,
+                variable_cell=True,
+            )
             opt.run(fmax=1e-3, smax=1e-4)
             energies.append(atoms.get_potential_energy())
 

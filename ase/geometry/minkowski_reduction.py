@@ -4,12 +4,11 @@ from ase.utils import pbc2pbc
 from ase.cell import Cell
 
 
-TOL = 1E-12
-MAX_IT = 100000    # in practice this is not exceeded
+TOL = 1e-12
+MAX_IT = 100000  # in practice this is not exceeded
 
 
 class CycleChecker:
-
     def __init__(self, d):
         assert d in [2, 3]
 
@@ -87,7 +86,7 @@ def reduction_full(B):
 
     for it in range(MAX_IT):
         # Sort vectors by norm
-        H = H[np.argsort(norms, kind='merge')]
+        H = H[np.argsort(norms, kind="merge")]
 
         # Gauss-reduce smallest two vectors
         hw = H[2]
@@ -170,25 +169,25 @@ def is_minkowski_reduced(cell, pbc=True):
         norms = np.linalg.norm(cell, axis=1)
         cell = cell[np.argsort(norms)[[1, 2, 0]]]
 
-        A = [[0, 1, 0],
-             [1, -1, 0],
-             [1, 1, 0]]
+        A = [[0, 1, 0], [1, -1, 0], [1, 1, 0]]
         lhs = np.linalg.norm(A @ cell, axis=1)
         norms = np.linalg.norm(cell, axis=1)
         rhs = norms[[0, 1, 1]]
     else:
-        A = [[0, 1, 0],
-             [0, 0, 1],
-             [1, 1, 0],
-             [1, 0, 1],
-             [0, 1, 1],
-             [1, -1, 0],
-             [1, 0, -1],
-             [0, 1, -1],
-             [1, 1, 1],
-             [1, -1, 1],
-             [1, 1, -1],
-             [1, -1, -1]]
+        A = [
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 1, 0],
+            [1, 0, 1],
+            [0, 1, 1],
+            [1, -1, 0],
+            [1, 0, -1],
+            [0, 1, -1],
+            [1, 1, 1],
+            [1, -1, 1],
+            [1, 1, -1],
+            [1, -1, -1],
+        ]
         lhs = np.linalg.norm(A @ cell, axis=1)
         norms = np.linalg.norm(cell, axis=1)
         rhs = norms[[0, 1, 1, 2, 2, 1, 2, 2, 2, 2, 2, 2]]
@@ -231,7 +230,7 @@ def minkowski_reduce(cell, pbc=True):
 
     if dim == 2:
         # permute cell so that first two vectors are the periodic ones
-        perm = np.argsort(pbc, kind='merge')[::-1]    # stable sort
+        perm = np.argsort(pbc, kind="merge")[::-1]  # stable sort
         pcell = cell[perm][:, perm]
 
         # perform gauss reduction

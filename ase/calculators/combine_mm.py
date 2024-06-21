@@ -8,10 +8,11 @@ k_c = units.Hartree * units.Bohr
 
 
 class CombineMM(Calculator):
-    implemented_properties = ['energy', 'forces']
+    implemented_properties = ["energy", "forces"]
 
-    def __init__(self, idx, apm1, apm2, calc1, calc2,
-                 sig1, eps1, sig2, eps2, rc=7.0, width=1.0):
+    def __init__(
+        self, idx, apm1, apm2, calc1, calc2, sig1, eps1, sig2, eps2, rc=7.0, width=1.0
+    ):
         """A calculator that combines two MM calculators
         (TIPnP, Counterions, ...)
 
@@ -77,9 +78,9 @@ class CombineMM(Calculator):
         self.cell = atoms.cell
         self.pbc = atoms.pbc
 
-        self.sigma, self.epsilon =\
-            combine_lj_lorenz_berthelot(self.sig1, self.sig2,
-                                        self.eps1, self.eps2)
+        self.sigma, self.epsilon = combine_lj_lorenz_berthelot(
+            self.sig1, self.sig2, self.eps1, self.eps2
+        )
 
         self.make_virtual_mask()
 
@@ -126,8 +127,8 @@ class CombineMM(Calculator):
         f12[self.mask] += fi1
         f12[~self.mask] += fi2
 
-        self.results['energy'] = e_c + e_lj + e1 + e2
-        self.results['forces'] = f_c + f_lj + f12
+        self.results["energy"] = e_c + e_lj + e1 + e2
+        self.results["forces"] = f_c + f_lj + f12
 
     def get_virtual_charges(self, atoms):
         if self.atoms1 is None:
@@ -165,12 +166,10 @@ class CombineMM(Calculator):
                 ct1 += 1
             if not self.mask[i]:
                 ct2 += 1
-            if ((ct2 == self.apm2) &
-                    (self.apm2 != self.atoms2.calc.sites_per_mol)):
+            if (ct2 == self.apm2) & (self.apm2 != self.atoms2.calc.sites_per_mol):
                 virtual_mask.append(False)
                 ct2 = 0
-            if ((ct1 == self.apm1) &
-                    (self.apm1 != self.atoms1.calc.sites_per_mol)):
+            if (ct1 == self.apm1) & (self.apm1 != self.atoms1.calc.sites_per_mol):
                 virtual_mask.append(True)
                 ct1 = 0
 
@@ -201,10 +200,10 @@ class CombineMM(Calculator):
                 for i, periodic in enumerate(self.pbc):
                     if periodic:
                         L = cell[i]
-                        shift[i] = (r00[i] + L / 2.) % L - L / 2. - r00[i]
+                        shift[i] = (r00[i] + L / 2.0) % L - L / 2.0 - r00[i]
                 r00 += shift
 
-                d00 = (r00**2).sum()**0.5
+                d00 = (r00**2).sum() ** 0.5
                 t = 1
                 dtdd = 0
                 if d00 > self.rc:
@@ -285,17 +284,20 @@ class CombineMM(Calculator):
                     continue
                 R = pos2 - p1[qa, :] + shift[:, None]
                 d2 = (R**2).sum(2)
-                c6 = (sig[qa, :]**2 / d2)**3
+                c6 = (sig[qa, :] ** 2 / d2) ** 3
                 c12 = c6**2
                 e = 4 * eps[qa, :] * (c12 - c6)
                 energy += np.dot(e.sum(1), t)
-                f = t[:, None, None] * (24 * eps[qa, :] *
-                                        (2 * c12 - c6) / d2)[:, :, None] * R
-                f00 = - (e.sum(1) * dt / d00)[:, None] * R00
+                f = (
+                    t[:, None, None]
+                    * (24 * eps[qa, :] * (2 * c12 - c6) / d2)[:, :, None]
+                    * R
+                )
+                f00 = -(e.sum(1) * dt / d00)[:, None] * R00
                 f2 += f.reshape((-1, 3))
                 f1[q * self.apm1 + qa, :] -= f.sum(0).sum(0)
                 f1[q * self.apm1, :] -= f00.sum(0)
-                f2[::self.apm2, :] += f00
+                f2[:: self.apm2, :] += f00
 
         return energy, f1, f2
 

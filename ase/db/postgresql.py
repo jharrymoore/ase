@@ -4,19 +4,18 @@ import numpy as np
 from psycopg2 import connect
 from psycopg2.extras import execute_values
 
-from ase.db.sqlite import (init_statements, index_statements, VERSION,
-                           SQLite3Database)
-from ase.io.jsonio import (encode as ase_encode,
-                           create_ase_object, create_ndarray)
+from ase.db.sqlite import init_statements, index_statements, VERSION, SQLite3Database
+from ase.io.jsonio import encode as ase_encode, create_ase_object, create_ndarray
 
 jsonb_indices = [
-    'CREATE INDEX idxkeys ON systems USING GIN (key_value_pairs);',
-    'CREATE INDEX idxcalc ON systems USING GIN (calculator_parameters);']
+    "CREATE INDEX idxkeys ON systems USING GIN (key_value_pairs);",
+    "CREATE INDEX idxcalc ON systems USING GIN (calculator_parameters);",
+]
 
 
 def remove_nan_and_inf(obj):
     if isinstance(obj, float) and not np.isfinite(obj):
-        return {'__special_number__': str(obj)}
+        return {"__special_number__": str(obj)}
     if isinstance(obj, list):
         return [remove_nan_and_inf(x) for x in obj]
     if isinstance(obj, dict):
@@ -27,8 +26,8 @@ def remove_nan_and_inf(obj):
 
 
 def insert_nan_and_inf(obj):
-    if isinstance(obj, dict) and '__special_number__' in obj:
-        return float(obj['__special_number__'])
+    if isinstance(obj, dict) and "__special_number__" in obj:
+        return float(obj["__special_number__"])
     if isinstance(obj, list):
         return [insert_nan_and_inf(x) for x in obj]
     if isinstance(obj, dict):
@@ -61,43 +60,48 @@ class Cursor:
         return self.cur.fetchall()
 
     def execute(self, statement, *args):
-        self.cur.execute(statement.replace('?', '%s'), *args)
+        self.cur.execute(statement.replace("?", "%s"), *args)
 
     def executemany(self, statement, *args):
         if len(args[0]) > 0:
             N = len(args[0][0])
         else:
             return
-        if 'INSERT INTO systems' in statement:
-            q = 'DEFAULT' + ', ' + ', '.join('?' * N)  # DEFAULT for id
+        if "INSERT INTO systems" in statement:
+            q = "DEFAULT" + ", " + ", ".join("?" * N)  # DEFAULT for id
         else:
-            q = ', '.join('?' * N)
-        statement = statement.replace('({})'.format(q), '%s')
-        q = '({})'.format(q.replace('?', '%s'))
+            q = ", ".join("?" * N)
+        statement = statement.replace("({})".format(q), "%s")
+        q = "({})".format(q.replace("?", "%s"))
 
-        execute_values(self.cur, statement.replace('?', '%s'),
-                       argslist=args[0], template=q, page_size=len(args[0]))
+        execute_values(
+            self.cur,
+            statement.replace("?", "%s"),
+            argslist=args[0],
+            template=q,
+            page_size=len(args[0]),
+        )
 
 
 def insert_ase_and_ndarray_objects(obj):
     if isinstance(obj, dict):
-        objtype = obj.pop('__ase_objtype__', None)
+        objtype = obj.pop("__ase_objtype__", None)
         if objtype is not None:
-            return create_ase_object(objtype,
-                                     insert_ase_and_ndarray_objects(obj))
-        data = obj.get('__ndarray__')
+            return create_ase_object(objtype, insert_ase_and_ndarray_objects(obj))
+        data = obj.get("__ndarray__")
         if data is not None:
             return create_ndarray(*data)
-        return {key: insert_ase_and_ndarray_objects(value)
-                for key, value in obj.items()}
+        return {
+            key: insert_ase_and_ndarray_objects(value) for key, value in obj.items()
+        }
     if isinstance(obj, list):
         return [insert_ase_and_ndarray_objects(value) for value in obj]
     return obj
 
 
 class PostgreSQLDatabase(SQLite3Database):
-    type = 'postgresql'
-    default = 'DEFAULT'
+    type = "postgresql"
+    default = "DEFAULT"
 
     def encode(self, obj, binary=False):
         return ase_encode(remove_nan_and_inf(obj))
@@ -135,33 +139,37 @@ class PostgreSQLDatabase(SQLite3Database):
 
         cur = con.cursor()
         cur.execute("show search_path;")
-        schema = cur.fetchone()[0].split(', ')
+        schema = cur.fetchone()[0].split(", ")
         if schema[0] == '"$user"':
             schema = schema[1]
         else:
             schema = schema[0]
 
-        cur.execute("""
+        cur.execute(
+            """
         SELECT EXISTS(select * from information_schema.tables where
         table_name='information' and table_schema='{}');
-        """.format(schema))
+        """.format(
+                schema
+            )
+        )
 
         if not cur.fetchone()[0]:  # information schema doesn't exist.
             # Initialize database:
-            sql = ';\n'.join(init_statements)
+            sql = ";\n".join(init_statements)
             sql = schema_update(sql)
             cur.execute(sql)
             if self.create_indices:
-                cur.execute(';\n'.join(index_statements))
-                cur.execute(';\n'.join(jsonb_indices))
+                cur.execute(";\n".join(index_statements))
+                cur.execute(";\n".join(jsonb_indices))
             con.commit()
             self.version = VERSION
         else:
-            cur.execute('select * from information;')
+            cur.execute("select * from information;")
             for name, value in cur.fetchall():
-                if name == 'version':
+                if name == "version":
                     self.version = int(value)
-                elif name == 'metadata':
+                elif name == "metadata":
                     self._metadata = json.loads(value)
 
         assert 5 < self.version <= VERSION
@@ -171,41 +179,51 @@ class PostgreSQLDatabase(SQLite3Database):
     def get_offset_string(self, offset, limit=None):
         # postgresql allows you to set offset without setting limit;
         # very practical
-        return '\nOFFSET {0}'.format(offset)
+        return "\nOFFSET {0}".format(offset)
 
     def get_last_id(self, cur):
-        cur.execute('SELECT last_value FROM systems_id_seq')
+        cur.execute("SELECT last_value FROM systems_id_seq")
         id = cur.fetchone()[0]
         return int(id)
 
 
 def schema_update(sql):
-    for a, b in [('REAL', 'DOUBLE PRECISION'),
-                 ('INTEGER PRIMARY KEY AUTOINCREMENT',
-                  'SERIAL PRIMARY KEY')]:
+    for a, b in [
+        ("REAL", "DOUBLE PRECISION"),
+        ("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY"),
+    ]:
         sql = sql.replace(a, b)
 
-    arrays_1D = ['numbers', 'initial_magmoms', 'initial_charges', 'masses',
-                 'tags', 'momenta', 'stress', 'dipole', 'magmoms', 'charges']
+    arrays_1D = [
+        "numbers",
+        "initial_magmoms",
+        "initial_charges",
+        "masses",
+        "tags",
+        "momenta",
+        "stress",
+        "dipole",
+        "magmoms",
+        "charges",
+    ]
 
-    arrays_2D = ['positions', 'cell', 'forces']
+    arrays_2D = ["positions", "cell", "forces"]
 
-    txt2jsonb = ['calculator_parameters', 'key_value_pairs']
+    txt2jsonb = ["calculator_parameters", "key_value_pairs"]
 
     for column in arrays_1D:
-        if column in ['numbers', 'tags']:
-            dtype = 'INTEGER'
+        if column in ["numbers", "tags"]:
+            dtype = "INTEGER"
         else:
-            dtype = 'DOUBLE PRECISION'
-        sql = sql.replace('{} BLOB,'.format(column),
-                          '{} {}[],'.format(column, dtype))
+            dtype = "DOUBLE PRECISION"
+        sql = sql.replace("{} BLOB,".format(column), "{} {}[],".format(column, dtype))
     for column in arrays_2D:
-        sql = sql.replace('{} BLOB,'.format(column),
-                          '{} DOUBLE PRECISION[][],'.format(column))
+        sql = sql.replace(
+            "{} BLOB,".format(column), "{} DOUBLE PRECISION[][],".format(column)
+        )
     for column in txt2jsonb:
-        sql = sql.replace('{} TEXT,'.format(column),
-                          '{} JSONB,'.format(column))
+        sql = sql.replace("{} TEXT,".format(column), "{} JSONB,".format(column))
 
-    sql = sql.replace('data BLOB,', 'data JSONB,')
+    sql = sql.replace("data BLOB,", "data JSONB,")
 
     return sql

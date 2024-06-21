@@ -8,8 +8,8 @@ from ase.build import fcc100, add_adsorbate
 def main():
     # 2x2-Al(001) surface with 3 layers and an
     # Au atom adsorbed in a hollow site:
-    slab = fcc100('Al', size=(2, 2, 3))
-    add_adsorbate(slab, 'Au', 1.7, 'hollow')
+    slab = fcc100("Al", size=(2, 2, 3))
+    add_adsorbate(slab, "Au", 1.7, "hollow")
     slab.center(axis=2, vacuum=4.0)
 
     # Fix second and third layers:
@@ -48,5 +48,5 @@ def main():
         image.calc = EMT()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

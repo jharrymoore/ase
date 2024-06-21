@@ -26,14 +26,13 @@ wout = """
 
 def test_wout():
     file = io.StringIO(wout)
-    hhx = read(file, format='wout')
-    assert ''.join(hhx.symbols) == 'HHX'
+    hhx = read(file, format="wout")
+    assert "".join(hhx.symbols) == "HHX"
 
 
 def test_wout_all():
     """Check reading of extra stuff."""
     file = io.StringIO(wout)
     result = read_wout_all(file)
-    assert result['spreads'][0] == 0.85842654
-    assert abs(result['centers'] -
-               result['atoms'].get_center_of_mass()).max() < 1e-5
+    assert result["spreads"][0] == 0.85842654
+    assert abs(result["centers"] - result["atoms"].get_center_of_mass()).max() < 1e-5

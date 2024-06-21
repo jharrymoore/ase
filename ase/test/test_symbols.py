@@ -6,7 +6,7 @@ from ase.symbols import Symbols
 
 @pytest.fixture
 def atoms():
-    return molecule('CH3CH2OH')
+    return molecule("CH3CH2OH")
 
 
 @pytest.fixture
@@ -16,15 +16,15 @@ def symbols(atoms):
 
 def test_symbols_indexing(atoms):
     print(atoms.symbols)
-    atoms.symbols[0] = 'X'
-    atoms.symbols[2:4] = 'Pu'
+    atoms.symbols[0] = "X"
+    atoms.symbols[2:4] = "Pu"
     atoms.numbers[6:8] = 79
 
     assert atoms.numbers[0] == 0
     assert (atoms.numbers[2:4] == 94).all()
-    assert sum(atoms.symbols == 'Au') == 2
-    assert (atoms.symbols[6:8] == 'Au').all()
-    assert (atoms.symbols[:3] == 'XCPu').all()
+    assert sum(atoms.symbols == "Au") == 2
+    assert (atoms.symbols[6:8] == "Au").all()
+    assert (atoms.symbols[:3] == "XCPu").all()
 
     print(atoms)
     print(atoms.numbers)
@@ -41,22 +41,22 @@ def test_str_roundtrip(symbols):
 
 
 def test_manipulation_with_string():
-    atoms = molecule('H2O')
-    atoms.symbols = 'Au2Ag'
+    atoms = molecule("H2O")
+    atoms.symbols = "Au2Ag"
     print(atoms.symbols)
-    assert (atoms.symbols == 'Au2Ag').all()
+    assert (atoms.symbols == "Au2Ag").all()
 
 
 def test_search(atoms):
-    indices = atoms.symbols.search('H')
+    indices = atoms.symbols.search("H")
     assert len(indices) > 0
-    assert (atoms.symbols[indices] == 'H').all()
-    assert (atoms[indices].symbols == 'H').all()
+    assert (atoms.symbols[indices] == "H").all()
+    assert (atoms[indices].symbols == "H").all()
 
 
 def test_search_two(atoms):
-    indices = atoms.symbols.search('CO')
-    assert all(sym in {'C', 'O'} for sym in atoms.symbols[indices])
+    indices = atoms.symbols.search("CO")
+    assert all(sym in {"C", "O"} for sym in atoms.symbols[indices])
 
 
 def test_species(atoms):
@@ -81,6 +81,6 @@ def test_symbols_to_atoms(symbols):
 
 
 def test_symbols_to_formula():
-    symstr = 'CH3CH2OH'
+    symstr = "CH3CH2OH"
     symbols = Symbols.fromsymbols(symstr)
     assert str(symbols.formula) == symstr

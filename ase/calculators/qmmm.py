@@ -1,16 +1,21 @@
 import numpy as np
+import time
+from ase import neighborlist
 
 from ase.calculators.calculator import Calculator
 from ase.data import atomic_numbers
 from ase.utils import IOContext
 from ase.geometry import get_distances
 from ase.cell import Cell
+from ase.io import read, write
+from ase import Atoms
+from typing import List
 
 
 class SimpleQMMM(Calculator):
     """Simple QMMM calculator."""
 
-    implemented_properties = ['energy', 'forces']
+    implemented_properties = ["energy", "forces"]
 
     def __init__(self, selection, qmcalc, mmcalc1, mmcalc2, vacuum=None):
         """SimpleQMMM object.
@@ -48,7 +53,7 @@ class SimpleQMMM(Calculator):
         Calculator.__init__(self)
 
     def _get_name(self):
-        return f'{self.qmcalc.name}-{self.mmcalc1.name}+{self.mmcalc1.name}'
+        return f"{self.qmcalc.name}-{self.mmcalc1.name}+{self.mmcalc1.name}"
 
     def initialize_qm(self, atoms):
         constraints = atoms.constraints
@@ -68,8 +73,7 @@ class SimpleQMMM(Calculator):
 
         self.qmatoms.positions = atoms.positions[self.selection]
         if self.vacuum:
-            self.qmatoms.positions += (self.center -
-                                       self.qmatoms.positions.mean(axis=0))
+            self.qmatoms.positions += self.center - self.qmatoms.positions.mean(axis=0)
 
         energy = self.qmcalc.get_potential_energy(self.qmatoms)
         qmforces = self.qmcalc.get_forces(self.qmatoms)
@@ -83,16 +87,25 @@ class SimpleQMMM(Calculator):
         energy -= self.mmcalc1.get_potential_energy(self.qmatoms)
         forces[self.selection] -= self.mmcalc1.get_forces(self.qmatoms)
 
-        self.results['energy'] = energy
-        self.results['forces'] = forces
+        self.results["energy"] = energy
+        self.results["forces"] = forces
 
 
 class EIQMMM(Calculator, IOContext):
     """Explicit interaction QMMM calculator."""
-    implemented_properties = ['energy', 'forces']
 
-    def __init__(self, selection, qmcalc, mmcalc, interaction,
-                 vacuum=None, embedding=None, output=None):
+    implemented_properties = ["energy", "forces"]
+
+    def __init__(
+        self,
+        selection,
+        qmcalc,
+        mmcalc,
+        interaction,
+        vacuum=None,
+        embedding=None,
+        output=None,
+    ):
         """EIQMMM object.
 
         The energy is calculated as::
@@ -140,7 +153,7 @@ class EIQMMM(Calculator, IOContext):
         Calculator.__init__(self)
 
     def _get_name(self):
-        return f'{self.qmcalc.name}+{self.interaction.name}+{self.mmcalc.name}'
+        return f"{self.qmcalc.name}+{self.interaction.name}+{self.mmcalc.name}"
 
     def initialize(self, atoms):
         self.mask = np.zeros(len(atoms), bool)
@@ -157,8 +170,11 @@ class EIQMMM(Calculator, IOContext):
         if self.vacuum:
             self.qmatoms.center(vacuum=self.vacuum)
             self.center = self.qmatoms.positions.mean(axis=0)
-            print('Size of QM-cell after centering:',
-                  self.qmatoms.cell.diagonal(), file=self.output)
+            print(
+                "Size of QM-cell after centering:",
+                self.qmatoms.cell.diagonal(),
+                file=self.output,
+            )
 
         self.qmatoms.calc = self.qmcalc
         self.mmatoms.calc = self.mmcalc
@@ -167,7 +183,7 @@ class EIQMMM(Calculator, IOContext):
             self.embedding = Embedding()
 
         self.embedding.initialize(self.qmatoms, self.mmatoms)
-        print('Embedding:', self.embedding, file=self.output)
+        print("Embedding:", self.embedding, file=self.output)
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -187,14 +203,19 @@ class EIQMMM(Calculator, IOContext):
         self.embedding.update(shift)
 
         ienergy, iqmforces, immforces = self.interaction.calculate(
-            self.qmatoms, self.mmatoms, shift)
+            self.qmatoms, self.mmatoms, shift
+        )
 
         qmenergy = self.qmatoms.get_potential_energy()
         mmenergy = self.mmatoms.get_potential_energy()
         energy = ienergy + qmenergy + mmenergy
 
-        print('Energies: {0:12.3f} {1:+12.3f} {2:+12.3f} = {3:12.3f}'
-              .format(ienergy, qmenergy, mmenergy, energy), file=self.output)
+        print(
+            "Energies: {0:12.3f} {1:+12.3f} {2:+12.3f} = {3:12.3f}".format(
+                ienergy, qmenergy, mmenergy, energy
+            ),
+            file=self.output,
+        )
 
         qmforces = self.qmatoms.get_forces()
         mmforces = self.mmatoms.get_forces()
@@ -205,8 +226,8 @@ class EIQMMM(Calculator, IOContext):
         forces[self.mask] = qmforces + iqmforces
         forces[~self.mask] = mmforces + immforces
 
-        self.results['energy'] = energy
-        self.results['forces'] = forces
+        self.results["energy"] = energy
+        self.results["forces"] = forces
 
 
 def wrap(D, cell, pbc):
@@ -228,7 +249,7 @@ class Embedding:
         self.parameters = parameters
 
     def __repr__(self):
-        return 'Embedding(molecule_size={0})'.format(self.molecule_size)
+        return "Embedding(molecule_size={0})".format(self.molecule_size)
 
     def initialize(self, qmatoms, mmatoms):
         """Hook up embedding object to QM and MM atoms objects."""
@@ -236,8 +257,7 @@ class Embedding:
         self.mmatoms = mmatoms
         charges = mmatoms.calc.get_virtual_charges(mmatoms)
         self.pcpot = qmatoms.calc.embed(charges, **self.parameters)
-        self.virtual_molecule_size = (self.molecule_size *
-                                      len(charges) // len(mmatoms))
+        self.virtual_molecule_size = self.molecule_size * len(charges) // len(mmatoms)
 
     def update(self, shift):
         """Update point-charge positions."""
@@ -245,7 +265,7 @@ class Embedding:
         # center of the the QM box, but avoid ripping molecules apart:
         qmcenter = self.qmatoms.positions.mean(axis=0)
         # if counter ions are used, then molecule_size has more than 1 value
-        if self.mmatoms.calc.name == 'combinemm':
+        if self.mmatoms.calc.name == "combinemm":
             mask1 = self.mmatoms.calc.mask
             mask2 = ~mask1
             vmask1 = self.mmatoms.calc.virtual_mask
@@ -259,12 +279,12 @@ class Embedding:
             pos2 = pos[mask2].reshape((-1, apm2, 3))
             pos = (pos1, pos2)
         else:
-            pos = (self.mmatoms.positions, )
+            pos = (self.mmatoms.positions,)
             apm1 = self.molecule_size
             apm2 = self.molecule_size
             # This is only specific to calculators where apm != spm,
             # i.e. TIP4P. Non-native MM calcs do not have this attr.
-            if hasattr(self.mmatoms.calc, 'sites_per_mol'):
+            if hasattr(self.mmatoms.calc, "sites_per_mol"):
                 spm1 = self.mmatoms.calc.sites_per_mol
                 spm2 = self.mmatoms.calc.sites_per_mol
             else:
@@ -300,13 +320,13 @@ class Embedding:
         positions = wrap_pos.copy()
         positions = self.mmatoms.calc.add_virtual_sites(positions)
 
-        if self.mmatoms.calc.name == 'combinemm':
+        if self.mmatoms.calc.name == "combinemm":
             com_pv = np.zeros_like(positions)
             for ii, m in enumerate((vmask1, vmask2)):
                 com_pv[m] = com_all[ii]
 
         # compatibility with gpaw versions w/o LR cut in PointChargePotential
-        if 'rc2' in self.parameters:
+        if "rc2" in self.parameters:
             self.pcpot.set_positions(positions, com_pv=com_pv)
         else:
             self.pcpot.set_positions(positions)
@@ -317,8 +337,7 @@ class Embedding:
         return self.mmatoms.calc.redistribute_forces(f)
 
 
-def combine_lj_lorenz_berthelot(sigmaqm, sigmamm,
-                                epsilonqm, epsilonmm):
+def combine_lj_lorenz_berthelot(sigmaqm, sigmamm, epsilonqm, epsilonmm):
     """Combine LJ parameters according to the Lorenz-Berthelot rule"""
     sigma = []
     epsilon = []
@@ -327,15 +346,15 @@ def combine_lj_lorenz_berthelot(sigmaqm, sigmamm,
         numcalcs = len(sigmamm)
     else:
         numcalcs = 1  # if only 1 mm calc, eps and sig are simply np arrays
-        sigmamm = (sigmamm, )
-        epsilonmm = (epsilonmm, )
+        sigmamm = (sigmamm,)
+        epsilonmm = (epsilonmm,)
     for cc in range(numcalcs):
         sigma_c = np.zeros((len(sigmaqm), len(sigmamm[cc])))
         epsilon_c = np.zeros_like(sigma_c)
 
         for ii in range(len(sigmaqm)):
             sigma_c[ii, :] = (sigmaqm[ii] + sigmamm[cc]) / 2
-            epsilon_c[ii, :] = (epsilonqm[ii] * epsilonmm[cc])**0.5
+            epsilon_c[ii, :] = (epsilonqm[ii] * epsilonmm[cc]) ** 0.5
         sigma.append(sigma_c)
         epsilon.append(epsilon_c)
 
@@ -347,11 +366,19 @@ def combine_lj_lorenz_berthelot(sigmaqm, sigmamm,
 
 
 class LJInteractionsGeneral:
-    name = 'LJ-general'
+    name = "LJ-general"
 
-    def __init__(self, sigmaqm, epsilonqm, sigmamm, epsilonmm,
-                 qm_molecule_size, mm_molecule_size=3,
-                 rc=np.Inf, width=1.0):
+    def __init__(
+        self,
+        sigmaqm,
+        epsilonqm,
+        sigmamm,
+        epsilonmm,
+        qm_molecule_size,
+        mm_molecule_size=3,
+        rc=np.Inf,
+        width=1.0,
+    ):
         """General Lennard-Jones type explicit interaction.
 
         sigmaqm: array
@@ -391,7 +418,8 @@ class LJInteractionsGeneral:
 
     def combine_lj(self):
         self.sigma, self.epsilon = combine_lj_lorenz_berthelot(
-            self.sigmaqm, self.sigmamm, self.epsilonqm, self.epsilonmm)
+            self.sigmaqm, self.sigmamm, self.epsilonqm, self.epsilonmm
+        )
 
     def calculate(self, qmatoms, mmatoms, shift):
         epsilon = self.epsilon
@@ -402,11 +430,11 @@ class LJInteractionsGeneral:
         apm1 = self.mms
         mask1 = np.ones(len(mmatoms), dtype=bool)
         mask2 = mask1
-        apm = (apm1, )
-        sigma = (sigma, )
-        epsilon = (epsilon, )
-        if hasattr(mmatoms.calc, 'name'):
-            if mmatoms.calc.name == 'combinemm':
+        apm = (apm1,)
+        sigma = (sigma,)
+        epsilon = (epsilon,)
+        if hasattr(mmatoms.calc, "name"):
+            if mmatoms.calc.name == "combinemm":
                 mask1 = mmatoms.calc.mask
                 mask2 = ~mask1
                 apm1 = mmatoms.calc.apm1
@@ -449,13 +477,16 @@ class LJInteractionsGeneral:
                         continue
                     R = mmpositions - qmpos[qa, :]
                     d2 = (R**2).sum(2)
-                    c6 = (sig[qa, :]**2 / d2)**3
+                    c6 = (sig[qa, :] ** 2 / d2) ** 3
                     c12 = c6**2
                     e = 4 * eps[qa, :] * (c12 - c6)
                     energy += np.dot(e.sum(1), t)
-                    f = t[:, None, None] * (24 * eps[qa, :] *
-                                            (2 * c12 - c6) / d2)[:, :, None] * R
-                    f00 = - (e.sum(1) * dt / d00)[:, None] * R00
+                    f = (
+                        t[:, None, None]
+                        * (24 * eps[qa, :] * (2 * c12 - c6) / d2)[:, :, None]
+                        * R
+                    )
+                    f00 = -(e.sum(1) * dt / d00)[:, None] * R00
                     mmforces += f.reshape((-1, 3))
                     qmforces[q * self.qms + qa, :] -= f.sum(0).sum(0)
                     qmforces[q * self.qms, :] -= f00.sum(0)
@@ -485,7 +516,7 @@ class LJInteractionsGeneral:
 
 
 class LJInteractions:
-    name = 'LJ'
+    name = "LJ"
 
     def __init__(self, parameters):
         """Lennard-Jones type explicit interaction.
@@ -516,11 +547,11 @@ class LJInteractions:
                 if (Z1, Z2) not in self.parameters:
                     continue
                 epsilon, sigma = self.parameters[(Z1, Z2)]
-                mask = (mmatoms.numbers == Z2)
+                mask = mmatoms.numbers == Z2
                 D = mmatoms.positions[mask] + shift - R1
                 wrap(D, mmatoms.cell.diagonal(), mmatoms.pbc)
                 d2 = (D**2).sum(1)
-                c6 = (sigma**2 / d2)**3
+                c6 = (sigma**2 / d2) ** 3
                 c12 = c6**2
                 energy += 4 * epsilon * (c12 - c6).sum()
                 f = 24 * epsilon * ((2 * c12 - c6) / d2)[:, np.newaxis] * D
@@ -537,11 +568,17 @@ class RescaledCalculator(Calculator):
     See T. D. Swinburne and J. R. Kermode, Phys. Rev. B 96, 144102 (2017)
     for a derivation of the scaling constants.
     """
-    implemented_properties = ['forces', 'energy', 'stress']
 
-    def __init__(self, mm_calc,
-                 qm_lattice_constant, qm_bulk_modulus,
-                 mm_lattice_constant, mm_bulk_modulus):
+    implemented_properties = ["forces", "energy", "stress"]
+
+    def __init__(
+        self,
+        mm_calc,
+        qm_lattice_constant,
+        qm_bulk_modulus,
+        mm_lattice_constant,
+        mm_bulk_modulus,
+    ):
         Calculator.__init__(self)
         self.mm_calc = mm_calc
         self.alpha = qm_lattice_constant / mm_lattice_constant
@@ -559,17 +596,17 @@ class RescaledCalculator(Calculator):
 
         results = {}
 
-        if 'energy' in properties:
+        if "energy" in properties:
             energy = self.mm_calc.get_potential_energy(scaled_atoms)
-            results['energy'] = energy / self.beta
+            results["energy"] = energy / self.beta
 
-        if 'forces' in properties:
+        if "forces" in properties:
             forces = self.mm_calc.get_forces(scaled_atoms)
-            results['forces'] = forces / (self.beta * self.alpha)
+            results["forces"] = forces / (self.beta * self.alpha)
 
-        if 'stress' in properties:
+        if "stress" in properties:
             stress = self.mm_calc.get_stress(scaled_atoms)
-            results['stress'] = stress / (self.beta * self.alpha**3)
+            results["stress"] = stress / (self.beta * self.alpha**3)
 
         self.results = results
 
@@ -581,7 +618,8 @@ class ForceConstantCalculator(Calculator):
     Useful with `ForceQMMM` to do harmonic QM/MM using force constants
     of QM method.
     """
-    implemented_properties = ['forces', 'energy']
+
+    implemented_properties = ["forces", "energy"]
 
     def __init__(self, D, ref, f0):
         """
@@ -610,8 +648,8 @@ class ForceConstantCalculator(Calculator):
         f = -self.D.dot(u.reshape(3 * self.size))
         forces = np.zeros((len(atoms), 3))
         forces[:, :] = f.reshape(self.size, 3)
-        self.results['forces'] = forces + self.f0
-        self.results['energy'] = 0.0
+        self.results["forces"] = forces + self.f0
+        self.results["energy"] = 0.0
 
 
 class ForceQMMM(Calculator):
@@ -628,18 +666,25 @@ class ForceQMMM(Calculator):
     Rep. Prog. Phys. 72, 026501 (2009)
     and T. D. Swinburne and J. R. Kermode, Phys. Rev. B 96, 144102 (2017).
     """
-    implemented_properties = ['forces', 'energy']
 
-    def __init__(self,
-                 atoms,
-                 qm_selection_mask,
-                 qm_calc,
-                 mm_calc,
-                 buffer_width,
-                 vacuum=5.,
-                 zero_mean=True,
-                 qm_cell_round_off=3,
-                 qm_radius=None):
+    implemented_properties = ["forces", "energy"]
+
+    def __init__(
+        self,
+        atoms,
+        qm_core_indices,
+        qm_calc,
+        mm_calc,
+        buffer_width,
+        update_qm_region_interval,
+        vacuum=5.0,
+        #  controls the force mixing between QM and MM
+        lambda_qmmm=1.0,
+        zero_mean=True,
+        qm_cell_round_off=3,
+        qm_selection_radius=None,
+        qm_radius=None,
+    ):
         """
         ForceQMMM calculator
 
@@ -665,19 +710,34 @@ class ForceQMMM(Calculator):
             in qm region.
         """
 
-        if len(atoms[qm_selection_mask]) == 0:
-            raise ValueError("no QM atoms selected!")
-
-        self.qm_selection_mask = qm_selection_mask
+        self.update_qm_region_interval = update_qm_region_interval
         self.qm_calc = qm_calc
         self.mm_calc = mm_calc
         self.vacuum = vacuum
+        self.qm_core_indices = qm_core_indices
         self.buffer_width = buffer_width
+
         self.zero_mean = zero_mean
         self.qm_cell_round_off = qm_cell_round_off
         self.qm_radius = qm_radius
+        self.atoms = atoms
+        self.qm_selection_radius = qm_selection_radius
+        self.n_steps = 0
+        self.lambda_qmmm = lambda_qmmm
 
         self.qm_buffer_mask = None
+        self.neighbourList = neighborlist.NeighborList(
+            bothways=True,
+            cutoffs=neighborlist.natural_cutoffs(atoms),
+        )
+        # self.neighbourList.update(atoms)
+
+        if self.qm_selection_radius is not None:
+            self.qm_selection_mask = self.get_core_qm_region(
+                atoms, self.qm_selection_radius, self.qm_core_indices
+            )
+        else:
+            self.qm_selection_mask = self.qm_core_indices
 
         Calculator.__init__(self)
 
@@ -690,19 +750,117 @@ class ForceQMMM(Calculator):
         _, qm_distance_matrix = get_distances(
             atoms.positions[self.qm_selection_mask],
             atoms.positions,
-            atoms.cell, atoms.pbc)
+            atoms.cell,
+            atoms.pbc,
+        )
 
         self.qm_buffer_mask = np.zeros(len(atoms), dtype=bool)
 
         # every r_qm is a matrix of distances
         # from an atom in qm region and all atoms with size [N_atoms]
+        # if the atom is within the buffer distance of any QM atom, add to mask
         for r_qm in qm_distance_matrix:
+            # This returns the boolean array with which to index the qm_buffer_mask
+
             self.qm_buffer_mask[r_qm < self.buffer_width] = True
+        # print out number of atoms in qm region and buffer region
 
-    def get_qm_cluster(self, atoms):
+        # now guess the connectivity from the atomic distances, using a neighbour list
+        self.neighbourList.update(atoms)
+        connectivity = neighborlist.get_connectivity_matrix(
+            self.neighbourList.nl, sparse=False
+        )
+        # n_atoms x n_atoms
+        # this should be n_atoms x n_atoms, identify all the atoms connected to the qm buffer region atoms, and include those if not already included
+        # loop over all the atoms in the qm buffer mask, if any connections are not already in the qm buffer mask, add them
+        # write out the initial buffer region
+        qm_buffer_atoms = atoms[self.qm_buffer_mask]
+        all_connected = False
+        while not all_connected:
+            n_added = 0
+            for idx, row in enumerate(connectivity):
+                # atoms connected to atom idx
+                for jdx, elem in enumerate(row):
+                    if elem:
+                        if self.qm_buffer_mask[idx] and not self.qm_buffer_mask[jdx]:
+                            self.qm_buffer_mask[jdx] = True
+                            n_added += 1
+                            # print("Adding atom %d to QM buffer mask, as a neighbour of %d " % (jdx, idx))
+                            # print(connectivity[idx][jdx])
+            if n_added == 0:
+                all_connected = True
+        # write out the xyz of just the qm buffer region
+        qm_buffer_atoms = atoms[self.qm_buffer_mask]
+        qm_buffer_atoms.write("qm_buffer.xyz")
+        # print the final indices of the qm buffer mask
 
-        if self.qm_buffer_mask is None:
+    def get_core_qm_region(
+        self, atoms: Atoms, cutoff: float, core_indices: List[int]
+    ) -> List[int]:
+        """Given the ase atoms object, compute a list of atoms within the radius of the core atoms. Perform a nearest neighbours search to ensure no dangling bonds across the QM/MM boundary."""
+        core_mask = np.zeros(len(atoms), dtype=bool)
+        core_mask[core_indices] = True
+
+        # compute geometric center of core atoms
+        core_center = np.mean(atoms[core_mask].positions, axis=0)
+        print(core_center)
+        # compute distances from the core center to all other atoms
+        # this should mean that if the core molecule drifts, we can still compute the QM region correctly, Periodicity is handled by the get_distances
+
+        _, distance_matrix = get_distances(
+            core_center, atoms.positions, atoms.cell, atoms.pbc
+        )
+
+        # find the column indices of the atoms within the cutoff
+        indices = np.unique(np.argwhere(distance_matrix < cutoff)[:, 1])
+        print(indices, indices.shape)
+
+        index_mask = np.zeros(len(atoms), dtype=bool)
+        index_mask[indices] = True
+        index_mask[core_indices] = True
+
+        # write out the atoms within the cutoff
+        write("within_cutoff.xyz", atoms[indices])
+        nl = neighborlist.NeighborList(
+            cutoffs=neighborlist.natural_cutoffs(atoms),
+            self_interaction=False,
+            bothways=True,
+        )
+        nl.update(atoms)
+
+        connectivity = nl.get_connectivity_matrix(sparse=False)
+
+        # now do an exhaustive exploration of the connectivity graph to find all atoms within the cutoff
+        all_connected = False
+        while not all_connected:
+            n_added = 0
+            for idx, row in enumerate(connectivity):
+                for jdx, elem in enumerate(row):
+                    if elem:
+                        if index_mask[idx] and not index_mask[jdx]:
+                            index_mask[jdx] = True
+                            n_added += 1
+            print(f"Added {n_added} atoms")
+            if n_added == 0:
+                all_connected = True
+                print("All atoms connected in QM region")
+
+        qm_region_atoms = atoms[index_mask]
+        write("qm_region.xyz", qm_region_atoms)
+        return qm_region_atoms, index_mask
+
+    def get_qm_cluster(self, atoms, update_qm_buffer_mask=True):
+
+        # if self.qm_buffer_mask is None:
+        # recalculate the buffer region every step
+        if update_qm_buffer_mask:
+            print("Updating QM buffer mask at step", self.n_steps)
+            t1 = time.time()
+            # get the updated buffer mask - all atoms within the buffer distance of the QM region
+            # this updates self.qm_buffer_mask
             self.initialize_qm_buffer_mask(atoms)
+            t2 = time.time()
+            print("Time to initialize qm buffer mask: %f" % (t2 - t1))
 
         qm_cluster = atoms[self.qm_buffer_mask]
         del qm_cluster.constraints
@@ -714,8 +872,9 @@ class ForceQMMM(Calculator):
             # Treat all X, Y and Z directions independently
             # only distance between qm atoms is calculated
             # in order to estimate qm radius in thee directions
-            R_qm, _ = get_distances(atoms.positions[self.qm_selection_mask],
-                                    cell=atoms.cell, pbc=atoms.pbc)
+            R_qm, _ = get_distances(
+                atoms.positions[self.qm_selection_mask], cell=atoms.cell, pbc=atoms.pbc
+            )
             # estimate qm radius in three directions as 1/2
             # of max distance between qm atoms
             self.qm_radius = np.amax(np.amax(R_qm, axis=1), axis=0) * 0.5
@@ -729,33 +888,31 @@ class ForceQMMM(Calculator):
         # in periodic directions of the cell (cell[i] < qm_radius + buffer
         # otherwise change to non pbc
         # and make a cluster in a vacuum configuration
-        qm_cluster_pbc = (atoms.pbc &
-                          (cell_size <
-                           2.0 * (self.qm_radius + self.buffer_width)))
+        qm_cluster_pbc = atoms.pbc & (
+            cell_size < 2.0 * (self.qm_radius + self.buffer_width)
+        )
 
         # start with the original orthorhombic cell
         qm_cluster_cell = cell_size.copy()
         # create a cluster in a vacuum cell in non periodic directions
-        qm_cluster_cell[~qm_cluster_pbc] = (
-            2.0 * (self.qm_radius[~qm_cluster_pbc] +
-                   self.buffer_width +
-                   self.vacuum))
+        qm_cluster_cell[~qm_cluster_pbc] = 2.0 * (
+            self.qm_radius[~qm_cluster_pbc] + self.buffer_width + self.vacuum
+        )
 
         if round_cell:
             # round the qm cell to the required tolerance
-            qm_cluster_cell[~qm_cluster_pbc] = (np.round(
-                (qm_cluster_cell[~qm_cluster_pbc]) /
-                self.qm_cell_round_off) *
-                self.qm_cell_round_off)
+            qm_cluster_cell[~qm_cluster_pbc] = (
+                np.round((qm_cluster_cell[~qm_cluster_pbc]) / self.qm_cell_round_off)
+                * self.qm_cell_round_off
+            )
 
         qm_cluster.set_cell(Cell(np.diag(qm_cluster_cell)))
         qm_cluster.pbc = qm_cluster_pbc
 
-        qm_shift = (0.5 * qm_cluster.cell.diagonal() -
-                    qm_cluster.positions.mean(axis=0))
+        qm_shift = 0.5 * qm_cluster.cell.diagonal() - qm_cluster.positions.mean(axis=0)
 
-        if 'cell_origin' in qm_cluster.info:
-            del qm_cluster.info['cell_origin']
+        if "cell_origin" in qm_cluster.info:
+            del qm_cluster.info["cell_origin"]
 
         # center the cluster only in non pbc directions
         qm_cluster.positions[:, ~qm_cluster_pbc] += qm_shift[~qm_cluster_pbc]
@@ -763,24 +920,75 @@ class ForceQMMM(Calculator):
         return qm_cluster
 
     def calculate(self, atoms, properties, system_changes):
+        # this is called at every iteration of the MD loop to get forces
         Calculator.calculate(self, atoms, properties, system_changes)
 
-        qm_cluster = self.get_qm_cluster(atoms)
+        update_qm_buffer_mask = (
+            True if self.n_steps % self.update_qm_region_interval == 0 else False
+        )
+        # first update the core qm region, i.e. a fixed cutoff around the core indices
+        if update_qm_buffer_mask:
+            _, self.qm_selection_mask = self.get_core_qm_region(
+                atoms, self.qm_selection_radius, self.qm_core_indices
+            )
 
+        qm_cluster = self.get_qm_cluster(atoms, update_qm_buffer_mask)
+        # also update the
+        # check number of atoms in qm cluster
+        # append the qm cluster to the writeout file
+        if self.n_steps % self.update_qm_region_interval == 0:
+            qm_cluster.write("qm_cluster.xyz", append=True)
+        # note we require forces on ALL atoms including those in the QM region
         forces = self.mm_calc.get_forces(atoms)
         qm_forces = self.qm_calc.get_forces(qm_cluster)
+        if self.qm_selection_radius is None:
+            forces[self.qm_selection_mask] = qm_forces[
+                self.qm_selection_mask[self.qm_buffer_mask]
+            ]
+        else:
+            # compute instantaneous geometric center of qm cluster
+            qm_center = np.mean(atoms[self.qm_core_indices].positions, axis=0)
+            # compute distance of each atom from qm center
+            R = get_distances(
+                qm_center, atoms.positions, cell=atoms.cell, pbc=atoms.pbc
+            )[1][0, :][self.qm_selection_mask]
+            # scale the radii between 0 and 1
+            R = R / self.qm_selection_radius
+            # compute mixing function
+            mixing_function = self.lambda_qmmm * 0.5 * (1.0 + np.cos(np.pi * R))
 
-        forces[self.qm_selection_mask] = \
-            qm_forces[self.qm_selection_mask[self.qm_buffer_mask]]
+            # make the mixing function 0 for all atoms outside the mixing radius
+            mixing_values = np.zeros(len(atoms))
+            mixing_values[self.qm_selection_mask] = mixing_function
+
+            # attach the mixing function value to the atoms object so we can colour code later
+            atoms.arrays["mixing_function"] = mixing_values
+
+            # compute forces
+            forces[self.qm_selection_mask] = (
+                self.lambda_qmmm
+                * mixing_function[:, np.newaxis]
+                * qm_forces[self.qm_selection_mask[self.qm_buffer_mask]]
+                + (1.0 - self.lambda_qmmm * mixing_function[:, np.newaxis])
+                * forces[self.qm_selection_mask]
+            )
+
+            # ensure core atoms are 100% QM
+            forces[self.qm_core_indices] = (
+                self.lambda_qmmm * qm_forces[self.qm_core_indices]
+                + (1.0 - self.lambda_qmmm) * forces[self.qm_core_indices]
+            )
 
         if self.zero_mean:
             # Target is that: forces.sum(axis=1) == [0., 0., 0.]
             forces[:] -= forces.mean(axis=0)
 
-        self.results['forces'] = forces
-        self.results['energy'] = 0.0
+        self.results["forces"] = forces
+        # just does forces, not energy, as per the paper
+        self.results["energy"] = 0.0
+        self.n_steps += 1
 
-    def get_region_from_masks(self, atoms=None, print_mapping=False):
+    def get_region_from_masks(self, atoms=None, print_mapping=True):
         """
         creates region array from the masks of the calculators. The tags in
         the array are:
@@ -790,19 +998,19 @@ class ForceQMMM(Calculator):
         """
         if atoms is None:
             if self.atoms is None:
-                raise ValueError('Calculator has no atoms')
+                raise ValueError("Calculator has no atoms")
             else:
                 atoms = self.atoms
 
         region = np.full_like(atoms, "MM")
 
-        region[self.qm_selection_mask] = (
-            np.full_like(region[self.qm_selection_mask], "QM"))
+        region[self.qm_selection_mask] = np.full_like(
+            region[self.qm_selection_mask], "QM"
+        )
 
         buffer_only_mask = self.qm_buffer_mask & ~self.qm_selection_mask
 
-        region[buffer_only_mask] = np.full_like(region[buffer_only_mask],
-                                                "buffer")
+        region[buffer_only_mask] = np.full_like(region[buffer_only_mask], "buffer")
 
         if print_mapping:
 
@@ -836,7 +1044,7 @@ class ForceQMMM(Calculator):
         """
         if atoms is None:
             if self.atoms is None:
-                raise ValueError('Calculator has no atoms')
+                raise ValueError("Calculator has no atoms")
             else:
                 atoms = self.atoms
 
@@ -847,7 +1055,7 @@ class ForceQMMM(Calculator):
 
         atoms_copy.calc = self  # to keep the calculation results
 
-        atoms_copy.write(filename, format='extxyz')
+        atoms_copy.write(filename, format="extxyz")
 
     @classmethod
     def import_extxyz(cls, filename, qm_calc, mm_calc):
@@ -873,7 +1081,8 @@ class ForceQMMM(Calculator):
         """
 
         from ase.io import read
-        atoms = read(filename, format='extxyz')
+
+        atoms = read(filename, format="extxyz")
 
         if "region" in atoms.arrays:
             region = atoms.get_array("region")
@@ -883,8 +1092,7 @@ class ForceQMMM(Calculator):
         dummy_qm_mask = np.full_like(atoms, False, dtype=bool)
         dummy_qm_mask[0] = True
 
-        self = cls(atoms, dummy_qm_mask,
-                   qm_calc, mm_calc, buffer_width=1.0)
+        self = cls(atoms, dummy_qm_mask, qm_calc, mm_calc, buffer_width=1.0)
 
         self.set_masks_from_region(region)
 

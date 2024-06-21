@@ -2,12 +2,12 @@ from ase.build import bulk
 from ase.io.bytes import to_bytes, parse_images, parse_atoms
 from ase.calculators.calculator import compare_atoms
 
-atoms = bulk('Ti')
-images = [bulk('Au'), bulk('Ti'), bulk('NaCl', 'rocksalt', 17)]
+atoms = bulk("Ti")
+images = [bulk("Au"), bulk("Ti"), bulk("NaCl", "rocksalt", 17)]
 
 
 def test_format():
-    fmt = 'traj'  # TODO: parametrize?
+    fmt = "traj"  # TODO: parametrize?
     buf = to_bytes(atoms, format=fmt)
     atoms1 = parse_atoms(buf)
 

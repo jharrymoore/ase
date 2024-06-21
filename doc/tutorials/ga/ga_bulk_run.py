@@ -12,38 +12,64 @@ from ga_bulk_relax import relax
 
 
 # Connect to the database and retrieve some information
-da = DataConnection('gadb.db')
+da = DataConnection("gadb.db")
 slab = da.get_slab()
 atom_numbers_to_optimize = da.get_atom_numbers_to_optimize()
 n_top = len(atom_numbers_to_optimize)
 
 # Use Oganov's fingerprint functions to decide whether
 # two structures are identical or not
-comp = OFPComparator(n_top=n_top, dE=1.0,
-                     cos_dist_max=1e-3, rcut=10., binwidth=0.05,
-                     pbc=[True, True, True], sigma=0.05, nsigma=4,
-                     recalculate=False)
+comp = OFPComparator(
+    n_top=n_top,
+    dE=1.0,
+    cos_dist_max=1e-3,
+    rcut=10.0,
+    binwidth=0.05,
+    pbc=[True, True, True],
+    sigma=0.05,
+    nsigma=4,
+    recalculate=False,
+)
 
 # Define the cell and interatomic distance bounds
 # that the candidates must obey
 blmin = closest_distances_generator(atom_numbers_to_optimize, 0.5)
 
-cellbounds = CellBounds(bounds={'phi': [20, 160], 'chi': [20, 160],
-                                'psi': [20, 160], 'a': [2, 60],
-                                'b': [2, 60], 'c': [2, 60]})
+cellbounds = CellBounds(
+    bounds={
+        "phi": [20, 160],
+        "chi": [20, 160],
+        "psi": [20, 160],
+        "a": [2, 60],
+        "b": [2, 60],
+        "c": [2, 60],
+    }
+)
 
 # Define a pairing operator with 100% (0%) chance that the first
 # (second) parent will be randomly translated, and with each parent
 # contributing to at least 15% of the child's scaled coordinates
-pairing = CutAndSplicePairing(slab, n_top, blmin, p1=1., p2=0., minfrac=0.15,
-                              number_of_variable_cell_vectors=3,
-                              cellbounds=cellbounds, use_tags=False)
+pairing = CutAndSplicePairing(
+    slab,
+    n_top,
+    blmin,
+    p1=1.0,
+    p2=0.0,
+    minfrac=0.15,
+    number_of_variable_cell_vectors=3,
+    cellbounds=cellbounds,
+    use_tags=False,
+)
 
 # Define a strain mutation with a typical standard deviation of 0.7
 # for the strain matrix elements (drawn from a normal distribution)
-strainmut = StrainMutation(blmin, stddev=0.7, cellbounds=cellbounds,
-                           number_of_variable_cell_vectors=3,
-                           use_tags=False)
+strainmut = StrainMutation(
+    blmin,
+    stddev=0.7,
+    cellbounds=cellbounds,
+    number_of_variable_cell_vectors=3,
+    use_tags=False,
+)
 
 # Define a soft mutation; we need to provide a dictionary with
 # (typically rather short) minimal interatomic distances which
@@ -52,15 +78,14 @@ strainmut = StrainMutation(blmin, stddev=0.7, cellbounds=cellbounds,
 # distances (in Angstrom) for a valid mutation are provided via
 # the 'bounds' keyword argument.
 blmin_soft = closest_distances_generator(atom_numbers_to_optimize, 0.1)
-softmut = SoftMutation(blmin_soft, bounds=[2., 5.], use_tags=False)
+softmut = SoftMutation(blmin_soft, bounds=[2.0, 5.0], use_tags=False)
 # By default, the operator will update a "used_modes.json" file
 # after every mutation, listing which modes have been used so far
 # for each structure in the database. The mode indices start at 3
 # as the three lowest frequency modes are translational modes.
 
 # Set up the relative probabilities for the different operators
-operators = OperationSelector([4., 3., 3.],
-                              [pairing, softmut, strainmut])
+operators = OperationSelector([4.0, 3.0, 3.0], [pairing, softmut, strainmut])
 
 # Relax the initial candidates
 while da.get_number_of_unrelaxed_candidates() > 0:
@@ -71,15 +96,17 @@ while da.get_number_of_unrelaxed_candidates() > 0:
 
     cell = a.get_cell()
     if not cellbounds.is_within_bounds(cell):
-        da.kill_candidate(a.info['confid'])
+        da.kill_candidate(a.info["confid"])
 
 # Initialize the population
 population_size = 20
-population = Population(data_connection=da,
-                        population_size=population_size,
-                        comparator=comp,
-                        logfile='log.txt',
-                        use_extinct=True)
+population = Population(
+    data_connection=da,
+    population_size=population_size,
+    comparator=comp,
+    logfile="log.txt",
+    use_extinct=True,
+)
 
 # Update the scaling volume used in some operators
 # based on a number of the best candidates
@@ -94,7 +121,7 @@ pairing.update_scaling_volume(current_pop, w_adapt=0.5, n_adapt=4)
 n_to_test = 50
 
 for step in range(n_to_test):
-    print('Now starting configuration number {0}'.format(step))
+    print("Now starting configuration number {0}".format(step))
 
     # Create a new candidate
     a3 = None
@@ -113,7 +140,7 @@ for step in range(n_to_test):
     # beyond the bounds we disregard it in the population
     cell = a3.get_cell()
     if not cellbounds.is_within_bounds(cell):
-        da.kill_candidate(a3.info['confid'])
+        da.kill_candidate(a3.info["confid"])
 
     # Update the population
     population.update()
@@ -123,17 +150,16 @@ for step in range(n_to_test):
         # and the pairing operator based on the current
         # best structures contained in the population
         current_pop = population.get_current_population()
-        strainmut.update_scaling_volume(current_pop, w_adapt=0.5,
-                                        n_adapt=4)
+        strainmut.update_scaling_volume(current_pop, w_adapt=0.5, n_adapt=4)
         pairing.update_scaling_volume(current_pop, w_adapt=0.5, n_adapt=4)
-        write('current_population.traj', current_pop)
+        write("current_population.traj", current_pop)
 
-print('GA finished after step %d' % step)
+print("GA finished after step %d" % step)
 hiscore = get_raw_score(current_pop[0])
-print('Highest raw score = %8.4f eV' % hiscore)
+print("Highest raw score = %8.4f eV" % hiscore)
 
 all_candidates = da.get_all_relaxed_candidates()
-write('all_candidates.traj', all_candidates)
+write("all_candidates.traj", all_candidates)
 
 current_pop = population.get_current_population()
-write('current_population.traj', current_pop)
+write("current_population.traj", current_pop)

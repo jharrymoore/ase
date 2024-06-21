@@ -9,7 +9,7 @@ from ase.spacegroup.symmetrize import FixSymmetry, check_symmetry, is_subgroup
 from ase.optimize.precon.lbfgs import PreconLBFGS
 from ase.constraints import UnitCellFilter, ExpCellFilter
 
-spglib = pytest.importorskip('spglib')
+spglib = pytest.importorskip("spglib")
 
 
 class NoisyLennardJones(LennardJones):
@@ -17,20 +17,21 @@ class NoisyLennardJones(LennardJones):
         self.rng = rng
         LennardJones.__init__(self, *args, **kwargs)
 
-    def calculate(self, atoms=None, properties=['energy'],
-                  system_changes=all_changes):
+    def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
         LennardJones.calculate(self, atoms, properties, system_changes)
-        if 'forces' in self.results:
-            self.results['forces'] += 1e-4 * self.rng.normal(
-                size=self.results['forces'].shape, )
-        if 'stress' in self.results:
-            self.results['stress'] += 1e-4 * self.rng.normal(
-                size=self.results['stress'].shape, )
+        if "forces" in self.results:
+            self.results["forces"] += 1e-4 * self.rng.normal(
+                size=self.results["forces"].shape,
+            )
+        if "stress" in self.results:
+            self.results["stress"] += 1e-4 * self.rng.normal(
+                size=self.results["stress"].shape,
+            )
 
 
 def setup_cell():
     # setup an bcc Al cell
-    at_init = bulk('Al', 'bcc', a=2 / np.sqrt(3), cubic=True)
+    at_init = bulk("Al", "bcc", a=2 / np.sqrt(3), cubic=True)
 
     F = np.eye(3)
     for k in range(3):
@@ -75,8 +76,8 @@ def filter(request):
     return request.param
 
 
-@pytest.mark.filterwarnings('ignore:ASE Atoms-like input is deprecated')
-@pytest.mark.filterwarnings('ignore:Armijo linesearch failed')
+@pytest.mark.filterwarnings("ignore:ASE Atoms-like input is deprecated")
+@pytest.mark.filterwarnings("ignore:Armijo linesearch failed")
 def test_no_symmetrization(filter):
     print("NO SYM")
     at_init, at_rot = setup_cell()
@@ -85,8 +86,8 @@ def test_no_symmetrization(filter):
     assert di["number"] == 229 and not is_subgroup(sub_data=di, sup_data=df)
 
 
-@pytest.mark.filterwarnings('ignore:ASE Atoms-like input is deprecated')
-@pytest.mark.filterwarnings('ignore:Armijo linesearch failed')
+@pytest.mark.filterwarnings("ignore:ASE Atoms-like input is deprecated")
+@pytest.mark.filterwarnings("ignore:Armijo linesearch failed")
 def test_no_sym_rotated(filter):
     print("NO SYM ROT")
     at_init, at_rot = setup_cell()
@@ -95,36 +96,49 @@ def test_no_sym_rotated(filter):
     assert di["number"] == 229 and not is_subgroup(sub_data=di, sup_data=df)
 
 
-@pytest.mark.filterwarnings('ignore:ASE Atoms-like input is deprecated')
-@pytest.mark.filterwarnings('ignore:Armijo linesearch failed')
+@pytest.mark.filterwarnings("ignore:ASE Atoms-like input is deprecated")
+@pytest.mark.filterwarnings("ignore:Armijo linesearch failed")
 def test_sym_adj_cell(filter):
     print("SYM POS+CELL")
     at_init, at_rot = setup_cell()
     at_sym_3 = at_init.copy()
     at_sym_3.set_constraint(
-        FixSymmetry(at_sym_3, adjust_positions=True, adjust_cell=True))
+        FixSymmetry(at_sym_3, adjust_positions=True, adjust_cell=True)
+    )
     di, df = symmetrized_optimisation(at_sym_3, filter)
     assert di["number"] == 229 and is_subgroup(sub_data=di, sup_data=df)
 
 
-@pytest.mark.filterwarnings('ignore:ASE Atoms-like input is deprecated')
-@pytest.mark.filterwarnings('ignore:Armijo linesearch failed')
+@pytest.mark.filterwarnings("ignore:ASE Atoms-like input is deprecated")
+@pytest.mark.filterwarnings("ignore:Armijo linesearch failed")
 def test_sym_rot_adj_cell(filter):
     print("SYM POS+CELL ROT")
     at_init, at_rot = setup_cell()
     at_sym_3_rot = at_init.copy()
     at_sym_3_rot.set_constraint(
-        FixSymmetry(at_sym_3_rot, adjust_positions=True, adjust_cell=True))
+        FixSymmetry(at_sym_3_rot, adjust_positions=True, adjust_cell=True)
+    )
     di, df = symmetrized_optimisation(at_sym_3_rot, filter)
     assert di["number"] == 229 and is_subgroup(sub_data=di, sup_data=df)
 
 
-@pytest.mark.filterwarnings('ignore:ASE Atoms-like input is deprecated')
+@pytest.mark.filterwarnings("ignore:ASE Atoms-like input is deprecated")
 def test_fix_symmetry_shuffle_indices():
     atoms = Atoms(
-        'AlFeAl6', cell=[6] * 3,
-        positions=[[0, 0, 0], [2.9, 2.9, 2.9], [0, 0, 3], [0, 3, 0],
-                   [0, 3, 3], [3, 0, 0], [3, 0, 3], [3, 3, 0]], pbc=True)
+        "AlFeAl6",
+        cell=[6] * 3,
+        positions=[
+            [0, 0, 0],
+            [2.9, 2.9, 2.9],
+            [0, 0, 3],
+            [0, 3, 0],
+            [0, 3, 3],
+            [3, 0, 0],
+            [3, 0, 3],
+            [3, 3, 0],
+        ],
+        pbc=True,
+    )
     atoms.set_constraint(FixSymmetry(atoms))
     at_permut = atoms[[0, 2, 3, 4, 5, 6, 7, 1]]
     pos0 = atoms.get_positions()

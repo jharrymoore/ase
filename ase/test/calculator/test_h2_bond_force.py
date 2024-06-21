@@ -5,7 +5,7 @@ from ase.build import molecule
 
 @pytest.fixture
 def atoms():
-    atoms = molecule('H2')
+    atoms = molecule("H2")
     atoms.positions -= atoms.positions[0]
     assert atoms.positions[0] == pytest.approx([0, 0, 0])
     atoms.pbc = 1
@@ -31,13 +31,13 @@ k_refs = dict(
 calc = pytest.mark.calculator
 
 
-@calc('abinit', chksymtnons=0)
-@calc('cp2k')
-@calc('espresso', tprnfor=True)
-@calc('gpaw', mode='pw', symmetry='off', txt=None)
-@calc('mopac', method='PM7', task='1SCF UHF GRADIENTS')
-@calc('nwchem')
-@calc('siesta')
+@calc("abinit", chksymtnons=0)
+@calc("cp2k")
+@calc("espresso", tprnfor=True)
+@calc("gpaw", mode="pw", symmetry="off", txt=None)
+@calc("mopac", method="PM7", task="1SCF UHF GRADIENTS")
+@calc("nwchem")
+@calc("siesta")
 def test_h2_bond(factory, atoms):
     d0 = atoms.get_distance(0, 1)
     atoms.calc = factory.calc()
@@ -65,5 +65,4 @@ def test_h2_bond(factory, atoms):
     # Not very strict for a bond length, but parameters are not consistent:
     assert xmin == pytest.approx(0.77, rel=0.05)
     assert k_from_energy == pytest.approx(k_from_forces, rel=0.05)
-    assert k_from_energy == pytest.approx(k_refs.get(factory.name, k_ref_0),
-                                          rel=0.05)
+    assert k_from_energy == pytest.approx(k_refs.get(factory.name, k_ref_0), rel=0.05)

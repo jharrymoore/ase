@@ -36,11 +36,27 @@ class PreconLBFGS(Optimizer):
     """
 
     # CO : added parameters rigid_units and rotation_factors
-    def __init__(self, atoms, restart=None, logfile='-', trajectory=None,
-                 maxstep=None, memory=100, damping=1.0, alpha=70.0,
-                 master=None, precon='auto', variable_cell=False,
-                 use_armijo=True, c1=0.23, c2=0.46, a_min=None,
-                 rigid_units=None, rotation_factors=None, Hinv=None):
+    def __init__(
+        self,
+        atoms,
+        restart=None,
+        logfile="-",
+        trajectory=None,
+        maxstep=None,
+        memory=100,
+        damping=1.0,
+        alpha=70.0,
+        master=None,
+        precon="auto",
+        variable_cell=False,
+        use_armijo=True,
+        c1=0.23,
+        c2=0.46,
+        a_min=None,
+        rigid_units=None,
+        rotation_factors=None,
+        Hinv=None,
+    ):
         """Parameters:
 
         atoms: Atoms object
@@ -127,28 +143,31 @@ class PreconLBFGS(Optimizer):
 
         # default preconditioner
         #   TODO: introduce a heuristic for different choices of preconditioners
-        if precon == 'auto':
+        if precon == "auto":
             if len(atoms) < 100:
                 precon = None
-                warnings.warn('The system is likely too small to benefit from '
-                              'the standard preconditioner, hence it is '
-                              'disabled. To re-enable preconditioning, call '
-                              '`PreconLBFGS` by explicitly providing the '
-                              'kwarg `precon`')
+                warnings.warn(
+                    "The system is likely too small to benefit from "
+                    "the standard preconditioner, hence it is "
+                    "disabled. To re-enable preconditioning, call "
+                    "`PreconLBFGS` by explicitly providing the "
+                    "kwarg `precon`"
+                )
             else:
-                precon = 'Exp'
+                precon = "Exp"
 
         if maxstep is not None:
             if maxstep > 1.0:
-                raise ValueError('You are using a much too large value for ' +
-                                 'the maximum step size: %.1f Angstrom' %
-                                 maxstep)
+                raise ValueError(
+                    "You are using a much too large value for "
+                    + "the maximum step size: %.1f Angstrom" % maxstep
+                )
             self.maxstep = maxstep
         else:
             self.maxstep = 0.04
 
         self.memory = memory
-        self.H0 = 1. / alpha  # Initial approximation of inverse Hessian
+        self.H0 = 1.0 / alpha  # Initial approximation of inverse Hessian
         # 1./70. is to emulate the behaviour of BFGS
         # Note that this is never changed!
         self.Hinv = Hinv
@@ -186,13 +205,21 @@ class PreconLBFGS(Optimizer):
         self.f0 = None
         self.e0 = None
         self.e1 = None
-        self.task = 'START'
+        self.task = "START"
         self.load_restart = False
 
     def read(self):
         """Load saved arrays to reconstruct the Hessian"""
-        self.iteration, self.s, self.y, self.rho, \
-            self.r0, self.f0, self.e0, self.task = self.load()
+        (
+            self.iteration,
+            self.s,
+            self.y,
+            self.rho,
+            self.r0,
+            self.f0,
+            self.e0,
+            self.task,
+        ) = self.load()
         self.load_restart = True
 
     def step(self, f=None):
@@ -235,7 +262,7 @@ class PreconLBFGS(Optimizer):
             b = rho[i] * np.dot(y[i], z)
             z += s[i] * (a[i] - b)
 
-        self.p = - z.reshape((-1, 3))
+        self.p = -z.reshape((-1, 3))
         ###
 
         g = -f
@@ -252,8 +279,18 @@ class PreconLBFGS(Optimizer):
         self.iteration += 1
         self.r0 = r
         self.f0 = -g
-        self.dump((self.iteration, self.s, self.y,
-                   self.rho, self.r0, self.f0, self.e0, self.task))
+        self.dump(
+            (
+                self.iteration,
+                self.s,
+                self.y,
+                self.rho,
+                self.r0,
+                self.f0,
+                self.e0,
+                self.task,
+            )
+        )
 
     def update(self, r, f, r0, f0):
         """Update everything that is kept in memory
@@ -281,7 +318,8 @@ class PreconLBFGS(Optimizer):
         """Initialize history from old trajectory."""
         if isinstance(traj, str):
             from ase.io.trajectory import Trajectory
-            traj = Trajectory(traj, 'r')
+
+            traj = Trajectory(traj, "r")
         r0 = None
         f0 = None
         # The last element is not added, as we get that for free when taking
@@ -310,9 +348,9 @@ class PreconLBFGS(Optimizer):
 
     def line_search(self, r, g, e, previously_reset_hessian):
         self.p = self.p.ravel()
-        p_size = np.sqrt((self.p ** 2).sum())
+        p_size = np.sqrt((self.p**2).sum())
         if p_size <= np.sqrt(len(self.atoms) * 1e-10):
-            self.p /= (p_size / np.sqrt(len(self.atoms) * 1e-10))
+            self.p /= p_size / np.sqrt(len(self.atoms) * 1e-10)
         g = g.ravel()
         r = r.ravel()
 
@@ -325,38 +363,51 @@ class PreconLBFGS(Optimizer):
                 #    out using some extrapolation tricks?
                 ls = LineSearchArmijo(self.func, c1=self.c1, tol=1e-14)
                 step, func_val, no_update = ls.run(
-                    r, self.p, a_min=self.a_min,
+                    r,
+                    self.p,
+                    a_min=self.a_min,
                     func_start=e,
                     func_prime_start=g,
                     func_old=self.e0,
                     rigid_units=self.rigid_units,
                     rotation_factors=self.rotation_factors,
-                    maxstep=self.maxstep)
+                    maxstep=self.maxstep,
+                )
                 self.e0 = e
                 self.e1 = func_val
                 self.alpha_k = step
             except (ValueError, RuntimeError):
                 if not previously_reset_hessian:
                     warnings.warn(
-                        'Armijo linesearch failed, resetting Hessian and '
-                        'trying again')
+                        "Armijo linesearch failed, resetting Hessian and "
+                        "trying again"
+                    )
                     self.reset_hessian()
                     self.alpha_k = 0.0
                 else:
                     raise RuntimeError(
-                        'Armijo linesearch failed after reset of Hessian, '
-                        'aborting')
+                        "Armijo linesearch failed after reset of Hessian, " "aborting"
+                    )
 
         else:
             ls = LineSearch()
-            self.alpha_k, e, self.e0, self.no_update = \
-                ls._line_search(self.func, self.fprime, r, self.p, g,
-                                e, self.e0, stpmin=self.a_min,
-                                maxstep=self.maxstep, c1=self.c1,
-                                c2=self.c2, stpmax=50.)
+            self.alpha_k, e, self.e0, self.no_update = ls._line_search(
+                self.func,
+                self.fprime,
+                r,
+                self.p,
+                g,
+                e,
+                self.e0,
+                stpmin=self.a_min,
+                maxstep=self.maxstep,
+                c1=self.c1,
+                c2=self.c2,
+                stpmax=50.0,
+            )
             self.e1 = e
             if self.alpha_k is None:
-                raise RuntimeError('Wolff lineSearch failed!')
+                raise RuntimeError("Wolff lineSearch failed!")
 
     def run(self, fmax=0.05, steps=100000000, smax=None):
         if smax is None:
@@ -384,13 +435,15 @@ class PreconLBFGS(Optimizer):
             name = self.__class__.__name__
             if isinstance(self.atoms, UnitCellFilter):
                 self.logfile.write(
-                    '%s: %3d  %02d:%02d:%02d %15.6f %12.4f %12.4f\n' %
-                    (name, self.nsteps, T[3], T[4], T[5], e, fmax, smax))
+                    "%s: %3d  %02d:%02d:%02d %15.6f %12.4f %12.4f\n"
+                    % (name, self.nsteps, T[3], T[4], T[5], e, fmax, smax)
+                )
 
             else:
                 self.logfile.write(
-                    '%s: %3d  %02d:%02d:%02d %15.6f %12.4f\n' %
-                    (name, self.nsteps, T[3], T[4], T[5], e, fmax))
+                    "%s: %3d  %02d:%02d:%02d %15.6f %12.4f\n"
+                    % (name, self.nsteps, T[3], T[4], T[5], e, fmax)
+                )
             self.logfile.flush()
 
     def converged(self, forces=None):
@@ -402,7 +455,7 @@ class PreconLBFGS(Optimizer):
             forces, stress = forces[:natoms], self.atoms.stress
             fmax_sq = (forces**2).sum(axis=1).max()
             smax_sq = (stress**2).max()
-            return (fmax_sq < self.fmax**2 and smax_sq < self.smax**2)
+            return fmax_sq < self.fmax**2 and smax_sq < self.smax**2
         else:
             fmax_sq = (forces**2).sum(axis=1).max()
             return fmax_sq < self.fmax**2

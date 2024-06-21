@@ -5,21 +5,32 @@ from ase.utils import ff
 
 
 class ForceField(Calculator):
-    implemented_properties = ['energy', 'forces']
+    implemented_properties = ["energy", "forces"]
     nolabel = True
 
-    def __init__(self, morses=None, bonds=None, angles=None, dihedrals=None,
-                 vdws=None, coulombs=None, **kwargs):
+    def __init__(
+        self,
+        morses=None,
+        bonds=None,
+        angles=None,
+        dihedrals=None,
+        vdws=None,
+        coulombs=None,
+        **kwargs
+    ):
         Calculator.__init__(self, **kwargs)
-        if (morses is None and
-            bonds is None and
-            angles is None and
-            dihedrals is None and
-            vdws is None and
-                coulombs is None):
+        if (
+            morses is None
+            and bonds is None
+            and angles is None
+            and dihedrals is None
+            and vdws is None
+            and coulombs is None
+        ):
             raise ImportError(
                 "At least one of morses, bonds, angles, dihedrals,"
-                "vdws or coulombs lists must be defined!")
+                "vdws or coulombs lists must be defined!"
+            )
         if morses is None:
             self.morses = []
         else:
@@ -48,9 +59,9 @@ class ForceField(Calculator):
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
         if system_changes:
-            for name in ['energy', 'forces', 'hessian']:
+            for name in ["energy", "forces", "hessian"]:
                 self.results.pop(name, None)
-        if 'energy' not in self.results:
+        if "energy" not in self.results:
             energy = 0.0
             for morse in self.morses:
                 i, j, e = ff.get_morse_potential_value(atoms, morse)
@@ -62,8 +73,7 @@ class ForceField(Calculator):
                 i, j, k, e = ff.get_angle_potential_value(atoms, angle)
                 energy += e
             for dihedral in self.dihedrals:
-                i, j, k, l, e = ff.get_dihedral_potential_value(
-                    atoms, dihedral)
+                i, j, k, l, e = ff.get_dihedral_potential_value(atoms, dihedral)
                 energy += e
             for vdw in self.vdws:
                 i, j, e = ff.get_vdw_potential_value(atoms, vdw)
@@ -71,8 +81,8 @@ class ForceField(Calculator):
             for coulomb in self.coulombs:
                 i, j, e = ff.get_coulomb_potential_value(atoms, coulomb)
                 energy += e
-            self.results['energy'] = energy
-        if 'forces' not in self.results:
+            self.results["energy"] = energy
+        if "forces" not in self.results:
             forces = np.zeros(3 * len(atoms))
             for morse in self.morses:
                 i, j, g = ff.get_morse_potential_gradient(atoms, morse)
@@ -90,8 +100,7 @@ class ForceField(Calculator):
                 for gb, ge, lb, le in limits:
                     forces[gb:ge] -= g[lb:le]
             for dihedral in self.dihedrals:
-                i, j, k, l, g = ff.get_dihedral_potential_gradient(
-                    atoms, dihedral)
+                i, j, k, l, g = ff.get_dihedral_potential_gradient(atoms, dihedral)
                 limits = get_limits([i, j, k, l])
                 for gb, ge, lb, le in limits:
                     forces[gb:ge] -= g[lb:le]
@@ -105,8 +114,8 @@ class ForceField(Calculator):
                 limits = get_limits([i, j])
                 for gb, ge, lb, le in limits:
                     forces[gb:ge] -= g[lb:le]
-            self.results['forces'] = np.reshape(forces, (len(atoms), 3))
-        if 'hessian' not in self.results:
+            self.results["forces"] = np.reshape(forces, (len(atoms), 3))
+        if "hessian" not in self.results:
             hessian = np.zeros((3 * len(atoms), 3 * len(atoms)))
             for morse in self.morses:
                 i, j, h = ff.get_morse_potential_hessian(atoms, morse)
@@ -127,8 +136,7 @@ class ForceField(Calculator):
                     for gb2, ge2, lb2, le2 in limits:
                         hessian[gb1:ge1, gb2:ge2] += h[lb1:le1, lb2:le2]
             for dihedral in self.dihedrals:
-                i, j, k, l, h = ff.get_dihedral_potential_hessian(
-                    atoms, dihedral)
+                i, j, k, l, h = ff.get_dihedral_potential_hessian(atoms, dihedral)
                 limits = get_limits([i, j, k, l])
                 for gb1, ge1, lb1, le1 in limits:
                     for gb2, ge2, lb2, le2 in limits:
@@ -145,10 +153,10 @@ class ForceField(Calculator):
                 for gb1, ge1, lb1, le1 in limits:
                     for gb2, ge2, lb2, le2 in limits:
                         hessian[gb1:ge1, gb2:ge2] += h[lb1:le1, lb2:le2]
-            self.results['hessian'] = hessian
+            self.results["hessian"] = hessian
 
     def get_hessian(self, atoms=None):
-        return self.get_property('hessian', atoms)
+        return self.get_property("hessian", atoms)
 
 
 def get_limits(indices):

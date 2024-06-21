@@ -21,17 +21,17 @@ def test_logging(testdir):
 
     initial_energy = atoms.get_potential_energy()
 
-    name = 'test_logging'
+    name = "test_logging"
 
-    traj_name = name + '.traj'
-    log_name = name + '.log'
+    traj_name = name + ".traj"
+    log_name = name + ".log"
 
     with ContourExploration(
-            atoms,
-            **bulk_Al_settings,
-            rng=rng,
-            trajectory=traj_name,
-            logfile=log_name,
+        atoms,
+        **bulk_Al_settings,
+        rng=rng,
+        trajectory=traj_name,
+        logfile=log_name,
     ) as dyn:
         energy_target = initial_energy
         dev = (atoms.get_potential_energy() - energy_target) / len(atoms)
@@ -66,7 +66,7 @@ def test_logging(testdir):
         length = len(fd.readlines())
     assert length == 7, length
 
-    with io.Trajectory(traj_name, 'r') as traj, open(log_name, 'r') as fd:
+    with io.Trajectory(traj_name, "r") as traj, open(log_name, "r") as fd:
         # skip the first line because it's a small initialization step
         lines = fd.readlines()[1:]
         for i, (im, line) in enumerate(zip(traj, lines)):
@@ -74,12 +74,10 @@ def test_logging(testdir):
             lineparts = [float(part) for part in line.split()]
 
             log_energy_target = lineparts[1]
-            assert 0 == pytest.approx(
-                log_energy_target - energy_targets[i], abs=1e-5)
+            assert 0 == pytest.approx(log_energy_target - energy_targets[i], abs=1e-5)
 
             log_energy = lineparts[2]
-            assert 0 == pytest.approx(
-                log_energy - im.get_potential_energy(), abs=1e-5)
+            assert 0 == pytest.approx(log_energy - im.get_potential_energy(), abs=1e-5)
 
             log_curvature = lineparts[3]
             assert 0 == pytest.approx(log_curvature - curvatures[i], abs=1e-5)

@@ -9,28 +9,26 @@ from ase.utils import reader
 from ase.units import Bohr
 
 
-_label_strip_re = compile(r'[\s._-]')
+_label_strip_re = compile(r"[\s._-]")
 
 
 def _labelize(raw_label):
     # Labels are case insensitive and -_. should be ignored, lower and strip it
-    return _label_strip_re.sub('', raw_label).lower()
+    return _label_strip_re.sub("", raw_label).lower()
 
 
 def _is_block(val):
     # Tell whether value is a block-value or an ordinary value.
     # A block is represented as a list of lists of strings,
     # and a ordinary value is represented as a list of strings
-    if isinstance(val, list) and \
-       len(val) > 0 and \
-       isinstance(val[0], list):
+    if isinstance(val, list) and len(val) > 0 and isinstance(val[0], list):
         return True
     return False
 
 
 def _get_stripped_lines(fd):
     # Remove comments, leading blanks, and empty lines
-    return [_f for _f in [L.split('#')[0].strip() for L in fd] if _f]
+    return [_f for _f in [L.split("#")[0].strip() for L in fd] if _f]
 
 
 @reader
@@ -42,29 +40,28 @@ def _read_fdf_lines(file):
     for L in _get_stripped_lines(file):
         w0 = lbz(L.split(None, 1)[0])
 
-        if w0 == '%include':
+        if w0 == "%include":
             # Include the contents of fname
             fname = L.split(None, 1)[1].strip()
-            parent_fname = getattr(file, 'name', None)
+            parent_fname = getattr(file, "name", None)
             if isinstance(parent_fname, str):
                 fname = Path(parent_fname).parent / fname
             lines += _read_fdf_lines(fname)
 
-        elif '<' in L:
-            L, fname = L.split('<', 1)
+        elif "<" in L:
+            L, fname = L.split("<", 1)
             w = L.split()
             fname = fname.strip()
 
-            if w0 == '%block':
+            if w0 == "%block":
                 # "%block label < filename" means that the block contents
                 # should be read from filename
                 if len(w) != 2:
-                    raise IOError('Bad %%block-statement "%s < %s"' %
-                                  (L, fname))
+                    raise IOError('Bad %%block-statement "%s < %s"' % (L, fname))
                 label = lbz(w[1])
-                lines.append('%%block %s' % label)
+                lines.append("%%block %s" % label)
                 lines += _get_stripped_lines(open(fname))
-                lines.append('%%endblock %s' % label)
+                lines.append("%%endblock %s" % label)
             else:
                 # "label < filename.fdf" means that the label
                 # (_only_ that label) is to be resolved from filename.fdf
@@ -72,11 +69,11 @@ def _read_fdf_lines(file):
                 fdf = read_fdf(fname)
                 if label in fdf:
                     if _is_block(fdf[label]):
-                        lines.append('%%block %s' % label)
-                        lines += [' '.join(x) for x in fdf[label]]
-                        lines.append('%%endblock %s' % label)
+                        lines.append("%%block %s" % label)
+                        lines += [" ".join(x) for x in fdf[label]]
+                        lines.append("%%endblock %s" % label)
                     else:
-                        lines.append('%s %s' % (label, ' '.join(fdf[label])))
+                        lines.append("%s %s" % (label, " ".join(fdf[label])))
                 # else:
                 #    label unresolved!
                 #    One should possibly issue a warning about this!
@@ -144,17 +141,19 @@ def read_fdf(fname):
     lines = _read_fdf_lines(fname)
     while lines:
         w = lines.pop(0).split(None, 1)
-        if lbz(w[0]) == '%block':
+        if lbz(w[0]) == "%block":
             # Block value
             if len(w) == 2:
                 label = lbz(w[1])
                 content = []
                 while True:
                     if len(lines) == 0:
-                        raise IOError('Unexpected EOF reached in %s, '
-                                      'un-ended block %s' % (fname, label))
+                        raise IOError(
+                            "Unexpected EOF reached in %s, "
+                            "un-ended block %s" % (fname, label)
+                        )
                     w = lines.pop(0).split()
-                    if lbz(w[0]) == '%endblock':
+                    if lbz(w[0]) == "%endblock":
                         break
                     content.append(w)
 
@@ -162,7 +161,7 @@ def read_fdf(fname):
                     # Only first appearance of label is to be used
                     fdf[label] = content
             else:
-                raise IOError('%%block statement without label')
+                raise IOError("%%block statement without label")
         else:
             # Ordinary value
             label = lbz(w[0])
@@ -192,10 +191,7 @@ def read_struct_out(fd):
         numbers[i] = int(tokens[1])
         scaled_positions[i] = np.array(tokens[2:5], float)
 
-    return Atoms(numbers,
-                 cell=cell,
-                 pbc=True,
-                 scaled_positions=scaled_positions)
+    return Atoms(numbers, cell=cell, pbc=True, scaled_positions=scaled_positions)
 
 
 def read_siesta_xv(fd):
@@ -220,7 +216,6 @@ def read_siesta_xv(fd):
     vectors = np.array(vectors)
     atomnumbers = np.array(atomnumbers)
     xyz = np.array(xyz)
-    atoms = Atoms(numbers=atomnumbers, positions=xyz, cell=vectors,
-                  pbc=True)
+    atoms = Atoms(numbers=atomnumbers, positions=xyz, cell=vectors, pbc=True)
     assert natoms == len(atoms)
     return atoms

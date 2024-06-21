@@ -2,11 +2,11 @@ import pytest
 from ase.utils import xwopen
 
 
-pytestmark = pytest.mark.usefixtures('testdir')
+pytestmark = pytest.mark.usefixtures("testdir")
 
 
-poem = 'Wer reitet so spät durch Nacht und Wind\n'.encode('utf-8')
-filename = 'poem.txt'
+poem = "Wer reitet so spät durch Nacht und Wind\n".encode("utf-8")
+filename = "poem.txt"
 
 
 def test_xwopen():
@@ -15,7 +15,7 @@ def test_xwopen():
 
     assert fd.closed
 
-    with open(filename, 'rb') as fd:
+    with open(filename, "rb") as fd:
         assert fd.read() == poem
 
 
@@ -28,5 +28,5 @@ def test_xwopen_locked():
 
 def test_xwopen_fail(tmp_path):
     with pytest.raises(OSError):
-        with xwopen(tmp_path / 'does_not_exist/file'):
+        with xwopen(tmp_path / "does_not_exist/file"):
             pass

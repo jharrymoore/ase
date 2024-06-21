@@ -15,9 +15,7 @@ def test_root_surf():
     fcc111_21_set = set([1, 3, 4, 7, 9, 12, 13, 16, 19, 21])
 
     # Keep pairs for testing
-    bulk_root = ((fcc111, fcc111_root),
-                 (bcc111, bcc111_root),
-                 (hcp0001, hcp0001_root))
+    bulk_root = ((fcc111, fcc111_root), (bcc111, bcc111_root), (hcp0001, hcp0001_root))
 
     for bulk, root_surf in bulk_root:
         prim = bulk("H", (1, 1, 2), a=1)

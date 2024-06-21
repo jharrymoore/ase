@@ -31,9 +31,12 @@ class DOS:
         self.width = width
         self.w_k = calc.get_k_point_weights()
         self.nspins = calc.get_number_of_spins()
-        self.e_skn = np.array([[calc.get_eigenvalues(kpt=k, spin=s)
-                                for k in range(len(self.w_k))]
-                               for s in range(self.nspins)])
+        self.e_skn = np.array(
+            [
+                [calc.get_eigenvalues(kpt=k, spin=s) for k in range(len(self.w_k))]
+                for s in range(self.nspins)
+            ]
+        )
         try:  # two Fermi levels
             for i, eF in enumerate(calc.get_fermi_level()):
                 self.e_skn[i] -= eF
@@ -70,7 +73,7 @@ class DOS:
 
     def delta(self, energy):
         """Return a delta-function centered at 'energy'."""
-        x = -((self.energies - energy) / self.width)**2
+        x = -(((self.energies - energy) / self.width) ** 2)
         return np.exp(x) / (sqrt(pi) * self.width)
 
     def get_dos(self, spin=None):
@@ -91,8 +94,9 @@ class DOS:
             spin = 0
 
         if self.width == 0.0:
-            dos = linear_tetrahedron_integration(self.cell, self.e_skn[spin],
-                                                 self.energies, comm=self.comm)
+            dos = linear_tetrahedron_integration(
+                self.cell, self.e_skn[spin], self.energies, comm=self.comm
+            )
             return dos
 
         dos = np.zeros(self.npts)
@@ -102,8 +106,7 @@ class DOS:
         return dos
 
 
-def linear_tetrahedron_integration(cell, eigs, energies,
-                                   weights=None, comm=world):
+def linear_tetrahedron_integration(cell, eigs, energies, weights=None, comm=world):
     """DOS from linear tetrahedron interpolation.
 
     cell: 3x3 ndarray-like
@@ -138,8 +141,7 @@ def linear_tetrahedron_integration(cell, eigs, energies,
     # Find the 6 tetrahedra:
     size = eigs.shape[:3]
     B = (np.linalg.inv(cell) / size).T
-    indices = np.array([[i, j, k]
-                        for i in [0, 1] for j in [0, 1] for k in [0, 1]])
+    indices = np.array([[i, j, k] for i in [0, 1] for j in [0, 1] for k in [0, 1]])
     dt = Delaunay(np.dot(indices, B))
 
     if weights is None:
@@ -191,8 +193,7 @@ def lti_dos1(e, w, energies, dos):
     zero = energies[0]
     if len(energies) > 1:
         de = energies[1] - zero
-        nn = (np.floor((en - zero) / de).astype(int) + 1).clip(0,
-                                                               len(energies))
+        nn = (np.floor((en - zero) / de).astype(int) + 1).clip(0, len(energies))
     else:
         nn = (en > zero).astype(int)
 
@@ -208,10 +209,7 @@ def lti_dos1(e, w, energies, dos):
         f02 = 1 - f20
         f03 = 1 - f30
         g = f20 * f30 / (e1 - e0)
-        dos[:, s] += w.T.dot([f01 + f02 + f03,
-                              f10,
-                              f20,
-                              f30]) * g
+        dos[:, s] += w.T.dot([f01 + f02 + f03, f10, f20, f30]) * g
     if n2 > n1:
         delta = e3 - e0
         s = slice(n1, n2)
@@ -225,10 +223,14 @@ def lti_dos1(e, w, energies, dos):
         f12 = 1 - f21
         f13 = 1 - f31
         g = 3 / delta * (f12 * f20 + f21 * f13)
-        dos[:, s] += w.T.dot([g * f03 / 3 + f02 * f20 * f12 / delta,
-                              g * f12 / 3 + f13 * f13 * f21 / delta,
-                              g * f21 / 3 + f20 * f20 * f12 / delta,
-                              g * f30 / 3 + f31 * f13 * f21 / delta])
+        dos[:, s] += w.T.dot(
+            [
+                g * f03 / 3 + f02 * f20 * f12 / delta,
+                g * f12 / 3 + f13 * f13 * f21 / delta,
+                g * f21 / 3 + f20 * f20 * f12 / delta,
+                g * f30 / 3 + f31 * f13 * f21 / delta,
+            ]
+        )
     if n3 > n2:
         s = slice(n2, n3)
         x = energies[s] - e3
@@ -239,11 +241,8 @@ def lti_dos1(e, w, energies, dos):
         f31 = 1 - f13
         f32 = 1 - f23
         g = f03 * f13 / (e3 - e2)
-        dos[:, s] += w.T.dot([f03,
-                              f13,
-                              f23,
-                              f30 + f31 + f32]) * g
+        dos[:, s] += w.T.dot([f03, f13, f23, f30 + f31 + f32]) * g
 
 
 def ltidos(*args, **kwargs):
-    raise DeprecationWarning('Please use linear_tetrahedron_integration().')
+    raise DeprecationWarning("Please use linear_tetrahedron_integration().")

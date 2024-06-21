@@ -2,9 +2,10 @@ def test_emt2():
     from ase.calculators.emt import EMT
     from ase import Atoms
     from ase.build import molecule
-    a1 = Atoms('Au', calculator=EMT())
+
+    a1 = Atoms("Au", calculator=EMT())
     e1 = a1.get_potential_energy()
-    a2 = molecule('C6H6', calculator=EMT())
+    a2 = molecule("C6H6", calculator=EMT())
     e2 = a2.get_potential_energy()
     a1.translate((0, 0, 50))
     a3 = a1 + a2

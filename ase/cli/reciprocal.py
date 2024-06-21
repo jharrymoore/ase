@@ -32,25 +32,25 @@ def obj2bandpath(obj):
     from ase.dft.kpoints import BandPath
 
     if isinstance(obj, BandPath):
-        print('Object is a band path')
+        print("Object is a band path")
         print(obj)
         return obj
 
-    if isinstance(getattr(obj, 'path', None), BandPath):
-        print(f'Object contains a bandpath: {obj}')
+    if isinstance(getattr(obj, "path", None), BandPath):
+        print(f"Object contains a bandpath: {obj}")
         path = obj.path
         print(path)
         return path
 
     if isinstance(obj, Atoms):
-        print(f'Atoms object: {obj}')
-        print('Determining standard form of Bravais lattice:')
+        print(f"Atoms object: {obj}")
+        print("Determining standard form of Bravais lattice:")
         lat = obj.cell.get_bravais_lattice(pbc=obj.pbc)
         print(lat.description())
-        print('Showing default bandpath')
+        print("Showing default bandpath")
         return lat.bandpath(density=0)
 
-    raise CLIError(f'Strange object: {obj}')
+    raise CLIError(f"Strange object: {obj}")
 
 
 class CLICommand:
@@ -69,9 +69,8 @@ class CLICommand:
     @staticmethod
     def add_arguments(parser):
         add = parser.add_argument
-        add('name', metavar='input-file',
-            help='Input file containing unit cell.')
-        add('output', nargs='?', help='Write plot to file (.png, .svg, ...).')
+        add("name", metavar="input-file", help="Input file containing unit cell.")
+        add("output", nargs="?", help="Write plot to file (.png, .svg, ...).")
 
     @staticmethod
     def run(args, parser):

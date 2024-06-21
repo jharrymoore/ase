@@ -3,24 +3,34 @@ from functools import partial
 import pytest
 
 from ase.calculators.emt import EMT
-from ase.optimize import (MDMin, FIRE, LBFGS, LBFGSLineSearch, BFGSLineSearch,
-                          BFGS, GoodOldQuasiNewton, GPMin, Berny, ODE12r)
+from ase.optimize import (
+    MDMin,
+    FIRE,
+    LBFGS,
+    LBFGSLineSearch,
+    BFGSLineSearch,
+    BFGS,
+    GoodOldQuasiNewton,
+    GPMin,
+    Berny,
+    ODE12r,
+)
 from ase.optimize.sciopt import SciPyFminCG, SciPyFminBFGS
 from ase.optimize.precon import PreconFIRE, PreconLBFGS, PreconODE12r
 from ase.cluster import Icosahedron
 from ase.build import bulk
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def ref_atoms():
-    atoms = bulk('Au')
+    atoms = bulk("Au")
     atoms.calc = EMT()
     atoms.get_potential_energy()
     return atoms
 
 
 def atoms_no_pbc():
-    ref_atoms = Icosahedron('Ag', 2, 3.82975)
+    ref_atoms = Icosahedron("Ag", 2, 3.82975)
     ref_atoms.calc = EMT()
     atoms = ref_atoms.copy()
     atoms.calc = EMT()
@@ -41,36 +51,51 @@ def atoms(ref_atoms):
 
 
 optclasses = [
-    MDMin, FIRE, LBFGS, LBFGSLineSearch, BFGSLineSearch,
-    BFGS, GoodOldQuasiNewton, GPMin, SciPyFminCG, SciPyFminBFGS,
-    PreconLBFGS, PreconFIRE, Berny, ODE12r, PreconODE12r
+    MDMin,
+    FIRE,
+    LBFGS,
+    LBFGSLineSearch,
+    BFGSLineSearch,
+    BFGS,
+    GoodOldQuasiNewton,
+    GPMin,
+    SciPyFminCG,
+    SciPyFminBFGS,
+    PreconLBFGS,
+    PreconFIRE,
+    Berny,
+    ODE12r,
+    PreconODE12r,
 ]
 
 
-@pytest.mark.parametrize('optcls', optclasses)
-@pytest.mark.filterwarnings('ignore: estimate_mu')
+@pytest.mark.parametrize("optcls", optclasses)
+@pytest.mark.filterwarnings("ignore: estimate_mu")
 def test_optimize(optcls, atoms, ref_atoms, testdir):
     if optcls is Berny:
-        pytest.importorskip('berny')  # check if pyberny installed
+        pytest.importorskip("berny")  # check if pyberny installed
         optcls = partial(optcls, dihedral=False)
         optcls.__name__ = Berny.__name__
         atoms, ref_atoms = atoms_no_pbc()
     kw = {}
     if optcls is PreconLBFGS:
-        kw['precon'] = None
+        kw["precon"] = None
 
     fmax = 0.01
-    with optcls(atoms, logfile='opt.log', **kw) as opt:
+    with optcls(atoms, logfile="opt.log", **kw) as opt:
         opt.run(fmax=fmax)
 
     forces = atoms.get_forces()
-    final_fmax = max((forces**2).sum(axis=1)**0.5)
+    final_fmax = max((forces**2).sum(axis=1) ** 0.5)
     ref_energy = ref_atoms.get_potential_energy()
     e_opt = atoms.get_potential_energy() * len(ref_atoms) / len(atoms)
     e_err = abs(e_opt - ref_energy)
     print()
-    print('{:>20}: fmax={:.05f} eopt={:.06f}, err={:06e}'
-          .format(optcls.__name__, final_fmax, e_opt, e_err))
+    print(
+        "{:>20}: fmax={:.05f} eopt={:.06f}, err={:06e}".format(
+            optcls.__name__, final_fmax, e_opt, e_err
+        )
+    )
 
     assert final_fmax < fmax
     assert e_err < 1.75e-5  # (This tolerance is arbitrary)

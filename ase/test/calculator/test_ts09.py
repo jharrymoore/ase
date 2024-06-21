@@ -1,7 +1,6 @@
 import pytest
 from ase import io
-from ase.calculators.vdwcorrection import (vdWTkatchenko09prl,
-                                           TS09Polarizability)
+from ase.calculators.vdwcorrection import vdWTkatchenko09prl, TS09Polarizability
 from ase.calculators.emt import EMT
 from ase.build import bulk, molecule
 
@@ -27,12 +26,12 @@ class FakeDFTcalculator(EMT):
         super().__init__()
 
     def get_xc_functional(self):
-        return 'PBE'
+        return "PBE"
 
 
 def test_ts09(testdir):
     a = 4.05  # Angstrom lattice spacing
-    al = bulk('Al', 'fcc', a=a)
+    al = bulk("Al", "fcc", a=a)
     al = al.repeat([2, 2, 1])
 
     cc = FakeDFTcalculator()
@@ -41,25 +40,25 @@ def test_ts09(testdir):
     al.calc = c
     al.get_potential_energy()
 
-    assert (al.get_potential_energy(force_consistent=False)
-            == al.get_potential_energy(force_consistent=True))
+    assert al.get_potential_energy(force_consistent=False) == al.get_potential_energy(
+        force_consistent=True
+    )
 
-    fname = 'out.traj'
+    fname = "out.traj"
     al.write(fname)
 
     # check that the output exists
     atoms = io.read(fname)
-    assert (atoms.get_potential_energy()
-            == pytest.approx(al.get_potential_energy()))
+    assert atoms.get_potential_energy() == pytest.approx(al.get_potential_energy())
 
     p = atoms.calc.parameters
-    assert p['calculator'] == cc.name
-    assert p['xc'] == cc.get_xc_functional()
-    assert p['uncorrected_energy'] == pytest.approx(cc.get_potential_energy())
+    assert p["calculator"] == cc.name
+    assert p["xc"] == cc.get_xc_functional()
+    assert p["uncorrected_energy"] == pytest.approx(cc.get_potential_energy())
 
 
 def test_ts09_polarizability(testdir):
-    atoms = molecule('N2')
+    atoms = molecule("N2")
 
     cc = FakeDFTcalculator(atoms)
     hp = FakeHirshfeldPartitioning(cc)
@@ -73,4 +72,4 @@ def test_ts09_polarizability(testdir):
     # polarizability is a tensor
     assert alpha_cc.shape == (3, 3)
 
-    assert alpha_cc.diagonal() == pytest.approx(0.1523047, .005)
+    assert alpha_cc.diagonal() == pytest.approx(0.1523047, 0.005)

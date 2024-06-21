@@ -8,11 +8,11 @@ from ase.units import _auf, _amu, _auv
 from ase.data import chemical_symbols
 from ase.calculators.singlepoint import SinglePointCalculator
 
-__all__ = ['read_dlp4', 'write_dlp4']
+__all__ = ["read_dlp4", "write_dlp4"]
 
 # dlp4 labels will be registered in atoms.arrays[DLP4_LABELS_KEY]
-DLP4_LABELS_KEY = 'dlp4_labels'
-DLP4_DISP_KEY = 'dlp4_displacements'
+DLP4_LABELS_KEY = "dlp4_labels"
+DLP4_DISP_KEY = "dlp4_displacements"
 dlp_f_si = 1.0e-10 * _amu / (1.0e-12 * 1.0e-12)  # Å*Da/ps^2
 dlp_f_ase = dlp_f_si / _auf
 dlp_v_si = 1.0e-10 / 1.0e-12  # Å/ps
@@ -41,13 +41,12 @@ def _get_frame_positions(f):
         line = True
         while line:
             line = f.readline()
-            if 'timestep' in line:
+            if "timestep" in line:
                 pos.append(f.tell())
         f.seek(startpos)
     else:
         nframes = int(items[3])
-        pos = [((natoms * (levcfg + 2) + 4) * i + 3)
-               * rl for i in range(nframes)]
+        pos = [((natoms * (levcfg + 2) + 4) * i + 3) * rl for i in range(nframes)]
 
     f.seek(init_pos)
     return levcfg, imcon, natoms, pos
@@ -72,8 +71,11 @@ def read_dlp_history(f, index=-1, symbols=None):
     images = []
     for fpos in selected:
         f.seek(fpos + 1)
-        images.append(read_single_image(f, levcfg, imcon, natoms,
-                                        is_trajectory=True, symbols=symbols))
+        images.append(
+            read_single_image(
+                f, levcfg, imcon, natoms, is_trajectory=True, symbols=symbols
+            )
+        )
 
     return images
 
@@ -83,8 +85,9 @@ def iread_dlp_history(f, symbols=None):
     levcfg, imcon, natoms, pos = _get_frame_positions(f)
     for p in pos:
         f.seek(p + 1)
-        yield read_single_image(f, levcfg, imcon, natoms, is_trajectory=True,
-                                symbols=symbols)
+        yield read_single_image(
+            f, levcfg, imcon, natoms, is_trajectory=True, symbols=symbols
+        )
 
 
 def read_dlp4(f, symbols=None):
@@ -103,7 +106,7 @@ def read_dlp4(f, symbols=None):
     position = f.tell()
     line = f.readline()
     tokens = line.split()
-    is_trajectory = tokens[0] == 'timestep'
+    is_trajectory = tokens[0] == "timestep"
     if not is_trajectory:
         # Difficult to distinguish between trajectory and non-trajectory
         # formats without reading one line too much.
@@ -115,8 +118,7 @@ def read_dlp4(f, symbols=None):
             natoms = int(tokens[2])
         else:
             natoms = None
-        yield read_single_image(f, levcfg, imcon, natoms, is_trajectory,
-                                symbols)
+        yield read_single_image(f, levcfg, imcon, natoms, is_trajectory, symbols)
         line = f.readline()
 
 
@@ -147,6 +149,7 @@ def read_single_image(f, levcfg, imcon, natoms, is_trajectory, symbols=None):
         counter = range(natoms)
     else:
         from itertools import count
+
         counter = count()
 
     labels = []
@@ -160,7 +163,7 @@ def read_single_image(f, levcfg, imcon, natoms, is_trajectory, symbols=None):
             a -= 1
             break
 
-        m = re.match(r'\s*([A-Za-z][a-z]?)(\S*)', line)
+        m = re.match(r"\s*([A-Za-z][a-z]?)(\S*)", line)
         assert m is not None, line
         symbol, label = m.group(1, 2)
         symbol = symbol.capitalize()
@@ -181,22 +184,25 @@ def read_single_image(f, levcfg, imcon, natoms, is_trajectory, symbols=None):
         if label:
             labels.append(label)
         else:
-            labels.append('')
+            labels.append("")
 
         x, y, z = f.readline().split()[:3]
         positions.append([float(x), float(y), float(z)])
         if levcfg > 0:
             vx, vy, vz = f.readline().split()[:3]
-            velocities.append([float(vx) * dlp_v_ase, float(vy)
-                               * dlp_v_ase, float(vz) * dlp_v_ase])
+            velocities.append(
+                [float(vx) * dlp_v_ase, float(vy) * dlp_v_ase, float(vz) * dlp_v_ase]
+            )
         if levcfg > 1:
             fx, fy, fz = f.readline().split()[:3]
-            forces.append([float(fx) * dlp_f_ase, float(fy)
-                           * dlp_f_ase, float(fz) * dlp_f_ase])
+            forces.append(
+                [float(fx) * dlp_f_ase, float(fy) * dlp_f_ase, float(fz) * dlp_f_ase]
+            )
 
     if symbols and (a + 1 != len(symbols)):
-        raise ValueError("Counter is at {} but you gave {} symbols"
-                         .format(a + 1, len(symbols)))
+        raise ValueError(
+            "Counter is at {} but you gave {} symbols".format(a + 1, len(symbols))
+        )
 
     if imcon == 0:
         pbc = False
@@ -206,12 +212,14 @@ def read_single_image(f, levcfg, imcon, natoms, is_trajectory, symbols=None):
         assert imcon in [1, 2, 3]
         pbc = True
 
-    atoms = Atoms(positions=positions,
-                  symbols=sym,
-                  cell=cell,
-                  pbc=pbc,
-                  # Cell is centered around (0, 0, 0) in dlp4:
-                  celldisp=-cell.sum(axis=0) / 2)
+    atoms = Atoms(
+        positions=positions,
+        symbols=sym,
+        cell=cell,
+        pbc=pbc,
+        # Cell is centered around (0, 0, 0) in dlp4:
+        celldisp=-cell.sum(axis=0) / 2,
+    )
 
     if is_trajectory:
         atoms.set_masses(masses)
@@ -226,7 +234,7 @@ def read_single_image(f, levcfg, imcon, natoms, is_trajectory, symbols=None):
     return atoms
 
 
-def write_dlp4(fd, atoms, levcfg=0, title='CONFIG generated by ASE'):
+def write_dlp4(fd, atoms, levcfg=0, title="CONFIG generated by ASE"):
     """Write a DL_POLY_4 config file.
 
     Typically used indirectly through write('filename', atoms, format='dlp4').
@@ -234,7 +242,7 @@ def write_dlp4(fd, atoms, levcfg=0, title='CONFIG generated by ASE'):
     Can be unforgiven with custom chemical element names.
     Please complain to alin@elena.space in case of bugs"""
 
-    fd.write('{0:72s}\n'.format(title))
+    fd.write("{0:72s}\n".format(title))
     natoms = len(atoms)
     npbc = sum(atoms.pbc)
     if npbc == 0:
@@ -244,16 +252,20 @@ def write_dlp4(fd, atoms, levcfg=0, title='CONFIG generated by ASE'):
     elif tuple(atoms.pbc) == (True, True, False):
         imcon = 6
     else:
-        raise ValueError('Unsupported pbc: {}.  '
-                         'Supported pbc are 000, 110, and 000.'
-                         .format(atoms.pbc))
+        raise ValueError(
+            "Unsupported pbc: {}.  "
+            "Supported pbc are 000, 110, and 000.".format(atoms.pbc)
+        )
 
-    fd.write('{0:10d}{1:10d}{2:10d}\n'.format(levcfg, imcon, natoms))
+    fd.write("{0:10d}{1:10d}{2:10d}\n".format(levcfg, imcon, natoms))
     if imcon > 0:
         cell = atoms.get_cell()
         for j in range(3):
-            fd.write('{0:20.10f}{1:20.10f}{2:20.10f}\n'.format(
-                cell[j, 0], cell[j, 1], cell[j, 2]))
+            fd.write(
+                "{0:20.10f}{1:20.10f}{2:20.10f}\n".format(
+                    cell[j, 0], cell[j, 1], cell[j, 2]
+                )
+            )
     vels = []
     forces = []
     if levcfg > 0:
@@ -267,19 +279,26 @@ def write_dlp4(fd, atoms, levcfg=0, title='CONFIG generated by ASE'):
         sym = a.symbol
         if labels is not None:
             sym += labels[i]
-        fd.write("{0:8s}{1:10d}\n{2:20.10f}{3:20.10f}{4:20.10f}\n".format(
-            sym, a.index + 1, a.x, a.y, a.z))
+        fd.write(
+            "{0:8s}{1:10d}\n{2:20.10f}{3:20.10f}{4:20.10f}\n".format(
+                sym, a.index + 1, a.x, a.y, a.z
+            )
+        )
         if levcfg > 0:
             if vels is None:
-                fd.write("{0:20.10f}{1:20.10f}{2:20.10f}\n".format(
-                    0.0, 0.0, 0.0))
+                fd.write("{0:20.10f}{1:20.10f}{2:20.10f}\n".format(0.0, 0.0, 0.0))
             else:
-                fd.write("{0:20.10f}{1:20.10f}{2:20.10f}\n".format(
-                    vels[a.index, 0], vels[a.index, 1], vels[a.index, 2]))
+                fd.write(
+                    "{0:20.10f}{1:20.10f}{2:20.10f}\n".format(
+                        vels[a.index, 0], vels[a.index, 1], vels[a.index, 2]
+                    )
+                )
         if levcfg > 1:
             if forces is None:
-                fd.write("{0:20.10f}{1:20.10f}{2:20.10f}\n".format(
-                    0.0, 0.0, 0.0))
+                fd.write("{0:20.10f}{1:20.10f}{2:20.10f}\n".format(0.0, 0.0, 0.0))
             else:
-                fd.write("{0:20.10f}{1:20.10f}{2:20.10f}\n".format(
-                    forces[a.index, 0], forces[a.index, 1], forces[a.index, 2]))
+                fd.write(
+                    "{0:20.10f}{1:20.10f}{2:20.10f}\n".format(
+                        forces[a.index, 0], forces[a.index, 1], forces[a.index, 2]
+                    )
+                )

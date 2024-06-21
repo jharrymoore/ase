@@ -24,8 +24,7 @@ class JSONDatabase(Database):
         ids = []
         nextid = 1
 
-        if (isinstance(self.filename, str) and
-                os.path.isfile(self.filename)):
+        if isinstance(self.filename, str) and os.path.isfile(self.filename):
             try:
                 bigdct, ids, nextid = self._read_json()
             except (SyntaxError, ValueError):
@@ -38,25 +37,25 @@ class JSONDatabase(Database):
         else:
             row = AtomsRow(atoms)
             row.ctime = mtime
-            row.user = os.getenv('USER')
+            row.user = os.getenv("USER")
 
         dct = {}
         for key in row.__dict__:
-            if key[0] == '_' or key in row._keys or key == 'id':
+            if key[0] == "_" or key in row._keys or key == "id":
                 continue
             dct[key] = row[key]
 
-        dct['mtime'] = mtime
+        dct["mtime"] = mtime
 
         if key_value_pairs:
-            dct['key_value_pairs'] = key_value_pairs
+            dct["key_value_pairs"] = key_value_pairs
 
         if data:
-            dct['data'] = data
+            dct["data"] = data
 
-        constraints = row.get('constraints')
+        constraints = row.get("constraints")
         if constraints:
-            dct['constraints'] = constraints
+            dct["constraints"] = constraints
 
         if id is None:
             id = nextid
@@ -78,19 +77,19 @@ class JSONDatabase(Database):
             if self.filename is not sys.stdin:
                 self.filename.seek(0)
 
-        if not isinstance(bigdct, dict) or not ('ids' in bigdct
-                                                or 1 in bigdct):
+        if not isinstance(bigdct, dict) or not ("ids" in bigdct or 1 in bigdct):
             from ase.io.formats import UnknownFileTypeError
-            raise UnknownFileTypeError('Does not resemble ASE JSON database')
 
-        ids = bigdct.get('ids')
+            raise UnknownFileTypeError("Does not resemble ASE JSON database")
+
+        ids = bigdct.get("ids")
         if ids is None:
             # Allow for missing "ids" and "nextid":
             assert 1 in bigdct
             return bigdct, [1], 2
         if not isinstance(ids, list):
             ids = ids.tolist()
-        return bigdct, ids, bigdct['nextid']
+        return bigdct, ids, bigdct["nextid"]
 
     def _write_json(self, bigdct, ids, nextid):
         if world.rank > 0:
@@ -98,14 +97,16 @@ class JSONDatabase(Database):
 
         with ExitStack() as stack:
             if isinstance(self.filename, str):
-                fd = stack.enter_context(open(self.filename, 'w'))
+                fd = stack.enter_context(open(self.filename, "w"))
             else:
                 fd = self.filename
-            print('{', end='', file=fd)
+            print("{", end="", file=fd)
             for id in ids:
                 dct = bigdct[id]
-                txt = ',\n '.join('"{0}": {1}'.format(key, encode(dct[key]))
-                                  for key in sorted(dct.keys()))
+                txt = ",\n ".join(
+                    '"{0}": {1}'.format(key, encode(dct[key]))
+                    for key in sorted(dct.keys())
+                )
                 print('"{0}": {{\n {1}}},'.format(id, txt), file=fd)
             if self._metadata is not None:
                 print('"metadata": {0},'.format(encode(self.metadata)), file=fd)
@@ -127,18 +128,27 @@ class JSONDatabase(Database):
             assert len(ids) == 1
             id = ids[0]
         dct = bigdct[id]
-        dct['id'] = id
+        dct["id"] = id
         return AtomsRow(dct)
 
-    def _select(self, keys, cmps, explain=False, verbosity=0,
-                limit=None, offset=0, sort=None, include_data=True,
-                columns='all'):
+    def _select(
+        self,
+        keys,
+        cmps,
+        explain=False,
+        verbosity=0,
+        limit=None,
+        offset=0,
+        sort=None,
+        include_data=True,
+        columns="all",
+    ):
         if explain:
-            yield {'explain': (0, 0, 0, 'scan table')}
+            yield {"explain": (0, 0, 0, "scan table")}
             return
 
         if sort:
-            if sort[0] == '-':
+            if sort[0] == "-":
                 reverse = True
                 sort = sort[1:]
             else:
@@ -160,7 +170,7 @@ class JSONDatabase(Database):
             rows += missing
 
             if limit:
-                rows = rows[offset:offset + limit]
+                rows = rows[offset : offset + limit]
             for key, row in rows:
                 yield row
             return
@@ -180,7 +190,7 @@ class JSONDatabase(Database):
                 return
             dct = bigdct[id]
             if not include_data:
-                dct.pop('data', None)
+                dct.pop("data", None)
             row = AtomsRow(dct)
             row.id = id
             for key in keys:
@@ -192,9 +202,9 @@ class JSONDatabase(Database):
                         value = np.equal(row.numbers, key).sum()
                     else:
                         value = row.get(key)
-                        if key == 'pbc':
-                            assert op in [ops['='], ops['!=']]
-                            value = ''.join('FT'[x] for x in value)
+                        if key == "pbc":
+                            assert op in [ops["="], ops["!="]]
+                            value = "".join("FT"[x] for x in value)
                     if value is None or not op(value, val):
                         break
                 else:
@@ -206,7 +216,7 @@ class JSONDatabase(Database):
     def metadata(self):
         if self._metadata is None:
             bigdct, myids, nextid = self._read_json()
-            self._metadata = bigdct.get('metadata', {})
+            self._metadata = bigdct.get("metadata", {})
         return self._metadata.copy()
 
     @metadata.setter

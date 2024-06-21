@@ -5,8 +5,7 @@ from ase.geometry.cell import cell_to_cellpar
 from ase.neighborlist import neighbor_list
 
 
-def get_neighbours(atoms, r_cut, self_interaction=False,
-                   neighbor_list=neighbor_list):
+def get_neighbours(atoms, r_cut, self_interaction=False, neighbor_list=neighbor_list):
     """Return a list of pairs of atoms within a given distance of each other.
 
     Uses ase.neighborlist.neighbour_list to compute neighbors.
@@ -29,7 +28,7 @@ def get_neighbours(atoms, r_cut, self_interaction=False,
     if isinstance(atoms, Filter):
         atoms = atoms.atoms
 
-    i_list, j_list, d_list = neighbor_list('ijd', atoms, r_cut)
+    i_list, j_list, d_list = neighbor_list("ijd", atoms, r_cut)
 
     # filter out self-interactions (across PBC)
     if not self_interaction:
@@ -47,8 +46,7 @@ def get_neighbours(atoms, r_cut, self_interaction=False,
     return i_list, j_list, d_list, fixed_atoms
 
 
-def estimate_nearest_neighbour_distance(atoms,
-                                        neighbor_list=neighbor_list):
+def estimate_nearest_neighbour_distance(atoms, neighbor_list=neighbor_list):
     """
     Estimate nearest neighbour distance r_NN
 
@@ -82,18 +80,20 @@ def estimate_nearest_neighbour_distance(atoms,
         # print('estimate_nearest_neighbour_distance(): '
         #            'calling neighbour_list with r_cut=%.2f A' % r_cut)
         i, j, rij, fixed_atoms = get_neighbours(
-            atoms, r_cut, self_interaction=True,
-            neighbor_list=neighbor_list)
+            atoms, r_cut, self_interaction=True, neighbor_list=neighbor_list
+        )
         if len(i) != 0:
             nn_i = np.bincount(i, minlength=len(atoms))
             if (nn_i != 0).all():
                 break
         r_cut *= phi
     else:
-        raise RuntimeError('increased r_cut to twice system extent without '
-                           'finding neighbours for all atoms. This can '
-                           'happen if your system is too small; try '
-                           'setting r_cut manually')
+        raise RuntimeError(
+            "increased r_cut to twice system extent without "
+            "finding neighbours for all atoms. This can "
+            "happen if your system is too small; try "
+            "setting r_cut manually"
+        )
 
     # maximum of nearest neighbour distances
     nn_distances = [np.min(rij[i == I]) for I in range(len(atoms))]

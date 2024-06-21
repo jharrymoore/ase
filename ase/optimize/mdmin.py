@@ -5,10 +5,11 @@ from ase.optimize.optimize import Optimizer
 
 class MDMin(Optimizer):
     # default parameters
-    defaults = {**Optimizer.defaults, 'dt': 0.2}
+    defaults = {**Optimizer.defaults, "dt": 0.2}
 
-    def __init__(self, atoms, restart=None, logfile='-', trajectory=None,
-                 dt=None, master=None):
+    def __init__(
+        self, atoms, restart=None, logfile="-", trajectory=None, dt=None, master=None
+    ):
         """Parameters:
 
         atoms: Atoms object
@@ -32,7 +33,7 @@ class MDMin(Optimizer):
         Optimizer.__init__(self, atoms, restart, logfile, trajectory, master)
 
         if dt is None:
-            self.dt = self.defaults['dt']
+            self.dt = self.defaults["dt"]
         else:
             self.dt = dt
 

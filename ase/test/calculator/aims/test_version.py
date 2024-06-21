@@ -11,4 +11,4 @@ blah blah blah
 
 
 def test_get_aims_version():
-    assert get_aims_version(version_string) == '200112.2'
+    assert get_aims_version(version_string) == "200112.2"

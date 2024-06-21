@@ -156,17 +156,19 @@ def test_parse_dfpt_dielectric(testdir):
 
     assert np.allclose(diel, diel_0)
 
+
 def test_parse_polarization(testdir):
     outfile = parent / "testdata/aims/polarization.out"
     atoms = read(outfile, format="aims-output")
 
     polar = atoms.calc.results["polarization"]
 
-    polar_0 = [-51.045557E-03, -51.045557E-03, -51.458008E-03]
+    polar_0 = [-51.045557e-03, -51.045557e-03, -51.458008e-03]
 
     assert np.allclose(polar, polar_0)
 
+
 def test_preamble_failed(testdir):
     outfile = parent / "testdata/aims/preamble_fail.out"
-    with pytest.raises(ParseError, match='No SCF steps'):
+    with pytest.raises(ParseError, match="No SCF steps"):
         read(outfile, format="aims-output")

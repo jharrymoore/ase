@@ -24,10 +24,10 @@ class Albrecht(ResonantRaman):
         nm: int
             Number of intermediate m levels to consider, default 20
         """
-        self.combinations = kwargs.pop('combinations', 1)
-        self.skip = kwargs.pop('skip', 0)
-        self.nm = kwargs.pop('nm', 20)
-        approximation = kwargs.pop('approximation', 'Albrecht')
+        self.combinations = kwargs.pop("combinations", 1)
+        self.skip = kwargs.pop("skip", 0)
+        self.nm = kwargs.pop("nm", 20)
+        approximation = kwargs.pop("approximation", "Albrecht")
 
         ResonantRaman.__init__(self, *args, **kwargs)
 
@@ -35,21 +35,21 @@ class Albrecht(ResonantRaman):
 
     def set_approximation(self, value):
         approx = value.lower()
-        if approx in ['albrecht', 'albrecht b', 'albrecht c', 'albrecht bc']:
+        if approx in ["albrecht", "albrecht b", "albrecht c", "albrecht bc"]:
             if not self.overlap:
-                raise ValueError('Overlaps are needed')
-        elif not approx == 'albrecht a':
+                raise ValueError("Overlaps are needed")
+        elif not approx == "albrecht a":
             raise ValueError('Please use "Albrecht" or "Albrecht A/B/C/BC"')
         self._approx = value
 
     def calculate_energies_and_modes(self):
-        if hasattr(self, 'im_r'):
+        if hasattr(self, "im_r"):
             return
 
         ResonantRaman.calculate_energies_and_modes(self)
 
         # single transitions and their occupation
-        om_Q = self.om_Q[self.skip:]
+        om_Q = self.om_Q[self.skip :]
         om_v = om_Q
         ndof = len(om_Q)
         n_vQ = np.eye(ndof, dtype=int)
@@ -93,7 +93,7 @@ class Albrecht(ResonantRaman):
 
     def Huang_Rhys_factors(self, forces_r):
         """Evaluate Huang-Rhys factors derived from forces."""
-        return 0.5 * self.unitless_displacements(forces_r)**2
+        return 0.5 * self.unitless_displacements(forces_r) ** 2
 
     def unitless_displacements(self, forces_r, mineigv=1e-12):
         """Evaluate unitless displacements from forces
@@ -112,18 +112,26 @@ class Albrecht(ResonantRaman):
         """
         assert len(forces_r.flat) == self.ndof
 
-        if not hasattr(self, 'Dm1_q'):
+        if not hasattr(self, "Dm1_q"):
             self.eigv_q, self.eigw_rq = np.linalg.eigh(
-                self.im_r[:, None] * self.H * self.im_r)
+                self.im_r[:, None] * self.H * self.im_r
+            )
             # there might be zero or nearly zero eigenvalues
-            self.Dm1_q = np.divide(1, self.eigv_q,
-                                   out=np.zeros_like(self.eigv_q),
-                                   where=np.abs(self.eigv_q) > mineigv)
-        X_r = self.eigw_rq @ np.diag(self.Dm1_q) @ self.eigw_rq.T @ (
-            forces_r.flat * self.im_r)
+            self.Dm1_q = np.divide(
+                1,
+                self.eigv_q,
+                out=np.zeros_like(self.eigv_q),
+                where=np.abs(self.eigv_q) > mineigv,
+            )
+        X_r = (
+            self.eigw_rq
+            @ np.diag(self.Dm1_q)
+            @ self.eigw_rq.T
+            @ (forces_r.flat * self.im_r)
+        )
 
         d_Q = np.dot(self.modes_Qq, X_r)
-        s = 1.e-20 / u.kg / u.C / u._hbar**2
+        s = 1.0e-20 / u.kg / u.C / u._hbar**2
         d_Q *= np.sqrt(s * self.om_Q)
 
         return d_Q
@@ -155,7 +163,7 @@ class Albrecht(ResonantRaman):
         """
         self.read()
 
-        if not hasattr(self, 'fcr'):
+        if not hasattr(self, "fcr"):
             self.fcr = FranckCondonRecursive()
 
         omL = omega + 1j * gamma
@@ -168,7 +176,7 @@ class Albrecht(ResonantRaman):
         for p in myp:
             energy = self.ex0E_p[p]
             d_Q = self.unitless_displacements(exF_pr[p])
-            energy_Q = energy - self.om_Q * d_Q**2 / 2.
+            energy_Q = energy - self.om_Q * d_Q**2 / 2.0
             me_cc = np.outer(self.ex0m_pc[p], self.ex0m_pc[p].conj())
 
             wm_Q = np.zeros((self.ndof), dtype=complex)
@@ -178,8 +186,8 @@ class Albrecht(ResonantRaman):
                 e_Q = energy_Q + m * self.om_Q
                 wm_Q += fco_Q / (e_Q - omL)
                 wp_Q += fco_Q / (e_Q + omS_Q)
-            m_Qcc += np.einsum('a,bc->abc', wm_Q, me_cc)
-            m_Qcc += np.einsum('a,bc->abc', wp_Q, me_cc.conj())
+            m_Qcc += np.einsum("a,bc->abc", wm_Q, me_cc)
+            m_Qcc += np.einsum("a,bc->abc", wp_Q, me_cc.conj())
         self.comm.sum(m_Qcc)
 
         return m_Qcc  # e^2 Angstrom^2 / eV
@@ -193,13 +201,13 @@ class Albrecht(ResonantRaman):
         """
         self.read()
 
-        if not hasattr(self, 'fcr'):
+        if not hasattr(self, "fcr"):
             self.fcr = FranckCondonRecursive()
 
         omL = omega + 1j * gamma
         omS_v = omL - self.om_v
         nv = len(self.om_v)
-        om_Q = self.om_Q[self.skip:]
+        om_Q = self.om_Q[self.skip :]
         nQ = len(om_Q)
 
         # n_v:
@@ -233,8 +241,8 @@ class Albrecht(ResonantRaman):
         m_vcc = np.zeros((nv, 3, 3), dtype=complex)
         for p in myp:
             energy = self.ex0E_p[p]
-            d_Q = self.unitless_displacements(exF_pr[p])[self.skip:]
-            S_Q = d_Q**2 / 2.
+            d_Q = self.unitless_displacements(exF_pr[p])[self.skip :]
+            S_Q = d_Q**2 / 2.0
             energy_v = energy - self.d_vQ.dot(om_Q * S_Q)
             me_cc = np.outer(self.ex0m_pc[p], self.ex0m_pc[p].conj())
 
@@ -247,9 +255,9 @@ class Albrecht(ResonantRaman):
             wm_v = np.zeros((nv), dtype=complex)
             wp_v = np.zeros((nv), dtype=complex)
             for m in range(self.nm):
-                fco1_v = np.where(n_ov[0] == 2,
-                                  d_ovQ[0].dot(fco2_mQ[m]),
-                                  d_ovQ[0].dot(fco1_mQ[m]))
+                fco1_v = np.where(
+                    n_ov[0] == 2, d_ovQ[0].dot(fco2_mQ[m]), d_ovQ[0].dot(fco1_mQ[m])
+                )
 
                 em_v = energy_v + m * om_ov[0]
                 # multiples of same kind
@@ -265,14 +273,13 @@ class Albrecht(ResonantRaman):
                         wm_v += fco_v / (e_v - omL)
                         wp_v += fco_v / (e_v + omS_v)
 
-            m_vcc += np.einsum('a,bc->abc', wm_v, me_cc)
-            m_vcc += np.einsum('a,bc->abc', wp_v, me_cc.conj())
+            m_vcc += np.einsum("a,bc->abc", wm_v, me_cc)
+            m_vcc += np.einsum("a,bc->abc", wp_v, me_cc.conj())
         self.comm.sum(m_vcc)
 
         return m_vcc  # e^2 Angstrom^2 / eV
 
-    def meBC(self, omega, gamma=0.1,
-             term='BC'):
+    def meBC(self, omega, gamma=0.1, term="BC"):
         """Evaluate Albrecht BC term.
 
         Returns
@@ -282,7 +289,7 @@ class Albrecht(ResonantRaman):
         """
         self.read()
 
-        if not hasattr(self, 'fco'):
+        if not hasattr(self, "fco"):
             self.fco = FranckCondonOverlap()
 
         omL = omega + 1j * gamma
@@ -291,8 +298,7 @@ class Albrecht(ResonantRaman):
         # excited state forces
         n_p, myp, exF_pr = self.init_parallel_excitations()
         # derivatives after normal coordinates
-        exdmdr_rpc = self._collect_r(
-            self.exdmdr_rpc, [n_p, 3], self.ex0m_pc.dtype)
+        exdmdr_rpc = self._collect_r(self.exdmdr_rpc, [n_p, 3], self.ex0m_pc.dtype)
         dmdq_qpc = (exdmdr_rpc.T * self.im_r).T  # unit e / sqrt(amu)
         dmdQ_Qpc = np.dot(dmdq_qpc.T, self.modes_Qq.T).T  # unit e / sqrt(amu)
 
@@ -314,8 +320,9 @@ class Albrecht(ResonantRaman):
             wCLS_Q = np.zeros((self.ndof), dtype=complex)
             wCSL_Q = np.zeros((self.ndof), dtype=complex)
             for m in range(self.nm):
-                f0mmQ1_Q = (self.fco.directT0(m, S_Q) +
-                            np.sqrt(2) * self.fco.direct0mm2(m, S_Q))
+                f0mmQ1_Q = self.fco.directT0(m, S_Q) + np.sqrt(2) * self.fco.direct0mm2(
+                    m, S_Q
+                )
                 f0Qmm1_Q = self.fco.direct(1, m, S_Q)
 
                 em_Q = energy_Q + m * self.om_Q
@@ -325,12 +332,12 @@ class Albrecht(ResonantRaman):
                 wCSL_Q += f0Qmm1_Q / (em_Q + omS_Q)
 
             # unit e^2 Angstrom / sqrt(amu)
-            mdmdQ_Qcc = np.einsum('a,bc->bac', m_c, dmdQ_Qc.conj())
-            dmdQm_Qcc = np.einsum('ab,c->abc', dmdQ_Qc, m_c.conj())
-            if 'B' in term:
+            mdmdQ_Qcc = np.einsum("a,bc->bac", m_c, dmdQ_Qc.conj())
+            dmdQm_Qcc = np.einsum("ab,c->abc", dmdQ_Qc, m_c.conj())
+            if "B" in term:
                 me_Qcc += np.multiply(wBLS_Q, mdmdQ_Qcc.T).T
                 me_Qcc += np.multiply(wBSL_Q, dmdQm_Qcc.T).T
-            if 'C' in term:
+            if "C" in term:
                 me_Qcc += np.multiply(wCLS_Q, mdmdQ_Qcc.T).T
                 me_Qcc += np.multiply(wCSL_Q, dmdQm_Qcc.T).T
 
@@ -343,19 +350,20 @@ class Albrecht(ResonantRaman):
         approx = self.approximation.lower()
         assert self.combinations == 1
         Vel_Qcc = np.zeros((len(self.om_Q), 3, 3), dtype=complex)
-        if approx == 'albrecht a' or approx == 'albrecht':
+        if approx == "albrecht a" or approx == "albrecht":
             Vel_Qcc += self.meA(omega, gamma)  # e^2 Angstrom^2 / eV
             # divide through pre-factor
-            with np.errstate(divide='ignore'):
-                Vel_Qcc *= np.where(self.vib01_Q > 0,
-                                    1. / self.vib01_Q, 0)[:, None, None]
+            with np.errstate(divide="ignore"):
+                Vel_Qcc *= np.where(self.vib01_Q > 0, 1.0 / self.vib01_Q, 0)[
+                    :, None, None
+                ]
             # -> e^2 Angstrom / eV / sqrt(amu)
-        if approx == 'albrecht bc' or approx == 'albrecht':
+        if approx == "albrecht bc" or approx == "albrecht":
             Vel_Qcc += self.meBC(omega, gamma)  # e^2 Angstrom / eV / sqrt(amu)
-        if approx == 'albrecht b':
-            Vel_Qcc += self.meBC(omega, gamma, term='B')
-        if approx == 'albrecht c':
-            Vel_Qcc = self.meBC(omega, gamma, term='C')
+        if approx == "albrecht b":
+            Vel_Qcc += self.meBC(omega, gamma, term="B")
+        if approx == "albrecht c":
+            Vel_Qcc = self.meBC(omega, gamma, term="C")
 
         Vel_Qcc *= u.Hartree * u.Bohr  # e^2 Angstrom^2 / eV -> Angstrom^3
 
@@ -367,89 +375,97 @@ class Albrecht(ResonantRaman):
         approx = self.approximation.lower()
         nv = len(self.om_v)
         V_vcc = np.zeros((nv, 3, 3), dtype=complex)
-        if approx == 'albrecht a' or approx == 'albrecht':
+        if approx == "albrecht a" or approx == "albrecht":
             if self.combinations == 1:
                 # e^2 Angstrom^2 / eV
-                V_vcc += self.meA(omega, gamma)[self.skip:]
+                V_vcc += self.meA(omega, gamma)[self.skip :]
             else:
                 V_vcc += self.meAmult(omega, gamma)
-        if approx == 'albrecht bc' or approx == 'albrecht':
+        if approx == "albrecht bc" or approx == "albrecht":
             if self.combinations == 1:
                 vel_vcc = self.meBC(omega, gamma)
                 V_vcc += vel_vcc * self.vib01_Q[:, None, None]
             else:
                 vel_vcc = self.meBCmult(omega, gamma)
                 V_vcc = 0
-        elif approx == 'albrecht b':
+        elif approx == "albrecht b":
             assert self.combinations == 1
-            vel_vcc = self.meBC(omega, gamma, term='B')
+            vel_vcc = self.meBC(omega, gamma, term="B")
             V_vcc = vel_vcc * self.vib01_Q[:, None, None]
-        if approx == 'albrecht c':
+        if approx == "albrecht c":
             assert self.combinations == 1
-            vel_vcc = self.meBC(omega, gamma, term='C')
+            vel_vcc = self.meBC(omega, gamma, term="C")
             V_vcc = vel_vcc * self.vib01_Q[:, None, None]
 
         return V_vcc  # e^2 Angstrom^2 / eV
 
-    def summary(self, omega=0, gamma=0,
-                method='standard', direction='central',
-                log=sys.stdout):
+    def summary(
+        self, omega=0, gamma=0, method="standard", direction="central", log=sys.stdout
+    ):
         """Print summary for given omega [eV]"""
         if self.combinations > 1:
             return self.extended_summary()
 
         om_v = self.get_energies()
-        intensities = self.get_absolute_intensities(omega, gamma)[self.skip:]
+        intensities = self.get_absolute_intensities(omega, gamma)[self.skip :]
 
         if isinstance(log, str):
-            log = paropen(log, 'a')
+            log = paropen(log, "a")
 
-        parprint('-------------------------------------', file=log)
-        parprint(' excitation at ' + str(omega) + ' eV', file=log)
-        parprint(' gamma ' + str(gamma) + ' eV', file=log)
-        parprint(' approximation:', self.approximation, file=log)
-        parprint(' Mode    Frequency        Intensity', file=log)
-        parprint('  #    meV     cm^-1      [A^4/amu]', file=log)
-        parprint('-------------------------------------', file=log)
+        parprint("-------------------------------------", file=log)
+        parprint(" excitation at " + str(omega) + " eV", file=log)
+        parprint(" gamma " + str(gamma) + " eV", file=log)
+        parprint(" approximation:", self.approximation, file=log)
+        parprint(" Mode    Frequency        Intensity", file=log)
+        parprint("  #    meV     cm^-1      [A^4/amu]", file=log)
+        parprint("-------------------------------------", file=log)
         for n, e in enumerate(om_v):
             if e.imag != 0:
-                c = 'i'
+                c = "i"
                 e = e.imag
             else:
-                c = ' '
+                c = " "
                 e = e.real
-            parprint('%3d %6.1f   %7.1f%s  %9.1f' %
-                     (n, 1000 * e, e / u.invcm, c, intensities[n]),
-                     file=log)
-        parprint('-------------------------------------', file=log)
-        parprint('Zero-point energy: %.3f eV' %
-                 self.vibrations.get_zero_point_energy(),
-                 file=log)
+            parprint(
+                "%3d %6.1f   %7.1f%s  %9.1f"
+                % (n, 1000 * e, e / u.invcm, c, intensities[n]),
+                file=log,
+            )
+        parprint("-------------------------------------", file=log)
+        parprint(
+            "Zero-point energy: %.3f eV" % self.vibrations.get_zero_point_energy(),
+            file=log,
+        )
 
-    def extended_summary(self, omega=0, gamma=0,
-                         method='standard', direction='central',
-                         log=sys.stdout):
+    def extended_summary(
+        self, omega=0, gamma=0, method="standard", direction="central", log=sys.stdout
+    ):
         """Print summary for given omega [eV]"""
         self.read(method, direction)
         om_v = self.get_energies()
         intens_v = self.intensity(omega, gamma)
 
         if isinstance(log, str):
-            log = paropen(log, 'a')
+            log = paropen(log, "a")
 
-        parprint('-------------------------------------', file=log)
-        parprint(' excitation at ' + str(omega) + ' eV', file=log)
-        parprint(' gamma ' + str(gamma) + ' eV', file=log)
-        parprint(' approximation:', self.approximation, file=log)
-        parprint(' observation:', self.observation, file=log)
-        parprint(' Mode    Frequency        Intensity', file=log)
-        parprint('  #    meV     cm^-1      [e^4A^4/eV^2]', file=log)
-        parprint('-------------------------------------', file=log)
+        parprint("-------------------------------------", file=log)
+        parprint(" excitation at " + str(omega) + " eV", file=log)
+        parprint(" gamma " + str(gamma) + " eV", file=log)
+        parprint(" approximation:", self.approximation, file=log)
+        parprint(" observation:", self.observation, file=log)
+        parprint(" Mode    Frequency        Intensity", file=log)
+        parprint("  #    meV     cm^-1      [e^4A^4/eV^2]", file=log)
+        parprint("-------------------------------------", file=log)
         for v, e in enumerate(om_v):
-            parprint(self.ind_v[v], '{0:6.1f}   {1:7.1f} {2:9.1f}'.format(
-                1000 * e, e / u.invcm, 1e9 * intens_v[v]),
-                file=log)
-        parprint('-------------------------------------', file=log)
-        parprint('Zero-point energy: %.3f eV' %
-                 self.vibrations.get_zero_point_energy(),
-                 file=log)
+            parprint(
+                self.ind_v[v],
+                "{0:6.1f}   {1:7.1f} {2:9.1f}".format(
+                    1000 * e, e / u.invcm, 1e9 * intens_v[v]
+                ),
+                file=log,
+            )
+        parprint("-------------------------------------", file=log)
+        parprint(
+            "Zero-point energy: %.3f eV" % self.vibrations.get_zero_point_energy(),
+            file=log,
+        )

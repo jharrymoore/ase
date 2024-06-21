@@ -12,8 +12,9 @@ from ase.geometry import get_distances
 @pytest.fixture
 def mm_calc():
     from ase.calculators.lj import LennardJones
+
     bulk_at = bulk("Cu", cubic=True)
-    sigma = (bulk_at * 2).get_distance(0, 1) * (2. ** (-1. / 6))
+    sigma = (bulk_at * 2).get_distance(0, 1) * (2.0 ** (-1.0 / 6))
 
     return LennardJones(sigma=sigma, epsilon=0.05)
 
@@ -44,33 +45,36 @@ def test_qm_buffer_mask(qm_calc, mm_calc, bulk_at):
     N_cell_geom = 10
     at0 = bulk_at * N_cell_geom
     r = at0.get_distances(0, np.arange(len(at0)), mic=True)
-    print("N_cell", N_cell_geom, 'N_MM', len(at0), "Size", N_cell_geom * alat)
+    print("N_cell", N_cell_geom, "N_MM", len(at0), "Size", N_cell_geom * alat)
     qm_rc = 5.37  # cutoff for EMC()
 
-    for R_QM in [1.0e-3,  # one atom in the center
-                 alat / np.sqrt(2.0) + 1.0e-3,  # should give 12 nearest
-                                                # neighbours + central atom
-                 alat + 1.0e-3]:  # should give 18 neighbours + central atom
+    for R_QM in [
+        1.0e-3,  # one atom in the center
+        alat / np.sqrt(2.0) + 1.0e-3,  # should give 12 nearest
+        # neighbours + central atom
+        alat + 1.0e-3,
+    ]:  # should give 18 neighbours + central atom
 
         at = at0.copy()
         qm_mask = r < R_QM
         qm_buffer_mask_ref = r < 2 * qm_rc + R_QM
         # exclude atoms that are too far (in case of non spherical region)
         # this is the old way to do it
-        _, r_qm_buffer = get_distances(at.positions[qm_buffer_mask_ref],
-                                       at.positions[qm_mask], at.cell, at.pbc)
+        _, r_qm_buffer = get_distances(
+            at.positions[qm_buffer_mask_ref], at.positions[qm_mask], at.cell, at.pbc
+        )
         updated_qm_buffer_mask = np.ones_like(at[qm_buffer_mask_ref])
         for i, r_qm in enumerate(r_qm_buffer):
             if r_qm.min() > 2 * qm_rc:
                 updated_qm_buffer_mask[i] = False
 
         qm_buffer_mask_ref[qm_buffer_mask_ref] = updated_qm_buffer_mask
-        '''
+        """
         print(f'R_QM             {R_QM}   N_QM        {qm_mask.sum()}')
         print(f'R_QM + buffer: {2 * qm_rc + R_QM:.2f}'
               f' N_QM_buffer {qm_buffer_mask_ref.sum()}')
         print(f'                     N_total:    {len(at)}')
-        '''
+        """
         qmmm = ForceQMMM(at, qm_mask, qm_calc, mm_calc, buffer_width=2 * qm_rc)
         # build qm_buffer_mask and test it
         qmmm.initialize_qm_buffer_mask(at)
@@ -85,14 +89,19 @@ def test_qm_buffer_mask(qm_calc, mm_calc, bulk_at):
         qm_mask_region = region == "QM"
         assert qm_mask_region.sum() == qm_mask.sum()
         buffer_mask_region = region == "buffer"
-        assert qm_mask_region.sum() + \
-            buffer_mask_region.sum() == qm_buffer_mask_ref.sum()
+        assert (
+            qm_mask_region.sum() + buffer_mask_region.sum() == qm_buffer_mask_ref.sum()
+        )
 
 
-def compare_qm_cell_and_pbc(qm_calc, mm_calc, bulk_at,
-                            test_size=4,
-                            expected_pbc=np.array([True, True, True]),
-                            buffer_width=5 * 3.61):
+def compare_qm_cell_and_pbc(
+    qm_calc,
+    mm_calc,
+    bulk_at,
+    test_size=4,
+    expected_pbc=np.array([True, True, True]),
+    buffer_width=5 * 3.61,
+):
     """
     test qm cell shape and choice of pbc:
     make a non-periodic pdc in a direction
@@ -112,8 +121,7 @@ def compare_qm_cell_and_pbc(qm_calc, mm_calc, bulk_at,
     R_QM = alat / np.sqrt(2.0) + 1.0e-3
     qm_mask = r < R_QM
 
-    qmmm = ForceQMMM(at0, qm_mask, qm_calc, mm_calc,
-                     buffer_width=buffer_width)
+    qmmm = ForceQMMM(at0, qm_mask, qm_calc, mm_calc, buffer_width=buffer_width)
     # equal to 1 alat
     # build qm_buffer_mask to build the cell
     qmmm.initialize_qm_buffer_mask(at0)
@@ -124,62 +132,83 @@ def compare_qm_cell_and_pbc(qm_calc, mm_calc, bulk_at,
 
     # test the cell size for qmmm.get_qm_cluster()
     if not all(expected_pbc):  # at least one F. avoid comparing empty arrays
-        assert not all(qm_cluster.cell.lengths()[~expected_pbc] ==
-                       at0.cell.lengths()[~expected_pbc])
+        assert not all(
+            qm_cluster.cell.lengths()[~expected_pbc]
+            == at0.cell.lengths()[~expected_pbc]
+        )
     if any(expected_pbc):  # at least one T. avoid comparing empty arrays
-        np.testing.assert_allclose(qm_cluster.cell.lengths()[expected_pbc],
-                                   at0.cell.lengths()[expected_pbc])
+        np.testing.assert_allclose(
+            qm_cluster.cell.lengths()[expected_pbc], at0.cell.lengths()[expected_pbc]
+        )
 
 
-@pytest.mark.parametrize("kwargs",
-                         [  # test the case of a cluster in
-                            # a fully periodic cell:
-                            # fist qm_radius + buffer > cell,
-                            # thus should give a cluster with pbc=[T, T, T]
-                            # (qm cluster is the same as the original cell)'''
-                            {"test_size": 4,
-                             "expected_pbc": np.array([True, True, True]),
-                             "buffer_width": 5 * 3.61},
-                            # test the case of a spherical
-                            # cluster in a fully periodic cell:
-                            # fist qm_radius + buffer < cell,
-                            # thus should give a cluster with pbc=[F, F, F]
-                            # (qm cluster cell must be DIFFERENT
-                            # form the original cell)
-                            {"test_size": 4,
-                             "expected_pbc": np.array([False, False, False]),
-                             "buffer_width": 3.61},
-                            # testing the mixed scenario when the qm_cluster
-                            # is periodic in one direction
-                            # (relevant for dislocation or crack cells)
-                            # (qm cluster cell must be the same as
-                            # the original cell in periodic direction
-                            # and DIFFERENT form the original cell
-                            # in non periodic directions
-                            # three tests for three different directions
-                            {"test_size": [4, 4, 1],
-                             "expected_pbc": np.array([False, False, True]),
-                             "buffer_width": 3.61},
-                            {"test_size": [4, 1, 4],
-                             "expected_pbc": np.array([False, True, False]),
-                             "buffer_width": 3.61},
-                            {"test_size": [1, 4, 4],
-                             "expected_pbc": np.array([True, False, False]),
-                             "buffer_width":3.61},
-                             # testing scenario periodic in one direction
-                             # and non periodic in the other two
-                             # relevant for surfaces.
-                             # testing three different scenarios
-                             {"test_size": [1, 1, 4],
-                              "expected_pbc": np.array([True, True, False]),
-                              "buffer_width": 3.61},
-                             {"test_size": [4, 1, 1],
-                              "expected_pbc": np.array([False, True, True]),
-                              "buffer_width": 3.61},
-                             {"test_size": [1, 4, 1],
-                              "expected_pbc": np.array([True, False, True]),
-                              "buffer_width": 3.61}
-                         ])
+@pytest.mark.parametrize(
+    "kwargs",
+    [  # test the case of a cluster in
+        # a fully periodic cell:
+        # fist qm_radius + buffer > cell,
+        # thus should give a cluster with pbc=[T, T, T]
+        # (qm cluster is the same as the original cell)'''
+        {
+            "test_size": 4,
+            "expected_pbc": np.array([True, True, True]),
+            "buffer_width": 5 * 3.61,
+        },
+        # test the case of a spherical
+        # cluster in a fully periodic cell:
+        # fist qm_radius + buffer < cell,
+        # thus should give a cluster with pbc=[F, F, F]
+        # (qm cluster cell must be DIFFERENT
+        # form the original cell)
+        {
+            "test_size": 4,
+            "expected_pbc": np.array([False, False, False]),
+            "buffer_width": 3.61,
+        },
+        # testing the mixed scenario when the qm_cluster
+        # is periodic in one direction
+        # (relevant for dislocation or crack cells)
+        # (qm cluster cell must be the same as
+        # the original cell in periodic direction
+        # and DIFFERENT form the original cell
+        # in non periodic directions
+        # three tests for three different directions
+        {
+            "test_size": [4, 4, 1],
+            "expected_pbc": np.array([False, False, True]),
+            "buffer_width": 3.61,
+        },
+        {
+            "test_size": [4, 1, 4],
+            "expected_pbc": np.array([False, True, False]),
+            "buffer_width": 3.61,
+        },
+        {
+            "test_size": [1, 4, 4],
+            "expected_pbc": np.array([True, False, False]),
+            "buffer_width": 3.61,
+        },
+        # testing scenario periodic in one direction
+        # and non periodic in the other two
+        # relevant for surfaces.
+        # testing three different scenarios
+        {
+            "test_size": [1, 1, 4],
+            "expected_pbc": np.array([True, True, False]),
+            "buffer_width": 3.61,
+        },
+        {
+            "test_size": [4, 1, 1],
+            "expected_pbc": np.array([False, True, True]),
+            "buffer_width": 3.61,
+        },
+        {
+            "test_size": [1, 4, 1],
+            "expected_pbc": np.array([True, False, True]),
+            "buffer_width": 3.61,
+        },
+    ],
+)
 def test_qm_pbc(kwargs, qm_calc, mm_calc, bulk_at):
     kwargs1 = {}
     kwargs1.update(kwargs)
@@ -195,6 +224,7 @@ def test_rescaled_calculator():
 
     from ase.calculators.eam import EAM
     from ase.units import GPa
+
     # A simple empirical N-body potential for
     # transition metals by M. W. Finnis & J.E. Sinclair
     # https://www.tandfonline.com/doi/abs/10.1080/01418618408244210
@@ -213,7 +243,7 @@ def test_rescaled_calculator():
         c1 = -33.7665655
         c2 = 6.2541999
 
-        energy = (c0 + c1 * r + c2 * r ** 2.0) * (r - c) ** 2.0
+        energy = (c0 + c1 * r + c2 * r**2.0) * (r - c) ** 2.0
         energy[r > c] = 0.0
 
         return energy
@@ -237,14 +267,19 @@ def test_rescaled_calculator():
         """
 
         A = 1.896373
-        energy = - A * np.sqrt(rho)
+        energy = -A * np.sqrt(rho)
 
         return energy
 
     cutoff = 4.400224
-    W_FS = EAM(elements=['W'], embedded_energy=np.array([embedding_function]),
-               electron_density=np.array([[cohesive_potential]]),
-               phi=np.array([[pair_potential]]), cutoff=cutoff, form='fs')
+    W_FS = EAM(
+        elements=["W"],
+        embedded_energy=np.array([embedding_function]),
+        electron_density=np.array([[cohesive_potential]]),
+        phi=np.array([[pair_potential]]),
+        cutoff=cutoff,
+        form="fs",
+    )
 
     # compute MM and QM equations of state
     def strain(at, e, calc):
@@ -294,14 +329,13 @@ def test_forceqmmm(qm_calc, mm_calc, bulk_at):
     N_cell = 2
     R_QMs = np.array([3, 7])
 
-    sigma = (bulk_at * 2).get_distance(0, 1) * (2. ** (-1. / 6))
+    sigma = (bulk_at * 2).get_distance(0, 1) * (2.0 ** (-1.0 / 6))
 
     at0 = bulk_at * N_cell
     r = at0.get_distances(0, np.arange(1, len(at0)), mic=True)
     print(len(r))
     del at0[0]  # introduce a vacancy
-    print("N_cell", N_cell, 'N_MM', len(at0),
-          "Size", N_cell * bulk_at.cell[0, 0])
+    print("N_cell", N_cell, "N_MM", len(at0), "Size", N_cell * bulk_at.cell[0, 0])
 
     ref_at = at0.copy()
     ref_at.calc = qm_calc
@@ -314,14 +348,15 @@ def test_forceqmmm(qm_calc, mm_calc, bulk_at):
         at = at0.copy()
         qm_mask = r < R_QM
         qm_buffer_mask_ref = r < 2 * qm_calc.rc + R_QM
-        print(f'R_QM             {R_QM}   N_QM        {qm_mask.sum()}')
-        print(f'R_QM + buffer: {2 * qm_calc.rc + R_QM:.2f}'
-              f' N_QM_buffer {qm_buffer_mask_ref.sum()}')
-        print(f'                     N_total:    {len(at)}')
+        print(f"R_QM             {R_QM}   N_QM        {qm_mask.sum()}")
+        print(
+            f"R_QM + buffer: {2 * qm_calc.rc + R_QM:.2f}"
+            f" N_QM_buffer {qm_buffer_mask_ref.sum()}"
+        )
+        print(f"                     N_total:    {len(at)}")
         # Warning: Small size of the cell and large size of the buffer
         # lead to the qm calculation performed on the whole cell.
-        qmmm = ForceQMMM(at, qm_mask, qm_calc, mm_calc,
-                         buffer_width=2 * qm_calc.rc)
+        qmmm = ForceQMMM(at, qm_mask, qm_calc, mm_calc, buffer_width=2 * qm_calc.rc)
         qmmm.initialize_qm_buffer_mask(at)
         at.calc = qmmm
         opt = FIRE(at)
@@ -330,18 +365,17 @@ def test_forceqmmm(qm_calc, mm_calc, bulk_at):
 
     # compute error in energy norm |\nabla u - \nabla u_ref|
     def strain_error(at0, u_ref, u, cutoff, mask):
-        I, J = neighbor_list('ij', at0, cutoff)
+        I, J = neighbor_list("ij", at0, cutoff)
         I, J = np.array([(i, j) for i, j in zip(I, J) if mask[i]]).T
         v = u_ref - u
         dv = np.linalg.norm(v[I, :] - v[J, :], axis=1)
         return np.linalg.norm(dv)
 
-    du_global = [strain_error(at0, u_ref, u, 1.5 * sigma,
-                              np.ones(len(r))) for u in us]
+    du_global = [strain_error(at0, u_ref, u, 1.5 * sigma, np.ones(len(r))) for u in us]
     du_local = [strain_error(at0, u_ref, u, 1.5 * sigma, r < 3.0) for u in us]
 
-    print('du_local', du_local)
-    print('du_global', du_global)
+    print("du_local", du_local)
+    print("du_global", du_global)
 
     # check local errors are monotonically decreasing
     assert np.all(np.diff(du_local) < 0)
@@ -363,8 +397,7 @@ def at0(qm_calc, mm_calc, bulk_at):
     R_QM = alat / np.sqrt(2.0) + 1.0e-3
     qm_mask = r < R_QM
 
-    qmmm = ForceQMMM(at0, qm_mask, qm_calc, mm_calc,
-                     buffer_width=3.61)
+    qmmm = ForceQMMM(at0, qm_mask, qm_calc, mm_calc, buffer_width=3.61)
 
     qmmm.initialize_qm_buffer_mask(at0)
     at0.calc = qmmm
@@ -385,6 +418,7 @@ def test_export_xyz(at0, testdir):
     qmmm.export_extxyz(filename=filename)
 
     from ase.io import read
+
     read_atoms = read(filename)
 
     assert "region" in read_atoms.arrays
@@ -409,12 +443,13 @@ def test_set_masks_from_region(at0, qm_calc, mm_calc):
     R_QM = 1.0e-3
     qm_mask = r < R_QM
 
-    test_qmmm = ForceQMMM(at0, qm_mask, qm_calc, mm_calc,
-                          buffer_width=3.61)
+    test_qmmm = ForceQMMM(at0, qm_mask, qm_calc, mm_calc, buffer_width=3.61)
 
     # assert that number of qm atoms is different
-    assert not (np.count_nonzero(qmmm.qm_selection_mask) ==
-                np.count_nonzero(test_qmmm.qm_selection_mask))
+    assert not (
+        np.count_nonzero(qmmm.qm_selection_mask)
+        == np.count_nonzero(test_qmmm.qm_selection_mask)
+    )
 
     test_qmmm.set_masks_from_region(region)
 

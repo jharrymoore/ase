@@ -17,12 +17,12 @@ def test_reduce_lattice():
     ref_cellpar = list(origcellpar)
     ref_cellpar[-1] = 120
 
-    symbols = 'CuAgAuPt'
+    symbols = "CuAgAuPt"
     scaled_positions = np.random.RandomState(42).random((4, 3))
 
-    atoms = Atoms(symbols=symbols,
-                  scaled_positions=scaled_positions,
-                  cell=origcellpar, pbc=True)
+    atoms = Atoms(
+        symbols=symbols, scaled_positions=scaled_positions, cell=origcellpar, pbc=True
+    )
 
     reduced_atoms = atoms.copy()
     reduce_lattice(reduced_atoms)

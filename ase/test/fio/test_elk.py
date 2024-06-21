@@ -11,13 +11,13 @@ from ase.units import Hartree, Bohr
 
 
 def test_elk_in():
-    atoms = bulk('Si')
+    atoms = bulk("Si")
     buf = io.StringIO()
-    write(buf, atoms, format='elk-in', parameters={'mockparameter': 17})
+    write(buf, atoms, format="elk-in", parameters={"mockparameter": 17})
     text = buf.getvalue()
     print(text)
-    assert 'avec' in text
-    assert re.search(r'mockparameter\s+17\n', text, re.M)
+    assert "avec" in text
+    assert re.search(r"mockparameter\s+17\n", text, re.M)
 
 
 mock_elk_eigval_out = """
@@ -42,14 +42,14 @@ mock_elk_eigval_out = """
 def test_parse_eigval():
     fd = io.StringIO(mock_elk_eigval_out)
     dct = dict(parse_elk_eigval(fd))
-    eig = dct['eigenvalues'] / Hartree
-    occ = dct['occupations']
-    kpts = dct['ibz_kpoints']
+    eig = dct["eigenvalues"] / Hartree
+    occ = dct["occupations"]
+    kpts = dct["ibz_kpoints"]
     assert len(eig) == 1
     assert len(occ) == 1
     assert pytest.approx(eig[0]) == [[-1.0, -0.5, 1.0], [1.0, 1.1, 1.2]]
     assert pytest.approx(occ[0]) == [[2.0, 1.5, 0.0], [1.9, 1.8, 1.7]]
-    assert pytest.approx(kpts) == [[0., 0., 0.], [0.0, 0.1, 0.2]]
+    assert pytest.approx(kpts) == [[0.0, 0.0, 0.0], [0.0, 0.1, 0.2]]
 
 
 elk_geometry_out = """
@@ -81,14 +81,22 @@ atoms
 
 def test_read_elk():
     atoms = read_elk(io.StringIO(elk_geometry_out))
-    assert str(atoms.symbols) == 'Si2'
+    assert str(atoms.symbols) == "Si2"
     assert all(atoms.pbc)
-    assert atoms.cell / Bohr == pytest.approx(np.array([
-        [1.0, 0.1, 0.2],
-        [0.3, 2.0, 0.4],
-        [0.5, 0.6, 3.0],
-    ]))
-    assert atoms.get_scaled_positions() == pytest.approx(np.array([
-        [0.1, 0.2, 0.3],
-        [0.4, 0.5, 0.6],
-    ]))
+    assert atoms.cell / Bohr == pytest.approx(
+        np.array(
+            [
+                [1.0, 0.1, 0.2],
+                [0.3, 2.0, 0.4],
+                [0.5, 0.6, 3.0],
+            ]
+        )
+    )
+    assert atoms.get_scaled_positions() == pytest.approx(
+        np.array(
+            [
+                [0.1, 0.2, 0.3],
+                [0.4, 0.5, 0.6],
+            ]
+        )
+    )

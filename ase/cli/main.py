@@ -15,47 +15,55 @@ class CLIError(Exception):
 # Important: Following any change to command-line parameters, use
 # python3 -m ase.cli.completion to update autocompletion.
 commands = [
-    ('info', 'ase.cli.info'),
+    ("info", "ase.cli.info"),
     # ('show', 'ase.cli.show'),
-    ('test', 'ase.test'),
-    ('gui', 'ase.gui.ag'),
-    ('db', 'ase.cli.db'),
-    ('run', 'ase.cli.run'),
-    ('band-structure', 'ase.cli.band_structure'),
-    ('build', 'ase.cli.build'),
-    ('dimensionality', 'ase.cli.dimensionality'),
-    ('eos', 'ase.eos'),
-    ('ulm', 'ase.cli.ulm'),
-    ('find', 'ase.cli.find'),
-    ('nebplot', 'ase.cli.nebplot'),
-    ('nomad-upload', 'ase.cli.nomad'),
-    ('nomad-get', 'ase.cli.nomadget'),
-    ('convert', 'ase.cli.convert'),
-    ('reciprocal', 'ase.cli.reciprocal'),
-    ('completion', 'ase.cli.completion'),
-    ('diff', 'ase.cli.diff'),
-    ('exec', 'ase.cli.exec')
+    ("test", "ase.test"),
+    ("gui", "ase.gui.ag"),
+    ("db", "ase.cli.db"),
+    ("run", "ase.cli.run"),
+    ("band-structure", "ase.cli.band_structure"),
+    ("build", "ase.cli.build"),
+    ("dimensionality", "ase.cli.dimensionality"),
+    ("eos", "ase.eos"),
+    ("ulm", "ase.cli.ulm"),
+    ("find", "ase.cli.find"),
+    ("nebplot", "ase.cli.nebplot"),
+    ("nomad-upload", "ase.cli.nomad"),
+    ("nomad-get", "ase.cli.nomadget"),
+    ("convert", "ase.cli.convert"),
+    ("reciprocal", "ase.cli.reciprocal"),
+    ("completion", "ase.cli.completion"),
+    ("diff", "ase.cli.diff"),
+    ("exec", "ase.cli.exec"),
 ]
 
 
-def main(prog='ase', description='ASE command line tool.',
-         version=__version__, commands=commands, hook=None, args=None):
-    parser = argparse.ArgumentParser(prog=prog,
-                                     description=description,
-                                     formatter_class=Formatter)
-    parser.add_argument('--version', action='version',
-                        version='%(prog)s-{}'.format(version))
-    parser.add_argument('-T', '--traceback', action='store_true')
-    subparsers = parser.add_subparsers(title='Sub-commands',
-                                       dest='command')
+def main(
+    prog="ase",
+    description="ASE command line tool.",
+    version=__version__,
+    commands=commands,
+    hook=None,
+    args=None,
+):
+    parser = argparse.ArgumentParser(
+        prog=prog, description=description, formatter_class=Formatter
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s-{}".format(version)
+    )
+    parser.add_argument("-T", "--traceback", action="store_true")
+    subparsers = parser.add_subparsers(title="Sub-commands", dest="command")
 
-    subparser = subparsers.add_parser('help',
-                                      description='Help',
-                                      help='Help for sub-command.')
-    subparser.add_argument('helpcommand',
-                           nargs='?',
-                           metavar='sub-command',
-                           help='Provide help for sub-command.')
+    subparser = subparsers.add_parser(
+        "help", description="Help", help="Help for sub-command."
+    )
+    subparser.add_argument(
+        "helpcommand",
+        nargs="?",
+        metavar="sub-command",
+        help="Provide help for sub-command.",
+    )
 
     functions = {}
     parsers = {}
@@ -65,20 +73,18 @@ def main(prog='ase', description='ASE command line tool.',
         if docstring is None:
             # Backwards compatibility with GPAW
             short = cmd.short_description
-            long = getattr(cmd, 'description', short)
+            long = getattr(cmd, "description", short)
         else:
-            parts = docstring.split('\n', 1)
+            parts = docstring.split("\n", 1)
             if len(parts) == 1:
                 short = docstring
                 long = docstring
             else:
                 short, body = parts
-                long = short + '\n' + textwrap.dedent(body)
+                long = short + "\n" + textwrap.dedent(body)
         subparser = subparsers.add_parser(
-            command,
-            formatter_class=Formatter,
-            help=short,
-            description=long)
+            command, formatter_class=Formatter, help=short, description=long
+        )
         cmd.add_arguments(subparser)
         functions[command] = cmd.run
         parsers[command] = subparser
@@ -88,7 +94,7 @@ def main(prog='ase', description='ASE command line tool.',
     else:
         args = parser.parse_args(args)
 
-    if args.command == 'help':
+    if args.command == "help":
         if args.helpcommand is None:
             parser.print_help()
         else:
@@ -110,9 +116,10 @@ def main(prog='ase', description='ASE command line tool.',
             if args.traceback:
                 raise
             else:
-                l1 = '{}: {}\n'.format(x.__class__.__name__, x)
-                l2 = ('To get a full traceback, use: {} -T {} ...'
-                      .format(prog, args.command))
+                l1 = "{}: {}\n".format(x.__class__.__name__, x)
+                l2 = "To get a full traceback, use: {} -T {} ...".format(
+                    prog, args.command
+                )
                 parser.error(l1 + l2)
 
 
@@ -120,22 +127,27 @@ class Formatter(argparse.HelpFormatter):
     """Improved help formatter."""
 
     def _fill_text(self, text, width, indent):
-        assert indent == ''
-        out = ''
-        blocks = text.split('\n\n')
+        assert indent == ""
+        out = ""
+        blocks = text.split("\n\n")
         for block in blocks:
-            if block[0] == '*':
+            if block[0] == "*":
                 # List items:
-                for item in block[2:].split('\n* '):
-                    out += textwrap.fill(item,
-                                         width=width - 2,
-                                         initial_indent='* ',
-                                         subsequent_indent='  ') + '\n'
-            elif block[0] == ' ':
+                for item in block[2:].split("\n* "):
+                    out += (
+                        textwrap.fill(
+                            item,
+                            width=width - 2,
+                            initial_indent="* ",
+                            subsequent_indent="  ",
+                        )
+                        + "\n"
+                    )
+            elif block[0] == " ":
                 # Indented literal block:
-                out += block + '\n'
+                out += block + "\n"
             else:
                 # Block of text:
-                out += textwrap.fill(block, width=width) + '\n'
-            out += '\n'
+                out += textwrap.fill(block, width=width) + "\n"
+            out += "\n"
         return out[:-1]

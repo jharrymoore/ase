@@ -76,9 +76,19 @@ class OFPComparator:
 
     """
 
-    def __init__(self, n_top=None, dE=1.0, cos_dist_max=5e-3, rcut=20.,
-                 binwidth=0.05, sigma=0.02, nsigma=4, pbc=True,
-                 maxdims=None, recalculate=False):
+    def __init__(
+        self,
+        n_top=None,
+        dE=1.0,
+        cos_dist_max=5e-3,
+        rcut=20.0,
+        binwidth=0.05,
+        sigma=0.02,
+        nsigma=4,
+        pbc=True,
+        maxdims=None,
+        recalculate=False,
+    ):
         self.n_top = n_top or 0
         self.dE = dE
         self.cos_dist_max = cos_dist_max
@@ -101,15 +111,15 @@ class OFPComparator:
                 if not self.pbc[direction]:
                     if self.maxdims[direction] is not None:
                         if self.maxdims[direction] <= 0:
-                            e = '''If a max thickness is specificed in maxdims
+                            e = """If a max thickness is specificed in maxdims
                                   for a non-periodic direction, it has to be
-                                  strictly positive.'''
+                                  strictly positive."""
                             raise ValueError(e)
 
     def looks_like(self, a1, a2):
-        """ Return if structure a1 or a2 are similar or not. """
+        """Return if structure a1 or a2 are similar or not."""
         if len(a1) != len(a2):
-            raise Exception('The two configurations are not the same size.')
+            raise Exception("The two configurations are not the same size.")
 
         # first we check the energy criteria
         if a1.calc is not None and a2.calc is not None:
@@ -123,9 +133,9 @@ class OFPComparator:
         return verdict
 
     def _json_encode(self, fingerprints, typedic):
-        """ json does not accept tuples nor integers as dict keys,
+        """json does not accept tuples nor integers as dict keys,
         so in order to write the fingerprints to atoms.info, we need
-        to convert them to strings """
+        to convert them to strings"""
         fingerprints_encoded = {}
         for key, val in fingerprints.items():
             try:
@@ -145,7 +155,7 @@ class OFPComparator:
         return [fingerprints_encoded, typedic_encoded]
 
     def _json_decode(self, fingerprints, typedic):
-        """ This is the reverse operation of _json_encode """
+        """This is the reverse operation of _json_encode"""
         fingerprints_decoded = {}
         for key, val in fingerprints.items():
             newkey = list(map(int, key.split("_")))
@@ -167,51 +177,53 @@ class OFPComparator:
         return [fingerprints_decoded, typedic_decoded]
 
     def _compare_structure(self, a1, a2):
-        """ Returns the cosine distance between the two structures,
-            using their fingerprints. """
+        """Returns the cosine distance between the two structures,
+        using their fingerprints."""
 
         if len(a1) != len(a2):
-            raise Exception('The two configurations are not the same size.')
+            raise Exception("The two configurations are not the same size.")
 
-        a1top = a1[-self.n_top:]
-        a2top = a2[-self.n_top:]
+        a1top = a1[-self.n_top :]
+        a2top = a2[-self.n_top :]
 
-        if 'fingerprints' in a1.info and not self.recalculate:
-            fp1, typedic1 = a1.info['fingerprints']
+        if "fingerprints" in a1.info and not self.recalculate:
+            fp1, typedic1 = a1.info["fingerprints"]
             fp1, typedic1 = self._json_decode(fp1, typedic1)
         else:
             fp1, typedic1 = self._take_fingerprints(a1top)
-            a1.info['fingerprints'] = self._json_encode(fp1, typedic1)
+            a1.info["fingerprints"] = self._json_encode(fp1, typedic1)
 
-        if 'fingerprints' in a2.info and not self.recalculate:
-            fp2, typedic2 = a2.info['fingerprints']
+        if "fingerprints" in a2.info and not self.recalculate:
+            fp2, typedic2 = a2.info["fingerprints"]
             fp2, typedic2 = self._json_decode(fp2, typedic2)
         else:
             fp2, typedic2 = self._take_fingerprints(a2top)
-            a2.info['fingerprints'] = self._json_encode(fp2, typedic2)
+            a2.info["fingerprints"] = self._json_encode(fp2, typedic2)
 
         if sorted(fp1) != sorted(fp2):
-            raise AssertionError('The two structures have fingerprints '
-                                 'with different compounds.')
+            raise AssertionError(
+                "The two structures have fingerprints " "with different compounds."
+            )
         for key in typedic1:
             if not np.array_equal(typedic1[key], typedic2[key]):
-                raise AssertionError('The two structures have a different '
-                                     'stoichiometry or ordering!')
+                raise AssertionError(
+                    "The two structures have a different " "stoichiometry or ordering!"
+                )
 
         cos_dist = self._cosine_distance(fp1, fp2, typedic1)
         return cos_dist
 
     def _get_volume(self, a):
-        ''' Calculates the normalizing value, and other parameters
+        """Calculates the normalizing value, and other parameters
         (pmin,pmax,qmin,qmax) that are used for surface area calculation
-        in the case of 1 or 2-D periodicity.'''
+        in the case of 1 or 2-D periodicity."""
 
         cell = a.get_cell()
         scalpos = a.get_scaled_positions()
 
         # defaults:
-        volume = 1.
-        pmin, pmax, qmin, qmax = [0.] * 4
+        volume = 1.0
+        pmin, pmax, qmin, qmax = [0.0] * 4
 
         if self.dimensions == 1 or self.dimensions == 2:
             for direction in range(3):
@@ -256,8 +268,7 @@ class OFPComparator:
             b1 = self.maxdims[non_pbc_dirs[1]]
             b1 /= np.linalg.norm(cell[non_pbc_dirs[1], :])
 
-            volume = np.abs(np.dot(np.cross(b0 * v0, b1 * v1),
-                                   cell[pbc_dir, :]))
+            volume = np.abs(np.dot(np.cross(b0 * v0, b1 * v1), cell[pbc_dir, :]))
 
             # note: here is a place where we assume that the
             # non-periodic direction is orthogonal to the periodic ones:
@@ -282,12 +293,12 @@ class OFPComparator:
             qmax *= np.linalg.norm(cell[non_pbc_dirs[1], :])
 
         elif self.dimensions == 0:
-            volume = 1.
+            volume = 1.0
 
         return [volume, pmin, pmax, qmin, qmax]
 
     def _take_fingerprints(self, atoms, individual=False):
-        """ Returns a [fingerprints,typedic] list, where fingerprints
+        """Returns a [fingerprints,typedic] list, where fingerprints
         is a dictionary with the fingerprints, and typedic is a
         dictionary with the list of atom indices for each element
         (or "type") in the atoms object.
@@ -342,15 +353,16 @@ class OFPComparator:
         # this is computationally the most intensive part
         a = atoms.copy()
         a.set_pbc(self.pbc)
-        nl = NeighborList([self.rcut / 2.] * len(a), skin=0.,
-                          self_interaction=False, bothways=True)
+        nl = NeighborList(
+            [self.rcut / 2.0] * len(a), skin=0.0, self_interaction=False, bothways=True
+        )
         nl.update(a)
 
         # parameters for the binning:
         m = int(np.ceil(self.nsigma * self.sigma / self.binwidth))
-        x = 0.25 * np.sqrt(2) * self.binwidth * (2 * m + 1) * 1. / self.sigma
+        x = 0.25 * np.sqrt(2) * self.binwidth * (2 * m + 1) * 1.0 / self.sigma
         smearing_norm = erf(x)
-        nbins = int(np.ceil(self.rcut * 1. / self.binwidth))
+        nbins = int(np.ceil(self.rcut * 1.0 / self.binwidth))
         bindist = self.binwidth * np.arange(1, nbins + 1)
 
         def take_individual_rdf(index, unique_type):
@@ -359,13 +371,13 @@ class OFPComparator:
             rdf = np.zeros(nbins)
 
             if self.dimensions == 3:
-                weights = 1. / surface_area_3d(bindist)
+                weights = 1.0 / surface_area_3d(bindist)
             elif self.dimensions == 2:
-                weights = 1. / surface_area_2d(bindist, pos[index])
+                weights = 1.0 / surface_area_2d(bindist, pos[index])
             elif self.dimensions == 1:
-                weights = 1. / surface_area_1d(bindist, pos[index])
+                weights = 1.0 / surface_area_1d(bindist, pos[index])
             elif self.dimensions == 0:
-                weights = 1. / surface_area_0d(bindist)
+                weights = 1.0 / surface_area_0d(bindist)
             weights /= self.binwidth
 
             indices, offsets = nl.get_neighbors(index)
@@ -380,15 +392,14 @@ class OFPComparator:
                 valid_bins = newbins[valid].astype(int)
                 values = weights[valid_bins]
 
-                c = 0.25 * np.sqrt(2) * self.binwidth * 1. / self.sigma
-                values *= 0.5 * erf(c * (2 * i + 1)) - \
-                    0.5 * erf(c * (2 * i - 1))
+                c = 0.25 * np.sqrt(2) * self.binwidth * 1.0 / self.sigma
+                values *= 0.5 * erf(c * (2 * i + 1)) - 0.5 * erf(c * (2 * i - 1))
                 values /= smearing_norm
 
                 for j, valid_bin in enumerate(valid_bins):
                     rdf[valid_bin] += values[j]
 
-            rdf /= len(typedic[unique_type]) * 1. / volume
+            rdf /= len(typedic[unique_type]) * 1.0 / volume
             return rdf
 
         fingerprints = {}
@@ -413,9 +424,8 @@ class OFPComparator:
 
         return [fingerprints, typedic]
 
-    def _calculate_local_orders(self, individual_fingerprints, typedic,
-                                volume):
-        """ Returns a list with the local order for every atom,
+    def _calculate_local_orders(self, individual_fingerprints, typedic, volume):
+        """Returns a list with the local order for every atom,
         using the definition of local order from
         Lyakhov, Oganov, Valle, Comp. Phys. Comm. 181 (2010) 1623-1632
         :doi:`10.1016/j.cpc.2010.06.007`"""
@@ -427,20 +437,20 @@ class OFPComparator:
         for index, fingerprints in individual_fingerprints.items():
             local_order = 0
             for unique_type, fingerprint in fingerprints.items():
-                term = np.linalg.norm(fingerprint)**2
+                term = np.linalg.norm(fingerprint) ** 2
                 term *= self.binwidth
-                term *= (volume * 1. / n_tot)**3
-                term *= len(typedic[unique_type]) * 1. / n_tot
+                term *= (volume * 1.0 / n_tot) ** 3
+                term *= len(typedic[unique_type]) * 1.0 / n_tot
                 local_order += term
             local_orders.append(np.sqrt(local_order))
 
         return local_orders
 
     def get_local_orders(self, a):
-        """ Returns the local orders of all the atoms."""
+        """Returns the local orders of all the atoms."""
 
-        a_top = a[-self.n_top:]
-        key = 'individual_fingerprints'
+        a_top = a[-self.n_top :]
+        key = "individual_fingerprints"
 
         if key in a.info and not self.recalculate:
             fp, typedic = self._json_decode(*a.info[key])
@@ -452,7 +462,7 @@ class OFPComparator:
         return self._calculate_local_orders(fp, typedic, volume)
 
     def _cosine_distance(self, fp1, fp2, typedic):
-        """ Returns the cosine distance from two fingerprints.
+        """Returns the cosine distance from two fingerprints.
         It also needs information about the number of atoms from
         each element, which is included in "typedic"."""
 
@@ -466,14 +476,14 @@ class OFPComparator:
             wtot += weight
             w[key] = weight
         for key in keys:
-            w[key] *= 1. / wtot
+            w[key] *= 1.0 / wtot
 
         # calculating the fingerprint norms:
         norm1 = 0
         norm2 = 0
         for key in keys:
-            norm1 += (np.linalg.norm(fp1[key])**2) * w[key]
-            norm2 += (np.linalg.norm(fp2[key])**2) * w[key]
+            norm1 += (np.linalg.norm(fp1[key]) ** 2) * w[key]
+            norm2 += (np.linalg.norm(fp2[key]) ** 2) * w[key]
         norm1 = np.sqrt(norm1)
         norm2 = np.sqrt(norm2)
 
@@ -485,8 +495,8 @@ class OFPComparator:
         distance = 0.5 * (1 - distance)
         return distance
 
-    def plot_fingerprints(self, a, prefix=''):
-        """ Function for quickly plotting all the fingerprints.
+    def plot_fingerprints(self, a, prefix=""):
+        """Function for quickly plotting all the fingerprints.
         Prefix = a prefix you want to give to the resulting PNG file."""
         try:
             import matplotlib.pyplot as plt
@@ -494,15 +504,15 @@ class OFPComparator:
             Warning("Matplotlib could not be loaded - plotting won't work")
             raise
 
-        if 'fingerprints' in a.info and not self.recalculate:
-            fp, typedic = a.info['fingerprints']
+        if "fingerprints" in a.info and not self.recalculate:
+            fp, typedic = a.info["fingerprints"]
             fp, typedic = self._json_decode(fp, typedic)
         else:
-            a_top = a[-self.n_top:]
+            a_top = a[-self.n_top :]
             fp, typedic = self._take_fingerprints(a_top)
-            a.info['fingerprints'] = self._json_encode(fp, typedic)
+            a.info["fingerprints"] = self._json_encode(fp, typedic)
 
-        npts = int(np.ceil(self.rcut * 1. / self.binwidth))
+        npts = int(np.ceil(self.rcut * 1.0 / self.binwidth))
         x = np.linspace(0, self.rcut, npts, endpoint=False)
 
         for key, val in fp.items():
@@ -511,8 +521,8 @@ class OFPComparator:
             plt.savefig(prefix + suffix)
             plt.clf()
 
-    def plot_individual_fingerprints(self, a, prefix=''):
-        """ Function for plotting all the individual fingerprints.
+    def plot_individual_fingerprints(self, a, prefix=""):
+        """Function for plotting all the individual fingerprints.
         Prefix = a prefix for the resulting PNG file."""
         try:
             import matplotlib.pyplot as plt
@@ -520,14 +530,14 @@ class OFPComparator:
             Warning("Matplotlib could not be loaded - plotting won't work")
             raise
 
-        if 'individual_fingerprints' in a.info and not self.recalculate:
-            fp, typedic = a.info['individual_fingerprints']
+        if "individual_fingerprints" in a.info and not self.recalculate:
+            fp, typedic = a.info["individual_fingerprints"]
         else:
-            a_top = a[-self.n_top:]
+            a_top = a[-self.n_top :]
             fp, typedic = self._take_fingerprints(a_top, individual=True)
-            a.info['individual_fingerprints'] = [fp, typedic]
+            a.info["individual_fingerprints"] = [fp, typedic]
 
-        npts = int(np.ceil(self.rcut * 1. / self.binwidth))
+        npts = int(np.ceil(self.rcut * 1.0 / self.binwidth))
         x = np.linspace(0, self.rcut, npts, endpoint=False)
 
         for key, val in fp.items():

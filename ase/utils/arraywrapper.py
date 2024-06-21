@@ -27,22 +27,55 @@ from functools import update_wrapper
 import numpy as np
 
 
-inplace_methods = ['__iadd__', '__imul__', '__ipow__', '__isub__',
-                   '__itruediv__', '__imatmul__']
+inplace_methods = [
+    "__iadd__",
+    "__imul__",
+    "__ipow__",
+    "__isub__",
+    "__itruediv__",
+    "__imatmul__",
+]
 
-forward_methods = ['__abs__', '__add__', '__contains__', '__eq__',
-                   '__ge__', '__getitem__', '__gt__', '__hash__',
-                   '__iter__', '__le__', '__len__', '__lt__',
-                   '__mul__', '__ne__', '__neg__', '__pos__',
-                   '__pow__', '__radd__', '__rmul__', '__rpow__',
-                   '__rsub__', '__rtruediv__', '__setitem__',
-                   '__sub__', '__truediv__']
+forward_methods = [
+    "__abs__",
+    "__add__",
+    "__contains__",
+    "__eq__",
+    "__ge__",
+    "__getitem__",
+    "__gt__",
+    "__hash__",
+    "__iter__",
+    "__le__",
+    "__len__",
+    "__lt__",
+    "__mul__",
+    "__ne__",
+    "__neg__",
+    "__pos__",
+    "__pow__",
+    "__radd__",
+    "__rmul__",
+    "__rpow__",
+    "__rsub__",
+    "__rtruediv__",
+    "__setitem__",
+    "__sub__",
+    "__truediv__",
+]
 
-default_methods = ['__eq__', '__le__', '__lt__', '__ge__',
-                   '__gt__', '__ne__', '__hash__']
+default_methods = [
+    "__eq__",
+    "__le__",
+    "__lt__",
+    "__ge__",
+    "__gt__",
+    "__ne__",
+    "__hash__",
+]
 
-if hasattr(np.ndarray, '__matmul__'):
-    forward_methods += ['__matmul__', '__rmatmul__']
+if hasattr(np.ndarray, "__matmul__"):
+    forward_methods += ["__matmul__", "__rmatmul__"]
 
 
 def forward_inplace_call(name):
@@ -60,7 +93,7 @@ def forward_inplace_call(name):
 def wrap_array_attribute(name):
     wrappee = getattr(np.ndarray, name)
     if wrappee is None:  # For example, __hash__ is None
-        assert name == '__hash__'
+        assert name == "__hash__"
         return None
 
     def attr(self):
@@ -92,7 +125,7 @@ def arraylike(cls):
             meth = forward_inplace_call(name)
             setattr(cls, name, meth)
 
-    allnames = [name for name in dir(np.ndarray) if not name.startswith('_')]
+    allnames = [name for name in dir(np.ndarray) if not name.startswith("_")]
     for name in forward_methods + allnames:
         if hasattr(cls, name) and name not in default_methods:
             continue  # Was overridden -- or there's a conflict.

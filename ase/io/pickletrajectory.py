@@ -15,8 +15,10 @@ except NameError:
 try:
     WindowsError
 except NameError:
+
     class WindowsError(OSError):
         pass
+
 
 import numpy as np
 
@@ -29,6 +31,7 @@ from ase.parallel import world, barrier
 
 class PickleTrajectory:
     """Reads/writes Atoms objects into a .traj file."""
+
     # Per default, write these quantities
     write_energy = True
     write_forces = True
@@ -38,8 +41,9 @@ class PickleTrajectory:
     write_momenta = True
     write_info = True
 
-    def __init__(self, filename, mode='r', atoms=None, master=None,
-                 backup=True, _warn=True):
+    def __init__(
+        self, filename, mode="r", atoms=None, master=None, backup=True, _warn=True
+    ):
         """A PickleTrajectory can be created in read, write or append mode.
 
         Parameters:
@@ -75,11 +79,12 @@ class PickleTrajectory:
         """
 
         if _warn:
-            msg = 'Please stop using old trajectory files!'
-            if mode == 'r':
-                msg += ('\nConvert to the new future-proof format like this:\n'
-                        '\n    $ python3 -m ase.io.trajectory ' +
-                        filename + '\n')
+            msg = "Please stop using old trajectory files!"
+            if mode == "r":
+                msg += (
+                    "\nConvert to the new future-proof format like this:\n"
+                    "\n    $ python3 -m ase.io.trajectory " + filename + "\n"
+                )
             raise DeprecationWarning(msg)
 
         self.numbers = None
@@ -93,7 +98,7 @@ class PickleTrajectory:
 
         self.offsets = []
         if master is None:
-            master = (world.rank == 0)
+            master = world.rank == 0
         self.master = master
         self.backup = backup
         self.set_atoms(atoms)
@@ -105,40 +110,40 @@ class PickleTrajectory:
         For internal use only.
         """
         self.fd = filename
-        if mode == 'r':
+        if mode == "r":
             if isinstance(filename, str):
-                self.fd = open(filename, 'rb')
+                self.fd = open(filename, "rb")
             self.read_header()
-        elif mode == 'a':
+        elif mode == "a":
             exists = True
             if isinstance(filename, str):
                 exists = os.path.isfile(filename)
                 if exists:
                     exists = os.path.getsize(filename) > 0
                 if exists:
-                    self.fd = open(filename, 'rb')
+                    self.fd = open(filename, "rb")
                     self.read_header()
                     self.fd.close()
                 barrier()
                 if self.master:
-                    self.fd = open(filename, 'ab+')
+                    self.fd = open(filename, "ab+")
                 else:
-                    self.fd = open(os.devnull, 'ab+')
-        elif mode == 'w':
+                    self.fd = open(os.devnull, "ab+")
+        elif mode == "w":
             if self.master:
                 if isinstance(filename, str):
                     if self.backup and os.path.isfile(filename):
                         try:
-                            os.rename(filename, filename + '.bak')
+                            os.rename(filename, filename + ".bak")
                         except WindowsError as e:
                             # this must run on Win only! Not atomic!
                             if e.errno != errno.EEXIST:
                                 raise
-                            os.unlink(filename + '.bak')
-                            os.rename(filename, filename + '.bak')
-                    self.fd = open(filename, 'wb')
+                            os.unlink(filename + ".bak")
+                            os.rename(filename, filename + ".bak")
+                    self.fd = open(filename, "wb")
             else:
-                self.fd = open(os.devnull, 'wb')
+                self.fd = open(os.devnull, "wb")
         else:
             raise ValueError('mode must be "r", "w" or "a".')
 
@@ -147,27 +152,27 @@ class PickleTrajectory:
 
         Mostly for internal use.
         """
-        if atoms is not None and not hasattr(atoms, 'get_positions'):
+        if atoms is not None and not hasattr(atoms, "get_positions"):
             raise TypeError('"atoms" argument is not an Atoms object.')
         self.atoms = atoms
 
     def read_header(self):
-        if hasattr(self.fd, 'name'):
+        if hasattr(self.fd, "name"):
             if os.path.isfile(self.fd.name):
                 if os.path.getsize(self.fd.name) == 0:
                     return
         self.fd.seek(0)
         try:
-            if self.fd.read(len('PickleTrajectory')) != b'PickleTrajectory':
-                raise IOError('This is not a trajectory file!')
+            if self.fd.read(len("PickleTrajectory")) != b"PickleTrajectory":
+                raise IOError("This is not a trajectory file!")
             d = pickle.load(self.fd)
         except EOFError:
-            raise EOFError('Bad trajectory file.')
+            raise EOFError("Bad trajectory file.")
 
-        self.pbc = d['pbc']
-        self.numbers = d['numbers']
-        self.tags = d.get('tags')
-        self.masses = d.get('masses')
+        self.pbc = d["pbc"]
+        self.numbers = d["numbers"]
+        self.tags = d.get("tags")
+        self.masses = d.get("masses")
         self.constraints = dict2constraints(d)
         self.offsets.append(self.fd.tell())
 
@@ -190,58 +195,60 @@ class PickleTrajectory:
             self.write_header(atoms)
         else:
             if (atoms.pbc != self.pbc).any():
-                raise ValueError('Bad periodic boundary conditions!')
+                raise ValueError("Bad periodic boundary conditions!")
             elif self.sanitycheck and len(atoms) != len(self.numbers):
-                raise ValueError('Bad number of atoms!')
+                raise ValueError("Bad number of atoms!")
             elif self.sanitycheck and (atoms.numbers != self.numbers).any():
-                raise ValueError('Bad atomic numbers!')
+                raise ValueError("Bad atomic numbers!")
 
-        if atoms.has('momenta'):
+        if atoms.has("momenta"):
             momenta = atoms.get_momenta()
         else:
             momenta = None
 
-        d = {'positions': atoms.get_positions(),
-             'cell': atoms.get_cell(),
-             'momenta': momenta}
+        d = {
+            "positions": atoms.get_positions(),
+            "cell": atoms.get_cell(),
+            "momenta": momenta,
+        }
 
         if atoms.calc is not None:
             if self.write_energy:
-                d['energy'] = atoms.get_potential_energy()
+                d["energy"] = atoms.get_potential_energy()
             if self.write_forces:
                 assert self.write_energy
                 try:
-                    d['forces'] = atoms.get_forces(apply_constraint=False)
+                    d["forces"] = atoms.get_forces(apply_constraint=False)
                 except PropertyNotImplementedError:
                     pass
             if self.write_stress:
                 assert self.write_energy
                 try:
-                    d['stress'] = atoms.get_stress()
+                    d["stress"] = atoms.get_stress()
                 except PropertyNotImplementedError:
                     pass
             if self.write_charges:
                 try:
-                    d['charges'] = atoms.get_charges()
+                    d["charges"] = atoms.get_charges()
                 except PropertyNotImplementedError:
                     pass
             if self.write_magmoms:
                 try:
                     magmoms = atoms.get_magnetic_moments()
                     if any(np.asarray(magmoms).flat):
-                        d['magmoms'] = magmoms
+                        d["magmoms"] = magmoms
                 except (PropertyNotImplementedError, AttributeError):
                     pass
 
-        if 'magmoms' not in d and atoms.has('initial_magmoms'):
-            d['magmoms'] = atoms.get_initial_magnetic_moments()
-        if 'charges' not in d and atoms.has('initial_charges'):
+        if "magmoms" not in d and atoms.has("initial_magmoms"):
+            d["magmoms"] = atoms.get_initial_magnetic_moments()
+        if "charges" not in d and atoms.has("initial_charges"):
             charges = atoms.get_initial_charges()
             if (charges != 0).any():
-                d['charges'] = charges
+                d["charges"] = charges
 
         if self.write_info:
-            d['info'] = stringnify_info(atoms.info)
+            d["info"] = stringnify_info(atoms.info)
 
         if self.master:
             pickle.dump(d, self.fd, protocol=2)
@@ -251,22 +258,24 @@ class PickleTrajectory:
         self.write_counter += 1
 
     def write_header(self, atoms):
-        self.fd.write(b'PickleTrajectory')
-        if atoms.has('tags'):
+        self.fd.write(b"PickleTrajectory")
+        if atoms.has("tags"):
             tags = atoms.get_tags()
         else:
             tags = None
-        if atoms.has('masses'):
+        if atoms.has("masses"):
             masses = atoms.get_masses()
         else:
             masses = None
-        d = {'version': 3,
-             'pbc': atoms.get_pbc(),
-             'numbers': atoms.get_atomic_numbers(),
-             'tags': tags,
-             'masses': masses,
-             'constraints': [],  # backwards compatibility
-             'constraints_string': pickle.dumps(atoms.constraints, protocol=0)}
+        d = {
+            "version": 3,
+            "pbc": atoms.get_pbc(),
+            "numbers": atoms.get_atomic_numbers(),
+            "tags": tags,
+            "masses": masses,
+            "constraints": [],  # backwards compatibility
+            "constraints_string": pickle.dumps(atoms.constraints, protocol=0),
+        }
         pickle.dump(d, self.fd, protocol=2)
         self.header_written = True
         self.offsets.append(self.fd.tell())
@@ -289,38 +298,40 @@ class PickleTrajectory:
         if 0 <= i < N:
             self.fd.seek(self.offsets[i])
             try:
-                d = pickle.load(self.fd, encoding='bytes')
-                d = {k.decode() if isinstance(k, bytes) else k: v
-                     for k, v in d.items()}
+                d = pickle.load(self.fd, encoding="bytes")
+                d = {k.decode() if isinstance(k, bytes) else k: v for k, v in d.items()}
             except EOFError:
                 raise IndexError
             if i == N - 1:
                 self.offsets.append(self.fd.tell())
-            charges = d.get('charges')
-            magmoms = d.get('magmoms')
+            charges = d.get("charges")
+            magmoms = d.get("magmoms")
             try:
                 constraints = [c.copy() for c in self.constraints]
             except Exception:
                 constraints = []
-                warnings.warn('Constraints did not unpickle correctly.')
-            atoms = Atoms(positions=d['positions'],
-                          numbers=self.numbers,
-                          cell=d['cell'],
-                          momenta=d['momenta'],
-                          magmoms=magmoms,
-                          charges=charges,
-                          tags=self.tags,
-                          masses=self.masses,
-                          pbc=self.pbc,
-                          info=unstringnify_info(d.get('info', {})),
-                          constraint=constraints)
-            if 'energy' in d:
+                warnings.warn("Constraints did not unpickle correctly.")
+            atoms = Atoms(
+                positions=d["positions"],
+                numbers=self.numbers,
+                cell=d["cell"],
+                momenta=d["momenta"],
+                magmoms=magmoms,
+                charges=charges,
+                tags=self.tags,
+                masses=self.masses,
+                pbc=self.pbc,
+                info=unstringnify_info(d.get("info", {})),
+                constraint=constraints,
+            )
+            if "energy" in d:
                 calc = SinglePointCalculator(
                     atoms,
-                    energy=d.get('energy', None),
-                    forces=d.get('forces', None),
-                    stress=d.get('stress', None),
-                    magmoms=magmoms)
+                    energy=d.get("energy", None),
+                    forces=d.get("forces", None),
+                    stress=d.get("stress", None),
+                    magmoms=magmoms,
+                )
                 atoms.calc = calc
             return atoms
 
@@ -331,7 +342,7 @@ class PickleTrajectory:
 
         i = len(self) + i
         if i < 0:
-            raise IndexError('Trajectory index out of range.')
+            raise IndexError("Trajectory index out of range.")
         return self[i]
 
     def __len__(self):
@@ -357,7 +368,7 @@ class PickleTrajectory:
         All other arguments are stored, and passed to the function.
         """
         if not isinstance(function, collections.Callable):
-            raise ValueError('Callback object must be callable.')
+            raise ValueError("Callback object must be callable.")
         self.pre_observers.append((function, interval, args, kwargs))
 
     def post_write_attach(self, function, interval=1, *args, **kwargs):
@@ -370,7 +381,7 @@ class PickleTrajectory:
         All other arguments are stored, and passed to the function.
         """
         if not isinstance(function, collections.Callable):
-            raise ValueError('Callback object must be callable.')
+            raise ValueError("Callback object must be callable.")
         self.post_observers.append((function, interval, args, kwargs))
 
     def _call_observers(self, obs):
@@ -393,8 +404,10 @@ def stringnify_info(info):
     stringnified = {}
     for k, v in info.items():
         if not isinstance(k, str):
-            warnings.warn('Non-string info-dict key is not stored in ' +
-                          'trajectory: ' + repr(k), UserWarning)
+            warnings.warn(
+                "Non-string info-dict key is not stored in " + "trajectory: " + repr(k),
+                UserWarning,
+            )
             continue
         try:
             # Should highest protocol be used here for efficiency?
@@ -403,8 +416,11 @@ def stringnify_info(info):
             # might end up with file objects in inconsistent states.
             s = pickle.dumps(v, protocol=0)
         except pickle.PicklingError:
-            warnings.warn('Skipping not picklable info-dict item: ' +
-                          '"%s" (%s)' % (k, sys.exc_info()[1]), UserWarning)
+            warnings.warn(
+                "Skipping not picklable info-dict item: "
+                + '"%s" (%s)' % (k, sys.exc_info()[1]),
+                UserWarning,
+            )
         else:
             stringnified[k] = s
     return stringnified
@@ -419,8 +435,11 @@ def unstringnify_info(stringnified):
         try:
             v = pickle.loads(s)
         except pickle.UnpicklingError:
-            warnings.warn('Skipping not unpicklable info-dict item: ' +
-                          '"%s" (%s)' % (k, sys.exc_info()[1]), UserWarning)
+            warnings.warn(
+                "Skipping not unpicklable info-dict item: "
+                + '"%s" (%s)' % (k, sys.exc_info()[1]),
+                UserWarning,
+            )
         else:
             info[k] = v
     return info
@@ -429,20 +448,20 @@ def unstringnify_info(stringnified):
 def dict2constraints(d):
     """Convert dict unpickled from trajectory file to list of constraints."""
 
-    version = d.get('version', 1)
+    version = d.get("version", 1)
 
     if version == 1:
-        return d['constraints']
+        return d["constraints"]
     elif version in (2, 3):
         try:
-            constraints = pickle.loads(d['constraints_string'])
+            constraints = pickle.loads(d["constraints_string"])
             for c in constraints:
                 if isinstance(c, FixAtoms) and c.index.dtype == bool:
                     # Special handling of old pickles:
                     c.index = np.arange(len(c.index))[c.index]
             return constraints
         except (AttributeError, KeyError, EOFError, ImportError, TypeError):
-            warnings.warn('Could not unpickle constraints!')
+            warnings.warn("Could not unpickle constraints!")
             return []
     else:
         return []

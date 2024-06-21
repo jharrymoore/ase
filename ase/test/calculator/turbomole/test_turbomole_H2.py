@@ -8,12 +8,12 @@ import pytest
 
 @pytest.fixture(scope="function")
 def atoms():
-    return Atoms('H2', positions=[(0, 0, 0), (0, 0, 1.1)])
+    return Atoms("H2", positions=[(0, 0, 0), (0, 0, 1.1)])
 
 
 def test_turbomole_H2_rhf_singlet(atoms):
     # Write all commands for the define command in a string
-    define_str = '\n\na coord\n*\nno\nb all sto-3g hondo\n*\neht\n\n\n\n*'
+    define_str = "\n\na coord\n*\nno\nb all sto-3g hondo\n*\neht\n\n\n\n*"
 
     atoms.calc = Turbomole(define_str=define_str)
 
@@ -22,9 +22,7 @@ def test_turbomole_H2_rhf_singlet(atoms):
 
 
 def test_turbomole_H2_uhf_singlet(atoms):
-    atoms.calc = Turbomole(**{
-        "multiplicity": 1, "uhf": True, "use dft": True
-    })
+    atoms.calc = Turbomole(**{"multiplicity": 1, "uhf": True, "use dft": True})
 
     # Run turbomole
     assert np.isclose(atoms.get_potential_energy(), -30.828865, atol=1e-5)

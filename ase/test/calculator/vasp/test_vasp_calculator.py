@@ -5,16 +5,19 @@ import sys
 import pytest
 
 from ase.build import molecule
-from ase.calculators.calculator import (CalculatorSetupError,
-                                        get_calculator_class)
+from ase.calculators.calculator import CalculatorSetupError, get_calculator_class
 from ase.calculators.vasp import Vasp
-from ase.calculators.vasp.vasp import (check_atoms, check_pbc, check_cell,
-                                       check_atoms_type)
+from ase.calculators.vasp.vasp import (
+    check_atoms,
+    check_pbc,
+    check_cell,
+    check_atoms_type,
+)
 
 
 @pytest.fixture
 def atoms():
-    return molecule('H2', vacuum=5, pbc=True)
+    return molecule("H2", vacuum=5, pbc=True)
 
 
 @pytest.fixture(autouse=True)
@@ -40,16 +43,17 @@ def test_check_atoms(atoms):
 
 
 @pytest.mark.parametrize(
-    'bad_atoms',
+    "bad_atoms",
     [
         None,
-        'a_string',
+        "a_string",
         # We cannot handle lists of atoms either
-        [molecule('H2', vacuum=5)],
-    ])
+        [molecule("H2", vacuum=5)],
+    ],
+)
 def test_not_atoms(bad_atoms):
     """Check that passing in objects which are not
-    actually Atoms objects raises a setup error """
+    actually Atoms objects raises a setup error"""
 
     with pytest.raises(CalculatorSetupError):
         check_atoms_type(bad_atoms)
@@ -63,11 +67,14 @@ def test_not_atoms(bad_atoms):
         calc.calculate(atoms=bad_atoms)
 
 
-@pytest.mark.parametrize('pbc', [
-    3 * [False],
-    [True, False, True],
-    [False, True, False],
-])
+@pytest.mark.parametrize(
+    "pbc",
+    [
+        3 * [False],
+        [True, False, True],
+        [False, True, False],
+    ],
+)
 def test_bad_pbc(atoms, pbc):
     """Test handling of PBC"""
     atoms.pbc = pbc
@@ -91,7 +98,7 @@ def test_bad_pbc(atoms, pbc):
 def test_vasp_no_cell(testdir):
     """Check missing cell handling."""
     # Molecules come with no unit cell
-    atoms = molecule('CH4')
+    atoms = molecule("CH4")
     # We should not have a cell
     assert atoms.cell.rank == 0
 
@@ -101,7 +108,7 @@ def test_vasp_no_cell(testdir):
         check_atoms(atoms)
 
     with pytest.raises(RuntimeError):
-        atoms.write('POSCAR')
+        atoms.write("POSCAR")
 
     calc = Vasp()
     atoms.calc = calc
@@ -111,13 +118,13 @@ def test_vasp_no_cell(testdir):
 
 def test_vasp_name():
     """Test the calculator class has the expected name"""
-    expected = 'vasp'
+    expected = "vasp"
     assert Vasp.name == expected  # Test class attribute
     assert Vasp().name == expected  # Ensure instance attribute hasn't changed
 
 
 def test_vasp_get_calculator():
-    cls_ = get_calculator_class('vasp')
+    cls_ = get_calculator_class("vasp")
 
     assert cls_ == Vasp
 
@@ -125,20 +132,20 @@ def test_vasp_get_calculator():
     assert get_calculator_class(Vasp.name) == cls_
 
 
-@pytest.mark.parametrize('envvar', Vasp.env_commands)
+@pytest.mark.parametrize("envvar", Vasp.env_commands)
 def test_make_command_envvar(envvar, monkeypatch, clear_vasp_envvar):
     """Test making a command based on the environment variables"""
     # Environment should be cleared by the "clear_vasp_envvar" fixture
     assert envvar not in os.environ
-    cmd_str = 'my command'
+    cmd_str = "my command"
     monkeypatch.setenv(envvar, cmd_str)
     calc = Vasp()
 
     cmd = calc.make_command()
-    if envvar == 'VASP_SCRIPT':
+    if envvar == "VASP_SCRIPT":
         # This envvar uses the `sys.exe` to create the command
         exe = sys.executable
-        assert cmd == f'{exe} {cmd_str}'
+        assert cmd == f"{exe} {cmd_str}"
     else:
         # We just use the exact string
         assert cmd == cmd_str
@@ -158,9 +165,9 @@ def test_make_command_explicit(monkeypatch):
     # envvars should not matter
     for envvar in Vasp.env_commands:
         # Populate the envvars with some strings, they should not matter
-        monkeypatch.setenv(envvar, 'something')
+        monkeypatch.setenv(envvar, "something")
     calc = Vasp()
-    my_cmd = 'my command'
+    my_cmd = "my command"
     cmd = calc.make_command(my_cmd)
     assert cmd == my_cmd
 

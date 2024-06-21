@@ -26,28 +26,28 @@ class Excitation:
         self.mur = mur
         self.muv = muv
         self.magn = magn
-        self.fij = 1.
+        self.fij = 1.0
 
     def outstring(self):
         """Format yourself as a string"""
-        string = '{0:g}  {1}  '.format(self.energy, self.index)
+        string = "{0:g}  {1}  ".format(self.energy, self.index)
 
         def format_me(me):
-            string = ''
+            string = ""
             if me.dtype == float:
                 for m in me:
-                    string += ' {0:g}'.format(m)
+                    string += " {0:g}".format(m)
             else:
                 for m in me:
-                    string += ' {0.real:g}{0.imag:+g}j'.format(m)
+                    string += " {0.real:g}{0.imag:+g}j".format(m)
             return string
 
-        string += '  ' + format_me(self.mur)
+        string += "  " + format_me(self.mur)
         if self.muv is not None:
-            string += '  ' + format_me(self.muv)
+            string += "  " + format_me(self.muv)
         if self.magn is not None:
-            string += '  ' + format_me(self.magn)
-        string += '\n'
+            string += "  " + format_me(self.magn)
+        string += "\n"
 
         return string
 
@@ -69,26 +69,26 @@ class Excitation:
 
         return cls(energy, index, mur, muv, magn)
 
-    def get_dipole_me(self, form='r'):
+    def get_dipole_me(self, form="r"):
         """Return the excitations dipole matrix element
         including the occupation factor sqrt(fij)"""
-        if form == 'r':  # length form
-            me = - self.mur
-        elif form == 'v':  # velocity form
-            me = - self.muv
+        if form == "r":  # length form
+            me = -self.mur
+        elif form == "v":  # velocity form
+            me = -self.muv
         else:
-            raise RuntimeError('Unknown form >' + form + '<')
+            raise RuntimeError("Unknown form >" + form + "<")
         return np.sqrt(self.fij) * me
 
-    def get_dipole_tensor(self, form='r'):
+    def get_dipole_tensor(self, form="r"):
         """Return the oscillator strength tensor"""
         me = self.get_dipole_me(form)
         return 2 * np.outer(me, me.conj()) * self.energy / Hartree
 
-    def get_oscillator_strength(self, form='r'):
+    def get_oscillator_strength(self, form="r"):
         """Return the excitations dipole oscillator strength."""
         me2_c = self.get_dipole_tensor(form).diagonal().real
-        return np.array([np.sum(me2_c) / 3.] + me2_c.tolist())
+        return np.array([np.sum(me2_c) / 3.0] + me2_c.tolist())
 
 
 class ExcitationList(list):
@@ -99,11 +99,10 @@ class ExcitationList(list):
         super().__init__()
 
         # set default energy scale to get eV
-        self.energy_to_eV_scale = 1.
+        self.energy_to_eV_scale = 1.0
 
 
-def polarizability(exlist, omega, form='v',
-                   tensor=False, index=0):
+def polarizability(exlist, omega, form="v", tensor=False, index=0):
     """Evaluate the photon energy dependent polarizability
     from the sum over states
 
@@ -129,21 +128,20 @@ def polarizability(exlist, omega, form='v',
         shape = (omega.shape, 3, 3) else
     """
     omega = np.asarray(omega)
-    om2 = 1. * omega**2
+    om2 = 1.0 * omega**2
     esc = exlist.energy_to_eV_scale
 
     if tensor:
         if not np.isscalar(om2):
             om2 = om2[:, None, None]
-        alpha = np.zeros(omega.shape + (3, 3),
-                         dtype=om2.dtype)
+        alpha = np.zeros(omega.shape + (3, 3), dtype=om2.dtype)
         for ex in exlist:
-            alpha += ex.get_dipole_tensor(form=form) / (
-                (ex.energy * esc)**2 - om2)
+            alpha += ex.get_dipole_tensor(form=form) / ((ex.energy * esc) ** 2 - om2)
     else:
         alpha = np.zeros_like(om2)
         for ex in exlist:
             alpha += ex.get_oscillator_strength(form=form)[index] / (
-                (ex.energy * esc)**2 - om2)
+                (ex.energy * esc) ** 2 - om2
+            )
 
     return alpha * Bohr**2 * Hartree

@@ -20,44 +20,38 @@ path, so the time spent on calculation of energy/forces will be different.
 """
 
 
-header = 'Optimizer       Steps Force evaluations Energy     Note           \n'
-bars = '=============== ===== ================= ========== ===============\n'
+header = "Optimizer       Steps Force evaluations Energy     Note           \n"
+bars = "=============== ===== ================= ========== ===============\n"
 
 
 def main():
-    dirlist = os.listdir('.')
-    name = r'.*\.csv'
+    dirlist = os.listdir(".")
+    name = r".*\.csv"
     filterre = re.compile(name)
     dirlist = list(filter(filterre.search, dirlist))
-    namelist = [d.strip('.csv') for d in dirlist]
+    namelist = [d.strip(".csv") for d in dirlist]
 
-    fd = open('testoptimize.rst', 'w')
+    fd = open("testoptimize.rst", "w")
     fd.write(rst)
 
     for name in namelist:
-        lines = open(name + '.csv', 'r').read().split('\n')
+        lines = open(name + ".csv", "r").read().split("\n")
         firstline = lines.pop(0)
         fd.write(
-            '\n' +
-            name + '\n' +
-            '=' * len(name) + '\n'
-            'Calculator used: %s\n' % firstline.split(',')[-1] +
-            '\n' +
-            bars +
-            header +
-            bars
+            "\n" + name + "\n" + "=" * len(name) + "\n"
+            "Calculator used: %s\n" % firstline.split(",")[-1]
+            + "\n"
+            + bars
+            + header
+            + bars
         )
         for line in lines:
             if len(line):
-                print(line.split(','))
-                fd.write(
-                    '%-15s %5s %17s %10s %s\n' % tuple(line.split(','))
-                )
-        fd.write(
-            bars
-        )
+                print(line.split(","))
+                fd.write("%-15s %5s %17s %10s %s\n" % tuple(line.split(",")))
+        fd.write(bars)
     fd.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

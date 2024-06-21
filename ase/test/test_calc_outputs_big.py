@@ -49,22 +49,26 @@ def test_properties_big(props):
 
 def test_singlepoint_roundtrip(props):
     from ase.build import bulk
-    from ase.calculators.singlepoint import (SinglePointDFTCalculator,
-                                             arrays_to_kpoints)
+    from ase.calculators.singlepoint import SinglePointDFTCalculator, arrays_to_kpoints
 
-    atoms = bulk('Au') * (1, 1, props['natoms'])
+    atoms = bulk("Au") * (1, 1, props["natoms"])
 
-    kpts = arrays_to_kpoints(props['eigenvalues'], props['occupations'],
-                             props['kpoint_weights'])
-    calc = SinglePointDFTCalculator(atoms=atoms, kpts=kpts,
-                                    efermi=props['fermi_level'],
-                                    forces=props['forces'])
+    kpts = arrays_to_kpoints(
+        props["eigenvalues"], props["occupations"], props["kpoint_weights"]
+    )
+    calc = SinglePointDFTCalculator(
+        atoms=atoms, kpts=kpts, efermi=props["fermi_level"], forces=props["forces"]
+    )
 
     props1 = calc.properties()
     print(props1)
 
     assert set(props1) >= {
-        'eigenvalues', 'occupations', 'kpoint_weights', 'fermi_level'}
+        "eigenvalues",
+        "occupations",
+        "kpoint_weights",
+        "fermi_level",
+    }
 
     for prop in props1:
         assert props[prop] == pytest.approx(props1[prop])
@@ -82,21 +86,23 @@ def test_output_mixin(props, rng):
 
     tester = OutputsMixinTester(props)
 
-    for getter, key in [('get_fermi_level', 'fermi_level'),
-                        ('get_ibz_k_points', 'ibz_kpoints'),
-                        ('get_k_point_weights', 'kpoint_weights'),
-                        ('get_number_of_bands', 'nbands'),
-                        ('get_number_of_spins', 'nspins')]:
+    for getter, key in [
+        ("get_fermi_level", "fermi_level"),
+        ("get_ibz_k_points", "ibz_kpoints"),
+        ("get_k_point_weights", "kpoint_weights"),
+        ("get_number_of_bands", "nbands"),
+        ("get_number_of_spins", "nspins"),
+    ]:
 
         assert getattr(tester, getter)() == pytest.approx(props[key])
 
         assert tester.get_spin_polarized() is True
 
-    for spin in range(props['nspins']):
-        for kpt_index in rng.choice(range(props['nkpts']), size=2):
-            assert (tester.get_eigenvalues(kpt=kpt_index, spin=spin)
-                    ==
-                    pytest.approx(props['eigenvalues'][spin][kpt_index]))
-            assert (tester.get_occupation_numbers(kpt=kpt_index, spin=spin)
-                    ==
-                    pytest.approx(props['occupations'][spin][kpt_index]))
+    for spin in range(props["nspins"]):
+        for kpt_index in rng.choice(range(props["nkpts"]), size=2):
+            assert tester.get_eigenvalues(kpt=kpt_index, spin=spin) == pytest.approx(
+                props["eigenvalues"][spin][kpt_index]
+            )
+            assert tester.get_occupation_numbers(
+                kpt=kpt_index, spin=spin
+            ) == pytest.approx(props["occupations"][spin][kpt_index])

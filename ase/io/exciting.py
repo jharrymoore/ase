@@ -29,42 +29,48 @@ def read_exciting(fileobj, index=-1):
     # Parse file into element tree
     doc = ET.parse(fileobj)
     root = doc.getroot()
-    speciesnodes = root.find('structure').iter('species')
+    speciesnodes = root.find("structure").iter("species")
     symbols = []
     positions = []
     basevects = []
     atoms = None
     # Collect data from tree
     for speciesnode in speciesnodes:
-        symbol = speciesnode.get('speciesfile').split('.')[0]
-        natoms = speciesnode.iter('atom')
+        symbol = speciesnode.get("speciesfile").split(".")[0]
+        natoms = speciesnode.iter("atom")
         for atom in natoms:
-            x, y, z = atom.get('coord').split()
+            x, y, z = atom.get("coord").split()
             positions.append([float(x), float(y), float(z)])
             symbols.append(symbol)
     # scale unit cell accorting to scaling attributes
-    if 'scale' in doc.find('structure/crystal').attrib:
-        scale = float(str(doc.find('structure/crystal').attrib['scale']))
+    if "scale" in doc.find("structure/crystal").attrib:
+        scale = float(str(doc.find("structure/crystal").attrib["scale"]))
     else:
         scale = 1
 
-    if 'stretch' in doc.find('structure/crystal').attrib:
-        a, b, c = doc.find('structure/crystal').attrib['stretch'].text.split()
+    if "stretch" in doc.find("structure/crystal").attrib:
+        a, b, c = doc.find("structure/crystal").attrib["stretch"].text.split()
         stretch = np.array([float(a), float(b), float(c)])
     else:
         stretch = np.array([1.0, 1.0, 1.0])
-    basevectsn = root.findall('structure/crystal/basevect')
+    basevectsn = root.findall("structure/crystal/basevect")
     for basevect in basevectsn:
         x, y, z = basevect.text.split()
-        basevects.append(np.array([float(x) * Bohr * stretch[0],
-                                   float(y) * Bohr * stretch[1],
-                                   float(z) * Bohr * stretch[2]
-                                   ]) * scale)
+        basevects.append(
+            np.array(
+                [
+                    float(x) * Bohr * stretch[0],
+                    float(y) * Bohr * stretch[1],
+                    float(z) * Bohr * stretch[2],
+                ]
+            )
+            * scale
+        )
     atoms = Atoms(symbols=symbols, cell=basevects)
 
     atoms.set_scaled_positions(positions)
-    if 'molecule' in root.find('structure').attrib.keys():
-        if root.find('structure').attrib['molecule']:
+    if "molecule" in root.find("structure").attrib.keys():
+        if root.find("structure").attrib["molecule"]:
             atoms.set_pbc(False)
     else:
         atoms.set_pbc(True)
@@ -87,7 +93,7 @@ def write_exciting(fileobj, images):
     -------
     """
     root = atoms2etree(images)
-    rough_string = ET.tostring(root, 'utf-8')
+    rough_string = ET.tostring(root, "utf-8")
     reparsed = minidom.parseString(rough_string)
     pretty = reparsed.toprettyxml(indent="\t")
     fileobj.write(pretty)
@@ -110,41 +116,47 @@ def atoms2etree(images):
     if not isinstance(images, (list, tuple)):
         images = [images]
 
-    root = ET.Element('input')
+    root = ET.Element("input")
     root.set(
-        '{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation',
-        'http://xml.exciting-code.org/excitinginput.xsd')
+        "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation",
+        "http://xml.exciting-code.org/excitinginput.xsd",
+    )
 
-    title = ET.SubElement(root, 'title')
-    title.text = ''
-    structure = ET.SubElement(root, 'structure')
-    crystal = ET.SubElement(structure, 'crystal')
+    title = ET.SubElement(root, "title")
+    title.text = ""
+    structure = ET.SubElement(root, "structure")
+    crystal = ET.SubElement(structure, "crystal")
     atoms = images[0]
     for vec in atoms.cell:
-        basevect = ET.SubElement(crystal, 'basevect')
-        basevect.text = '%.14f %.14f %.14f' % tuple(vec / Bohr)
+        basevect = ET.SubElement(crystal, "basevect")
+        basevect.text = "%.14f %.14f %.14f" % tuple(vec / Bohr)
 
-    oldsymbol = ''
+    oldsymbol = ""
     oldrmt = -1
     newrmt = -1
     scaled = atoms.get_scaled_positions()
     for aindex, symbol in enumerate(atoms.get_chemical_symbols()):
-        if 'rmt' in atoms.arrays:
-            newrmt = atoms.get_array('rmt')[aindex] / Bohr
+        if "rmt" in atoms.arrays:
+            newrmt = atoms.get_array("rmt")[aindex] / Bohr
         if symbol != oldsymbol or newrmt != oldrmt:
-            speciesnode = ET.SubElement(structure, 'species',
-                                        speciesfile='%s.xml' % symbol,
-                                        chemicalSymbol=symbol)
+            speciesnode = ET.SubElement(
+                structure,
+                "species",
+                speciesfile="%s.xml" % symbol,
+                chemicalSymbol=symbol,
+            )
             oldsymbol = symbol
-            if 'rmt' in atoms.arrays:
-                oldrmt = atoms.get_array('rmt')[aindex] / Bohr
+            if "rmt" in atoms.arrays:
+                oldrmt = atoms.get_array("rmt")[aindex] / Bohr
                 if oldrmt > 0:
-                    speciesnode.attrib['rmt'] = '%.4f' % oldrmt
+                    speciesnode.attrib["rmt"] = "%.4f" % oldrmt
 
-        atom = ET.SubElement(speciesnode, 'atom',
-                             coord='%.14f %.14f %.14f' % tuple(scaled[aindex]))
-        if 'momenta' in atoms.arrays:
-            atom.attrib['bfcmt'] = '%.14f %.14f %.14f' % tuple(
-                atoms.get_array('mommenta')[aindex])
+        atom = ET.SubElement(
+            speciesnode, "atom", coord="%.14f %.14f %.14f" % tuple(scaled[aindex])
+        )
+        if "momenta" in atoms.arrays:
+            atom.attrib["bfcmt"] = "%.14f %.14f %.14f" % tuple(
+                atoms.get_array("mommenta")[aindex]
+            )
 
     return root

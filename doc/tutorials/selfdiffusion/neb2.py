@@ -13,13 +13,11 @@ from ase.calculators.emt import EMT
 a = 4.0614
 b = a / sqrt(2)
 h = b / 2
-initial = Atoms('Al2',
-                positions=[(0, 0, 0),
-                           (a / 2, b / 2, -h)],
-                cell=(a, b, 2 * h),
-                pbc=(1, 1, 0))
+initial = Atoms(
+    "Al2", positions=[(0, 0, 0), (a / 2, b / 2, -h)], cell=(a, b, 2 * h), pbc=(1, 1, 0)
+)
 initial *= (2, 2, 2)
-initial.append(Atom('Al', (a / 2, b / 2, 3 * h)))
+initial.append(Atom("Al", (a / 2, b / 2, 3 * h)))
 initial.center(vacuum=4.0, axis=2)
 
 final = initial.copy()
@@ -62,4 +60,4 @@ minimizer.run(fmax=0.05)
 # Write the path to a trajectory:
 view(images)
 # 564 meV
-write('jump2.traj', images)
+write("jump2.traj", images)

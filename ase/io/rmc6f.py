@@ -6,11 +6,9 @@ from ase.atoms import Atoms
 from ase.utils import reader, writer
 from ase.cell import Cell
 
-__all__ = ['read_rmc6f', 'write_rmc6f']
+__all__ = ["read_rmc6f", "write_rmc6f"]
 
-ncols2style = {9: 'no_labels',
-               10: 'labels',
-               11: 'magnetic'}
+ncols2style = {9: "no_labels", 10: "labels", 11: "magnetic"}
 
 
 def _read_construct_regex(lines):
@@ -18,11 +16,11 @@ def _read_construct_regex(lines):
     Utility for constructing  regular expressions used by reader.
     """
     lines = [line.strip() for line in lines]
-    lines_re = '|'.join(lines)
-    lines_re = lines_re.replace(' ', r'\s+')
-    lines_re = lines_re.replace('(', r'\(')
-    lines_re = lines_re.replace(')', r'\)')
-    return '({})'.format(lines_re)
+    lines_re = "|".join(lines)
+    lines_re = lines_re.replace(" ", r"\s+")
+    lines_re = lines_re.replace("(", r"\(")
+    lines_re = lines_re.replace(")", r"\)")
+    return "({})".format(lines_re)
 
 
 def _read_line_of_atoms_section(fields):
@@ -59,21 +57,21 @@ def _read_line_of_atoms_section(fields):
     # Create the position dictionary
     properties = list()
     element = str(fields[1])
-    if style == 'no_labels':
+    if style == "no_labels":
         # id element xf yf zf ref_num ucell_x ucell_y ucell_z
         xf = float(fields[2])
         yf = float(fields[3])
         zf = float(fields[4])
         properties = [element, xf, yf, zf]
 
-    elif style == 'labels':
+    elif style == "labels":
         # id element label xf yf zf ref_num ucell_x ucell_y ucell_z
         xf = float(fields[3])
         yf = float(fields[4])
         zf = float(fields[5])
         properties = [element, xf, yf, zf]
 
-    elif style == 'magnetic':
+    elif style == "magnetic":
         # id element xf yf zf ref_num ucell_x ucell_y ucell_z M: spin
         xf = float(fields[2])
         yf = float(fields[3])
@@ -118,7 +116,8 @@ def _read_process_rmc6f_lines_to_pos_and_cell(lines):
         "Number of atoms:",
         "Supercell dimensions:",
         "Cell (Ang/deg):",
-        "Lattice vectors (Ang):"]
+        "Lattice vectors (Ang):",
+    ]
     sections = ["Atoms"]
 
     # Construct header and sections regex
@@ -129,7 +128,7 @@ def _read_process_rmc6f_lines_to_pos_and_cell(lines):
     header = True
 
     # Remove any lines that are blank
-    lines = [line for line in lines if line != '']
+    lines = [line for line in lines if line != ""]
 
     # Process each line of rmc6f file
     pos = {}
@@ -148,7 +147,7 @@ def _read_process_rmc6f_lines_to_pos_and_cell(lines):
             val = None
 
             # Regex that matches whitespace-separated floats
-            float_list_re = r'\s+(\d[\d|\s\.]+[\d|\.])'
+            float_list_re = r"\s+(\d[\d|\s\.]+[\d|\.])"
             m = re.search(header_lines_re + float_list_re, line)
             if m is not None:
                 field = m.group(1)
@@ -164,7 +163,7 @@ def _read_process_rmc6f_lines_to_pos_and_cell(lines):
                     code: natoms = int(val)
                     """
 
-                if field.startswith('Supercell'):
+                if field.startswith("Supercell"):
                     pass
                     """
                     NOTE: wrapping back down to unit cell is not
@@ -173,11 +172,11 @@ def _read_process_rmc6f_lines_to_pos_and_cell(lines):
                     code: supercell = [int(x) for x in val.split()]
                     """
 
-                if field.startswith('Cell'):
+                if field.startswith("Cell"):
                     cellpar = [float(x) for x in val.split()]
                     cell = Cell.fromcellpar(cellpar)
 
-                if field.startswith('Lattice'):
+                if field.startswith("Lattice"):
                     pass
                     """
                     NOTE: Have questions about RMC fractionalization matrix for
@@ -187,7 +186,7 @@ def _read_process_rmc6f_lines_to_pos_and_cell(lines):
 
         # main body section
         if section is not None:
-            if section == 'Atoms':
+            if section == "Atoms":
                 atom_id, atom_props = _read_line_of_atoms_section(line.split())
                 pos[atom_id] = atom_props
 
@@ -216,13 +215,15 @@ def _write_output_column_format(columns, arrays):
         The format for printing the columns.
 
     """
-    fmt_map = {'d': ('R', '%14.6f '),
-               'f': ('R', '%14.6f '),
-               'i': ('I', '%8d '),
-               'O': ('S', '%s'),
-               'S': ('S', '%s'),
-               'U': ('S', '%s'),
-               'b': ('L', ' %.1s ')}
+    fmt_map = {
+        "d": ("R", "%14.6f "),
+        "f": ("R", "%14.6f "),
+        "i": ("I", "%8d "),
+        "O": ("S", "%s"),
+        "S": ("S", "%s"),
+        "U": ("S", "%s"),
+        "b": ("L", " %.1s "),
+    }
 
     property_types = []
     property_ncols = []
@@ -242,7 +243,7 @@ def _write_output_column_format(columns, arrays):
         is_1d_as_2d = len(array.shape) == 2 and array.shape[1] == 1
 
         # Construct the list of key pairs of column with dtype
-        if (is_1d or is_1d_as_2d):
+        if is_1d or is_1d_as_2d:
             ncol = 1
             dtypes.append((column, dtype))
         else:
@@ -256,7 +257,7 @@ def _write_output_column_format(columns, arrays):
 
     # Prepare outputs to correct data structure
     dtype_obj = np.dtype(dtypes)
-    formats_as_str = ''.join(formats) + '\n'
+    formats_as_str = "".join(formats) + "\n"
 
     return property_ncols, dtype_obj, formats_as_str
 
@@ -358,11 +359,13 @@ def read_rmc6f(filename, atom_type_map=None):
         if spin is not None:
             magmoms.append(spin)
 
-    atoms = Atoms(scaled_positions=scaled_positions,
-                  symbols=symbols,
-                  cell=cell,
-                  magmoms=magmoms,
-                  pbc=[True, True, True])
+    atoms = Atoms(
+        scaled_positions=scaled_positions,
+        symbols=symbols,
+        cell=cell,
+        magmoms=magmoms,
+        pbc=[True, True, True],
+    )
 
     return atoms
 
@@ -411,13 +414,13 @@ def write_rmc6f(filename, atoms, order=None, atom_type_map=None):
 
     # get type and number of each atom type
     atom_types_list = [atom_type_map[atype] for atype in atom_types]
-    atom_types_present = ' '.join(atom_types_list)
-    natom_types_present = ' '.join(natom_types)
+    atom_types_present = " ".join(atom_types_list)
+    natom_types_present = " ".join(natom_types)
 
     header_lines = [
         "(Version 6f format configuration file)",
         "(Generated by ASE - Atomic Simulation Environment https://wiki.fysik.dtu.dk/ase/ )",  # noqa: E501
-        "Metadata date: " + time.strftime('%d-%m-%Y'),
+        "Metadata date: " + time.strftime("%d-%m-%Y"),
         "Number of types of atoms:   {} ".format(len(atom_types)),
         "Atom types present:          {}".format(atom_types_present),
         "Number of each atom type:   {}".format(natom_types_present),
@@ -426,10 +429,11 @@ def write_rmc6f(filename, atoms, order=None, atom_type_map=None):
         "Number of moves accepted:            0",
         "Number of prior configuration saves: 0",
         "Number of atoms:                     {}".format(len(atoms)),
-        "Supercell dimensions:                1 1 1"]
+        "Supercell dimensions:                1 1 1",
+    ]
 
     # magnetic moments
-    if atoms.has('magmoms'):
+    if atoms.has("magmoms"):
         spin_str = "Number of spins:                     {}"
         spin_line = spin_str.format(len(atoms.get_initial_magnetic_moments()))
         header_lines.extend([spin_line])
@@ -437,7 +441,7 @@ def write_rmc6f(filename, atoms, order=None, atom_type_map=None):
     density_str = "Number density (Ang^-3):              {}"
     density_line = density_str.format(len(atoms) / atoms.get_volume())
     cell_angles = [str(x) for x in atoms.cell.cellpar()]
-    cell_line = "Cell (Ang/deg): " + ' '.join(cell_angles)
+    cell_line = "Cell (Ang/deg): " + " ".join(cell_angles)
     header_lines.extend([density_line, cell_line])
 
     # get lattice vectors from cell lengths and angles
@@ -446,29 +450,29 @@ def write_rmc6f(filename, atoms, order=None, atom_type_map=None):
 
     cell_parameters = atoms.cell.cellpar()
     cell = Cell.fromcellpar(cell_parameters).T
-    x_line = ' '.join(['{:12.6f}'.format(i) for i in cell[0]])
-    y_line = ' '.join(['{:12.6f}'.format(i) for i in cell[1]])
-    z_line = ' '.join(['{:12.6f}'.format(i) for i in cell[2]])
+    x_line = " ".join(["{:12.6f}".format(i) for i in cell[0]])
+    y_line = " ".join(["{:12.6f}".format(i) for i in cell[1]])
+    z_line = " ".join(["{:12.6f}".format(i) for i in cell[2]])
     lat_lines = ["Lattice vectors (Ang):", x_line, y_line, z_line]
     header_lines.extend(lat_lines)
-    header_lines.extend(['Atoms:'])
+    header_lines.extend(["Atoms:"])
 
     # ATOMS SECTION
 
     # create columns of data for atoms (fr_cols)
-    fr_cols = ['id', 'symbols', 'scaled_positions', 'ref_num', 'ref_cell']
-    if atoms.has('magmoms'):
-        fr_cols.extend('magmom')
+    fr_cols = ["id", "symbols", "scaled_positions", "ref_num", "ref_cell"]
+    if atoms.has("magmoms"):
+        fr_cols.extend("magmom")
 
     # Collect data to be written out
     natoms = len(atoms)
 
     arrays = {}
-    arrays['id'] = np.array(range(1, natoms + 1, 1), int)
-    arrays['symbols'] = np.array(atoms.symbols)
-    arrays['ref_num'] = np.zeros(natoms, int)
-    arrays['ref_cell'] = np.zeros((natoms, 3), int)
-    arrays['scaled_positions'] = np.array(atoms.get_scaled_positions())
+    arrays["id"] = np.array(range(1, natoms + 1, 1), int)
+    arrays["symbols"] = np.array(atoms.symbols)
+    arrays["ref_num"] = np.zeros(natoms, int)
+    arrays["ref_cell"] = np.zeros((natoms, 3), int)
+    arrays["scaled_positions"] = np.array(atoms.get_scaled_positions())
 
     # get formatting for writing output based on atom arrays
     ncols, dtype_obj, fmt = _write_output_column_format(fr_cols, arrays)

@@ -12,20 +12,20 @@ def write_xsf(fileobj, images, data=None, origin=None, span_vectors=None):
     is_anim = len(images) > 1
 
     if is_anim:
-        fileobj.write('ANIMSTEPS %d\n' % len(images))
+        fileobj.write("ANIMSTEPS %d\n" % len(images))
 
     numbers = images[0].get_atomic_numbers()
 
     pbc = images[0].get_pbc()
     npbc = sum(pbc)
     if pbc[2]:
-        fileobj.write('CRYSTAL\n')
+        fileobj.write("CRYSTAL\n")
         assert npbc == 3
     elif pbc[1]:
-        fileobj.write('SLAB\n')
+        fileobj.write("SLAB\n")
         assert npbc == 2
     elif pbc[0]:
-        fileobj.write('POLYMER\n')
+        fileobj.write("POLYMER\n")
         assert npbc == 1
     else:
         # (Header written as part of image loop)
@@ -38,27 +38,28 @@ def write_xsf(fileobj, images, data=None, origin=None, span_vectors=None):
             break
 
     for n, atoms in enumerate(images):
-        anim_token = ' %d' % (n + 1) if is_anim else ''
+        anim_token = " %d" % (n + 1) if is_anim else ""
         if pbc.any():
-            write_cell = (n == 0 or cell_variable)
+            write_cell = n == 0 or cell_variable
             if write_cell:
                 if cell_variable:
-                    fileobj.write('PRIMVEC%s\n' % anim_token)
+                    fileobj.write("PRIMVEC%s\n" % anim_token)
                 else:
-                    fileobj.write('PRIMVEC\n')
+                    fileobj.write("PRIMVEC\n")
                 cell = atoms.get_cell()
                 for i in range(3):
-                    fileobj.write(' %.14f %.14f %.14f\n' % tuple(cell[i]))
+                    fileobj.write(" %.14f %.14f %.14f\n" % tuple(cell[i]))
 
-            fileobj.write('PRIMCOORD%s\n' % anim_token)
+            fileobj.write("PRIMCOORD%s\n" % anim_token)
         else:
-            fileobj.write('ATOMS%s\n' % anim_token)
+            fileobj.write("ATOMS%s\n" % anim_token)
 
         # Get the forces if it's not too expensive:
         calc = atoms.calc
-        if (calc is not None and
-            (hasattr(calc, 'calculation_required') and
-             not calc.calculation_required(atoms, ['forces']))):
+        if calc is not None and (
+            hasattr(calc, "calculation_required")
+            and not calc.calculation_required(atoms, ["forces"])
+        ):
             forces = atoms.get_forces() / Hartree
         else:
             forces = None
@@ -66,28 +67,28 @@ def write_xsf(fileobj, images, data=None, origin=None, span_vectors=None):
         pos = atoms.get_positions()
 
         if pbc.any():
-            fileobj.write(' %d 1\n' % len(pos))
+            fileobj.write(" %d 1\n" % len(pos))
         for a in range(len(pos)):
-            fileobj.write(' %2d' % numbers[a])
-            fileobj.write(' %20.14f %20.14f %20.14f' % tuple(pos[a]))
+            fileobj.write(" %2d" % numbers[a])
+            fileobj.write(" %20.14f %20.14f %20.14f" % tuple(pos[a]))
             if forces is None:
-                fileobj.write('\n')
+                fileobj.write("\n")
             else:
-                fileobj.write(' %20.14f %20.14f %20.14f\n' % tuple(forces[a]))
+                fileobj.write(" %20.14f %20.14f %20.14f\n" % tuple(forces[a]))
 
     if data is None:
         return
 
-    fileobj.write('BEGIN_BLOCK_DATAGRID_3D\n')
-    fileobj.write(' data\n')
-    fileobj.write(' BEGIN_DATAGRID_3Dgrid#1\n')
+    fileobj.write("BEGIN_BLOCK_DATAGRID_3D\n")
+    fileobj.write(" data\n")
+    fileobj.write(" BEGIN_DATAGRID_3Dgrid#1\n")
 
     data = np.asarray(data)
     if data.dtype == complex:
         data = np.abs(data)
 
     shape = data.shape
-    fileobj.write('  %d %d %d\n' % shape)
+    fileobj.write("  %d %d %d\n" % shape)
 
     cell = atoms.get_cell()
     if origin is None:
@@ -95,27 +96,26 @@ def write_xsf(fileobj, images, data=None, origin=None, span_vectors=None):
         for i in range(3):
             if not pbc[i]:
                 origin += cell[i] / shape[i]
-    fileobj.write('  %f %f %f\n' % tuple(origin))
+    fileobj.write("  %f %f %f\n" % tuple(origin))
 
     for i in range(3):
         # XXXX is this not just supposed to be the cell?
         # What's with the strange division?
         # This disagrees with the output of Octopus.  Investigate
         if span_vectors is None:
-            fileobj.write('  %f %f %f\n' %
-                          tuple(cell[i] * (shape[i] + 1) / shape[i]))
+            fileobj.write("  %f %f %f\n" % tuple(cell[i] * (shape[i] + 1) / shape[i]))
         else:
-            fileobj.write('  %f %f %f\n' % tuple(span_vectors[i]))
+            fileobj.write("  %f %f %f\n" % tuple(span_vectors[i]))
 
     for k in range(shape[2]):
         for j in range(shape[1]):
-            fileobj.write('   ')
-            fileobj.write(' '.join(['%f' % d for d in data[:, j, k]]))
-            fileobj.write('\n')
-        fileobj.write('\n')
+            fileobj.write("   ")
+            fileobj.write(" ".join(["%f" % d for d in data[:, j, k]]))
+            fileobj.write("\n")
+        fileobj.write("\n")
 
-    fileobj.write(' END_DATAGRID_3D\n')
-    fileobj.write('END_BLOCK_DATAGRID_3D\n')
+    fileobj.write(" END_DATAGRID_3D\n")
+    fileobj.write("END_BLOCK_DATAGRID_3D\n")
 
 
 @reader
@@ -132,10 +132,11 @@ def iread_xsf(fileobj, read_data=False):
      list of numpy arrays, if data is returned.
 
     Presently supports only a single 3D datagrid."""
+
     def _line_generator_func():
         for line in fileobj:
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue  # Discard comments and empty lines
             yield line
 
@@ -146,54 +147,54 @@ def iread_xsf(fileobj, read_data=False):
 
     line = readline()
 
-    if line.startswith('ANIMSTEPS'):
+    if line.startswith("ANIMSTEPS"):
         nimages = int(line.split()[1])
         line = readline()
     else:
         nimages = 1
 
-    if line == 'CRYSTAL':
+    if line == "CRYSTAL":
         pbc = (True, True, True)
-    elif line == 'SLAB':
+    elif line == "SLAB":
         pbc = (True, True, False)
-    elif line == 'POLYMER':
+    elif line == "POLYMER":
         pbc = (True, False, False)
     else:
-        assert line.startswith('ATOMS'), line  # can also be ATOMS 1
+        assert line.startswith("ATOMS"), line  # can also be ATOMS 1
         pbc = (False, False, False)
 
     cell = None
     for n in range(nimages):
         if any(pbc):
             line = readline()
-            if line.startswith('PRIMCOORD'):
+            if line.startswith("PRIMCOORD"):
                 assert cell is not None  # cell read from previous image
             else:
-                assert line.startswith('PRIMVEC')
+                assert line.startswith("PRIMVEC")
                 cell = []
                 for i in range(3):
                     cell.append([float(x) for x in readline().split()])
 
                 line = readline()
-                if line.startswith('CONVVEC'):  # ignored;
+                if line.startswith("CONVVEC"):  # ignored;
                     for i in range(3):
                         readline()
                     line = readline()
 
-            assert line.startswith('PRIMCOORD')
+            assert line.startswith("PRIMCOORD")
             natoms = int(readline().split()[0])
             lines = [readline() for _ in range(natoms)]
         else:
-            assert line.startswith('ATOMS'), line
+            assert line.startswith("ATOMS"), line
             line = readline()
             lines = []
-            while not (line.startswith('ATOMS') or line.startswith('BEGIN')):
+            while not (line.startswith("ATOMS") or line.startswith("BEGIN")):
                 lines.append(line)
                 try:
                     line = readline()
                 except StopIteration:
                     break
-            if line.startswith('BEGIN'):
+            if line.startswith("BEGIN"):
                 # We read "too far" and accidentally got the header
                 # of the data section.  This happens only when parsing
                 # ATOMS blocks, because one cannot infer their length.
@@ -229,10 +230,10 @@ def iread_xsf(fileobj, read_data=False):
             line = readline()
         else:
             line = data_header_line
-        assert line.startswith('BEGIN_BLOCK_DATAGRID_3D')
+        assert line.startswith("BEGIN_BLOCK_DATAGRID_3D")
         readline()  # name
         line = readline()
-        assert line.startswith('BEGIN_DATAGRID_3D')
+        assert line.startswith("BEGIN_DATAGRID_3D")
 
         shape = [int(x) for x in readline().split()]
         assert len(shape) == 3
@@ -251,7 +252,7 @@ def iread_xsf(fileobj, read_data=False):
 
         data = []
         line = readline()  # First line of data
-        while not line.startswith('END_DATAGRID_3D'):
+        while not line.startswith("END_DATAGRID_3D"):
             data.extend([float(x) for x in line.split()])
             line = readline()
         assert len(data) == npoints

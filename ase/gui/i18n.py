@@ -23,8 +23,8 @@ import os
 import gettext
 
 
-domain = 'ag'
-localedir = '%s/po/' % os.path.dirname(__file__)
+domain = "ag"
+localedir = "%s/po/" % os.path.dirname(__file__)
 translation = gettext.translation(domain, localedir, fallback=True)
 
 

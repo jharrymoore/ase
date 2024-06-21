@@ -9,7 +9,7 @@ from ase.calculators.idealgas import IdealGas
 
 def test_idealgas():
     rng = np.random.RandomState(17)
-    atoms = bulk('Kr').repeat((10, 10, 10))
+    atoms = bulk("Kr").repeat((10, 10, 10))
     assert len(atoms) == 1000
 
     atoms.center(vacuum=100)

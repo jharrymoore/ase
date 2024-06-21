@@ -39,7 +39,7 @@ UNITSETS["real"] = dict(
     charge=u.e_si,
     dipole=u.electron_angstrom_si,
     electric_field=u.volt_per_angstrom_si,
-    density=u.gram_si / u.centimeter_si ** DIM,
+    density=u.gram_si / u.centimeter_si**DIM,
 )
 
 UNITSETS["metal"] = dict(
@@ -56,7 +56,7 @@ UNITSETS["metal"] = dict(
     charge=u.e_si,
     dipole=u.electron_angstrom_si,
     electric_field=u.volt_per_angstrom_si,
-    density=u.gram_si / u.centimeter_si ** DIM,
+    density=u.gram_si / u.centimeter_si**DIM,
 )
 
 UNITSETS["si"] = dict(
@@ -73,7 +73,7 @@ UNITSETS["si"] = dict(
     charge=u.coulomb_si,
     dipole=u.coulomb_meter_si,
     electric_field=u.volt_per_meter_si,
-    density=u.kilogram_si / u.meter_si ** DIM,
+    density=u.kilogram_si / u.meter_si**DIM,
 )
 
 UNITSETS["cgs"] = dict(
@@ -90,7 +90,7 @@ UNITSETS["cgs"] = dict(
     charge=u.statcoulomb_si,  # or esu (4.8032044e-10 is a proton)
     dipole=u.statcoulomb_centimeter_si,  # =u. 10^18 debye,
     electric_field=u.statvolt_per_centimeter_si,  # or dyne / esu
-    density=u.gram_si / (u.centimeter_si ** DIM),
+    density=u.gram_si / (u.centimeter_si**DIM),
 )
 
 UNITSETS["electron"] = dict(
@@ -138,7 +138,7 @@ UNITSETS["nano"] = dict(
     charge=u.e_si,  # multiple of electron charge (1.0 is a proton)
     dipole=u.electron_nanometer_si,
     electric_field=u.volt_si / u.nanometer_si,
-    density=u.attogram_si / u.nanometer_si ** DIM,
+    density=u.attogram_si / u.nanometer_si**DIM,
 )
 
 

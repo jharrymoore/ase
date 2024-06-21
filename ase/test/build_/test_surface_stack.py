@@ -8,7 +8,7 @@ def test_surface_stack():
     # consistent with stacking.
 
     d = _all_surface_functions()
-    exclude = {'mx2', 'graphene'}  # mx2 and graphene are not like the others
+    exclude = {"mx2", "graphene"}  # mx2 and graphene are not like the others
 
     for name in sorted(d):
         if name in exclude:
@@ -18,17 +18,16 @@ def test_surface_stack():
 
         def has(var):
             c = func.__code__
-            return var in c.co_varnames[:c.co_argcount]
+            return var in c.co_varnames[: c.co_argcount]
 
         for nlayers in range(1, 7):
-            atoms = func('Au', size=(2, 2, nlayers), periodic=True, a=4.0)
-            big_atoms = func('Au', size=(2, 2, 2 * nlayers),
-                             periodic=True, a=4.0)
+            atoms = func("Au", size=(2, 2, nlayers), periodic=True, a=4.0)
+            big_atoms = func("Au", size=(2, 2, 2 * nlayers), periodic=True, a=4.0)
             stacked_atoms = stack(atoms, atoms)
 
             changes = compare_atoms(stacked_atoms, big_atoms, tol=1e-11)
             if not changes:
-                print('OK', name, nlayers)
+                print("OK", name, nlayers)
                 break
         else:
-            assert 0, 'Unstackable surface {}'.format(name)
+            assert 0, "Unstackable surface {}".format(name)

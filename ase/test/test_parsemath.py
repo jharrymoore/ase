@@ -53,11 +53,10 @@ def test_parsemath():
 
     solutions = [
         3 * param_dct["param_1"],
-        param_dct["param_2"]**-2.0,
-        (param_dct["param_6"])**2.0,
+        param_dct["param_2"] ** -2.0,
+        (param_dct["param_6"]) ** 2.0,
         param_dct["param_1"] / param_dct["param_5"],
-        param_dct["param_1"] + param_dct["param_2"] *
-        30.0 - param_dct["param_5"],
+        param_dct["param_1"] + param_dct["param_2"] * 30.0 - param_dct["param_5"],
         (param_dct["param_1"] + 1) / param_dct["param_2"],
         math.sqrt(param_dct["param_2"]),
         math.fmod(param_dct["param_4"], param_dct["param_1"]),
@@ -97,7 +96,8 @@ def test_parsemath():
         eval_expression("99**99**99*99**99**99")
         raise RuntimeError(
             "This should not be reached, the parser is now vulnerable "
-            "to computational time based DOS attack")
+            "to computational time based DOS attack"
+        )
     except ValueError:
         pass
 
@@ -105,14 +105,15 @@ def test_parsemath():
         eval_expression("e" * 10000000, dict())
         raise RuntimeError(
             "This should not be reached, the parser is now vulnerable "
-            "to memory based DOS attack")
+            "to memory based DOS attack"
+        )
     except ValueError:
         pass
 
     try:
         eval_expression("__import__('os').system('echo $HOME')")
         raise RuntimeError(
-            "This should not be reached, "
-            "the parser can execute malicious code")
+            "This should not be reached, " "the parser can execute malicious code"
+        )
     except TypeError:
         pass

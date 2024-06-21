@@ -25,9 +25,9 @@ def mock_gui_error(title, text=None):
 
 @pytest.fixture
 def display():
-    pytest.importorskip('tkinter')
-    if not os.environ.get('DISPLAY'):
-        raise pytest.skip('no display')
+    pytest.importorskip("tkinter")
+    if not os.environ.get("DISPLAY"):
+        raise pytest.skip("no display")
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def gui(guifactory):
 def no_blocking_errors_monkeypatch(monkeypatch):
     # If there's an unexpected error in one of the tests, we don't
     # want a blocking dialog to lock the whole test suite:
-    for name in ['error', 'showerror', 'showwarning', 'showinfo']:
+    for name in ["error", "showerror", "showwarning", "showinfo"]:
         monkeypatch.setattr(ui, name, mock_gui_error)
     # orig_ui_error = ui.error
     # ui.error = mock_gui_error
@@ -58,6 +58,7 @@ def guifactory(display):
         gui = GUI(images)
         guis.append(gui)
         return gui
+
     yield factory
 
     for gui in guis:
@@ -66,62 +67,62 @@ def guifactory(display):
 
 @pytest.fixture
 def atoms(gui):
-    atoms = bulk('Ti') * (2, 2, 2)
+    atoms = bulk("Ti") * (2, 2, 2)
     gui.new_atoms(atoms)
     return atoms
 
 
 @pytest.fixture
 def animation(guifactory):
-    images = [bulk(sym) for sym in ['Cu', 'Ag', 'Au']]
+    images = [bulk(sym) for sym in ["Cu", "Ag", "Au"]]
     gui = guifactory(images)
     return gui
 
 
 def test_about(gui):
-    ui.about('name', 'version:1.1.1', 'http://webpage.org')
+    ui.about("name", "version:1.1.1", "http://webpage.org")
 
 
 def test_helpwindow(gui):
-    ui.helpwindow('some\n multiline\n text')
+    ui.helpwindow("some\n multiline\n text")
 
 
 def test_nanotube(gui):
     nt = gui.nanotube_window()
     nt.apply()
-    nt.element[1].value = '?'
+    nt.element[1].value = "?"
     with pytest.raises(GUIError):
         nt.apply()
 
-    nt.element[1].value = 'C'
+    nt.element[1].value = "C"
     nt.ok()
     assert len(gui.images[0]) == 20
 
 
 def test_nanoparticle(gui):
     n = gui.nanoparticle_window()
-    n.element.symbol = 'W'  # test bcc
+    n.element.symbol = "W"  # test bcc
     n.set_structure_data()
     n.apply()
     assert len(gui.images[0]) == 57
     assert gui.images[0].get_distance(44, 45) == pytest.approx(2.737, 0.001)
-    n.structure_cb.value = n.structure_names['sc']
+    n.structure_cb.value = n.structure_names["sc"]
     n.update_structure()
     n.apply()
     assert len(gui.images[0]) == 231
     assert gui.images[0].get_distance(143, 145) == pytest.approx(3.160, 0.001)
-    n.structure_cb.value = n.structure_names['hcp']
+    n.structure_cb.value = n.structure_names["hcp"]
     n.update_structure()
     n.apply()
     assert len(gui.images[0]) == 257
     assert gui.images[0].get_distance(4, 5) == pytest.approx(3.0, 0.001)
     assert gui.images[0].get_distance(11, 5) == pytest.approx(3.160, 0.001)
-    n.element.symbol = 'Cu'  # test fcc
+    n.element.symbol = "Cu"  # test fcc
     n.set_structure_data()
     n.apply()
     assert len(gui.images[0]) == 675
     assert gui.images[0].get_distance(0, 1) == pytest.approx(2.553, 0.001)
-    n.method_cb.value = 'wulff'
+    n.method_cb.value = "wulff"
     n.update_gui_method()
     n.apply()
     assert len(gui.images[0]) == 135
@@ -129,89 +130,97 @@ def test_nanoparticle(gui):
 
 
 def test_color(gui):
-    a = Atoms('C10', magmoms=np.linspace(1, -1, 10))
+    a = Atoms("C10", magmoms=np.linspace(1, -1, 10))
     a.positions[:] = np.linspace(0, 9, 10)[:, None]
     a.calc = SinglePointCalculator(a, forces=a.positions)
     che = np.linspace(100, 110, 10)
     mask = [0] * 10
     mask[5] = 1
-    a.set_array('corehole_energies', np.ma.array(che, mask=mask))
+    a.set_array("corehole_energies", np.ma.array(che, mask=mask))
     gui.new_atoms(a)
     c = gui.colors_window()
-    c.toggle('force')
-    c.toggle('magmom')
+    c.toggle("force")
+    c.toggle("magmom")
     activebuttons = [button.active for button in c.radio.buttons]
     assert activebuttons == [1, 0, 1, 0, 0, 1, 1, 1], activebuttons
-    c.toggle('corehole_energies')
+    c.toggle("corehole_energies")
     c.change_mnmx(101, 120)
 
 
 def test_settings(gui):
-    gui.new_atoms(molecule('H2O'))
+    gui.new_atoms(molecule("H2O"))
     s = gui.settings()
     s.scale.value = 1.9
     s.scale_radii()
 
 
 def test_rotate(gui):
-    gui.window['toggle-show-bonds'] = True
-    gui.new_atoms(molecule('H2O'))
+    gui.window["toggle-show-bonds"] = True
+    gui.new_atoms(molecule("H2O"))
     gui.rotate_window()
 
 
 def test_open_and_save(gui, testdir):
-    mol = molecule('H2O')
+    mol = molecule("H2O")
     for i in range(3):
-        mol.write('h2o.json')
-    gui.open(filename='h2o.json')
-    save_dialog(gui, 'h2o.cif@-1')
+        mol.write("h2o.json")
+    gui.open(filename="h2o.json")
+    save_dialog(gui, "h2o.cif@-1")
 
 
-@pytest.mark.parametrize('filename', [
-    None, 'output.png', 'output.eps',
-    'output.pov', 'output.traj', 'output.traj@0',
-])
+@pytest.mark.parametrize(
+    "filename",
+    [
+        None,
+        "output.png",
+        "output.eps",
+        "output.pov",
+        "output.traj",
+        "output.traj@0",
+    ],
+)
 def test_export_graphics(gui, testdir, with_bulk_ti, monkeypatch, filename):
     # Monkeypatch the blocking dialog:
-    monkeypatch.setattr(ui.SaveFileDialog, 'go', lambda event: filename)
+    monkeypatch.setattr(ui.SaveFileDialog, "go", lambda event: filename)
     gui.save()
     if filename is not None:
-        realfilename = filename.rsplit('@')[0]
+        realfilename = filename.rsplit("@")[0]
         assert Path(realfilename).is_file()
 
 
 def test_fracocc(gui, testdir):
     from ase.test.fio.test_cif import content
-    with open('./fracocc.cif', 'w') as fd:
+
+    with open("./fracocc.cif", "w") as fd:
         fd.write(content)
-    gui.open(filename='fracocc.cif')
+    gui.open(filename="fracocc.cif")
 
 
 def test_povray(gui, testdir):
-    mol = molecule('H2O')
+    mol = molecule("H2O")
     gui.new_atoms(mol)  # not gui.set_atoms(mol)
     n = gui.render_window()
-    assert n.basename_widget.value == 'H2O'
+    assert n.basename_widget.value == "H2O"
     n.run_povray_widget.check.deselect()
     n.keep_files_widget.check.select()
     # can't set attribute n.run.povray_widge.value = False
     n.ok()
-    ini = Path('./H2O.ini')
-    pov = Path('./H2O.pov')
+    ini = Path("./H2O.ini")
+    pov = Path("./H2O.pov")
     assert ini.is_file()
     assert pov.is_file()
 
-    with open(ini, 'r') as _:
+    with open(ini, "r") as _:
         _ = _.read()
-        assert 'H2O' in _
-    with open(pov, 'r') as _:
+        assert "H2O" in _
+    with open(pov, "r") as _:
         _ = _.read()
-        assert 'atom' in _
+        assert "atom" in _
 
 
 @pytest.fixture
 def with_bulk_ti(gui):
-    atoms = bulk('Ti') * (2, 2, 2)
+    atoms = bulk("Ti") * (2, 2, 2)
     gui.new_atoms(atoms)
 
 
@@ -231,9 +240,10 @@ def test_select_atoms(gui, with_bulk_ti):
 def test_modify_element(gui, modify):
     class MockElement:
         Z = 79
+
     modify.set_element(MockElement())
-    assert all(gui.atoms.symbols[:4] == 'Au')
-    assert all(gui.atoms.symbols[4:] == 'Ti')
+    assert all(gui.atoms.symbols[:4] == "Au")
+    assert all(gui.atoms.symbols[4:] == "Ti")
 
 
 def test_modify_tag(gui, modify):
@@ -253,7 +263,7 @@ def test_modify_magmom(gui, modify):
 
 
 def test_repeat(gui):
-    fe = bulk('Fe')
+    fe = bulk("Fe")
     gui.new_atoms(fe)
     repeat = gui.repeat_window()
 
@@ -275,7 +285,7 @@ def test_repeat(gui):
 def test_surface(gui):
     assert len(gui.atoms) == 0
     surf = gui.surface_window()
-    surf.element.symbol = 'Au'
+    surf.element.symbol = "Au"
     surf.apply()
     assert len(gui.atoms) > 0
     assert gui.atoms.cell.rank == 2
@@ -292,7 +302,7 @@ def test_movie(animation):
 
 def test_reciprocal(gui):
     # XXX should test 1D, 2D, and it should work correctly of course
-    gui.new_atoms(bulk('Au'))
+    gui.new_atoms(bulk("Au"))
     reciprocal = gui.reciprocal()
     reciprocal.terminate()
     exitcode = reciprocal.wait(timeout=5)
@@ -307,19 +317,19 @@ def test_bad_reciprocal(gui):
 
 def test_add_atoms(gui):
     dia = gui.add_atoms()
-    dia.combobox.value = 'CH3CH2OH'
+    dia.combobox.value = "CH3CH2OH"
     assert len(gui.atoms) == 0
     dia.add()
-    assert str(gui.atoms.symbols) == str(molecule('CH3CH2OH').symbols)
+    assert str(gui.atoms.symbols) == str(molecule("CH3CH2OH").symbols)
 
 
 def test_cell_editor(gui):
-    au = bulk('Au')
+    au = bulk("Au")
     gui.new_atoms(au.copy())
 
     dia = gui.cell_editor()
 
-    ti = bulk('Ti')
+    ti = bulk("Ti")
 
     dia.update(ti.cell, ti.pbc)
     dia.apply_vectors()
@@ -353,17 +363,17 @@ def test_constrain(gui, atoms):
 
 
 def different_dimensionalities():
-    yield molecule('H2O')
-    yield Atoms('X', cell=[1, 0, 0], pbc=[1, 0, 0])
-    yield Atoms('X', cell=[1, 1, 0], pbc=[1, 1, 0])
-    yield bulk('Au')
+    yield molecule("H2O")
+    yield Atoms("X", cell=[1, 0, 0], pbc=[1, 0, 0])
+    yield Atoms("X", cell=[1, 1, 0], pbc=[1, 1, 0])
+    yield bulk("Au")
 
 
-@pytest.mark.parametrize('atoms', different_dimensionalities())
+@pytest.mark.parametrize("atoms", different_dimensionalities())
 def test_quickinfo(gui, atoms):
     gui.new_atoms(atoms)
     # (Note: String can be in any language)
-    refstring = _('Single image loaded.')
+    refstring = _("Single image loaded.")
     infostring = info(gui)
     assert refstring in infostring
 
@@ -374,7 +384,7 @@ def test_quickinfo(gui, atoms):
 
 
 def test_clipboard_copy(gui):
-    atoms = molecule('CH3CH2OH')
+    atoms = molecule("CH3CH2OH")
     gui.new_atoms(atoms)
     gui.select_all()
     assert all(gui.selected_atoms().symbols == atoms.symbols)
@@ -385,7 +395,7 @@ def test_clipboard_copy(gui):
 
 
 def test_clipboard_cut_paste(gui):
-    atoms = molecule('H2O')
+    atoms = molecule("H2O")
     gui.new_atoms(atoms.copy())
     assert len(gui.atoms) == 3
     gui.select_all()
@@ -395,7 +405,7 @@ def test_clipboard_cut_paste(gui):
 
 
 def test_clipboard_paste_onto_empty(gui):
-    atoms = bulk('Ti')
+    atoms = bulk("Ti")
     gui.clipboard.set_atoms(atoms)
     gui.paste_atoms_from_clipboard()
     # (The paste includes cell and pbc when existing atoms are empty)
@@ -403,20 +413,23 @@ def test_clipboard_paste_onto_empty(gui):
 
 
 def test_clipboard_paste_onto_existing(gui):
-    ti = bulk('Ti')
+    ti = bulk("Ti")
     gui.new_atoms(ti.copy())
     assert gui.atoms == ti
-    h2o = molecule('H2O')
+    h2o = molecule("H2O")
     gui.clipboard.set_atoms(h2o)
     gui.paste_atoms_from_clipboard()
     assert gui.atoms == ti + h2o
 
 
-@pytest.mark.parametrize('text', [
-    '',
-    'invalid_atoms',
-    '[1, 2, 3]',  # valid JSON but not Atoms
-])
+@pytest.mark.parametrize(
+    "text",
+    [
+        "",
+        "invalid_atoms",
+        "[1, 2, 3]",  # valid JSON but not Atoms
+    ],
+)
 def test_clipboard_paste_invalid(gui, text):
     gui.clipboard.set_text(text)
     with pytest.raises(GUIError):
@@ -424,38 +437,39 @@ def test_clipboard_paste_invalid(gui, text):
 
 
 def window():
-
     def hello(event=None):
-        print('hello', event)
+        print("hello", event)
 
-    menu = [('Hi', [ui.MenuItem('_Hello', hello, 'Ctrl+H')]),
-            ('Hell_o', [ui.MenuItem('ABC', hello, choices='ABC')])]
-    win = ui.MainWindow('Test', menu=menu)
+    menu = [
+        ("Hi", [ui.MenuItem("_Hello", hello, "Ctrl+H")]),
+        ("Hell_o", [ui.MenuItem("ABC", hello, choices="ABC")]),
+    ]
+    win = ui.MainWindow("Test", menu=menu)
 
-    win.add(ui.Label('Hello'))
-    win.add(ui.Button('Hello', hello))
+    win.add(ui.Label("Hello"))
+    win.add(ui.Button("Hello", hello))
 
-    r = ui.Rows([ui.Label(x * 7) for x in 'abcd'])
+    r = ui.Rows([ui.Label(x * 7) for x in "abcd"])
     win.add(r)
-    r.add('11111\n2222\n333\n44\n5')
+    r.add("11111\n2222\n333\n44\n5")
 
     def abc(x):
         print(x, r.rows)
 
-    cb = ui.ComboBox(['Aa', 'Bb', 'Cc'], callback=abc)
+    cb = ui.ComboBox(["Aa", "Bb", "Cc"], callback=abc)
     win.add(cb)
 
-    rb = ui.RadioButtons(['A', 'B', 'C'], 'ABC', abc)
+    rb = ui.RadioButtons(["A", "B", "C"], "ABC", abc)
     win.add(rb)
 
-    b = ui.CheckButton('Hello')
+    b = ui.CheckButton("Hello")
 
     def hi():
         print(b.value, rb.value, cb.value)
         del r[2]
-        r.add('-------------')
+        r.add("-------------")
 
-    win.add([b, ui.Button('Hi', hi)])
+    win.add([b, ui.Button("Hi", hi)])
 
     return win
 

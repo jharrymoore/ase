@@ -23,14 +23,14 @@ class Properties(Mapping):
     def _setvalue(self, name, value):
         if name in self._dct:
             # Which error should we raise for already existing property?
-            raise ValueError(f'{name} already set')
+            raise ValueError(f"{name} already set")
 
         prop = all_outputs[name]
         value = prop.normalize_type(value)
         shape = np.shape(value)
 
         if not self.shape_is_consistent(prop, value):
-            raise ValueError(f'{name} has bad shape: {shape}')
+            raise ValueError(f"{name} has bad shape: {shape}")
 
         for i, spec in enumerate(prop.shapespec):
             if not isinstance(spec, str) or spec in self._dct:
@@ -58,7 +58,7 @@ class Properties(Mapping):
 
     def __repr__(self):
         clsname = type(self).__name__
-        return f'({clsname}({self._dct})'
+        return f"({clsname}({self._dct})"
 
 
 all_outputs = {}
@@ -77,8 +77,8 @@ class Property(ABC):
 
     def __repr__(self) -> str:
         typename = self.dtype.__name__  # Extend to other than float/int?
-        shape = ', '.join(str(dim) for dim in self.shapespec)
-        return f'Property({self.name!r}, dtype={typename}, shape=[{shape}])'
+        shape = ", ".join(str(dim) for dim in self.shapespec)
+        return f"Property({self.name!r}, dtype={typename}, shape=[{shape}])"
 
 
 class ScalarProperty(Property):
@@ -87,14 +87,14 @@ class ScalarProperty(Property):
 
     def normalize_type(self, value):
         if not np.isscalar(value):
-            raise TypeError('Expected scalar')
+            raise TypeError("Expected scalar")
         return self.dtype(value)
 
 
 class ArrayProperty(Property):
     def normalize_type(self, value):
         if np.isscalar(value):
-            raise TypeError('Expected array, got scalar')
+            raise TypeError("Expected array, got scalar")
         return np.asarray(value, dtype=self.dtype)
 
 
@@ -102,9 +102,9 @@ ShapeSpec = Union[str, int]
 
 
 def _defineprop(
-        name: str,
-        dtype: type = float,
-        shape: Union[ShapeSpec, Sequence[ShapeSpec]] = tuple()
+    name: str,
+    dtype: type = float,
+    shape: Union[ShapeSpec, Sequence[ShapeSpec]] = tuple(),
 ) -> Property:
     """Create, register, and return a property."""
 
@@ -124,32 +124,32 @@ def _defineprop(
 
 
 # Atoms, energy, forces, stress:
-_defineprop('natoms', int)
-_defineprop('energy', float)
-_defineprop('energies', float, shape='natoms')
-_defineprop('free_energy', float)
-_defineprop('forces', float, shape=('natoms', 3))
-_defineprop('stress', float, shape=6)
-_defineprop('stresses', float, shape=('natoms', 6))
+_defineprop("natoms", int)
+_defineprop("energy", float)
+_defineprop("energies", float, shape="natoms")
+_defineprop("free_energy", float)
+_defineprop("forces", float, shape=("natoms", 3))
+_defineprop("stress", float, shape=6)
+_defineprop("stresses", float, shape=("natoms", 6))
 
 # Electronic structure:
-_defineprop('nbands', int)
-_defineprop('nkpts', int)
-_defineprop('nspins', int)
-_defineprop('fermi_level', float)
-_defineprop('kpoint_weights', float, shape='nkpts')
-_defineprop('ibz_kpoints', float, shape=('nkpts', 3))
-_defineprop('eigenvalues', float, shape=('nspins', 'nkpts', 'nbands'))
-_defineprop('occupations', float, shape=('nspins', 'nkpts', 'nbands'))
+_defineprop("nbands", int)
+_defineprop("nkpts", int)
+_defineprop("nspins", int)
+_defineprop("fermi_level", float)
+_defineprop("kpoint_weights", float, shape="nkpts")
+_defineprop("ibz_kpoints", float, shape=("nkpts", 3))
+_defineprop("eigenvalues", float, shape=("nspins", "nkpts", "nbands"))
+_defineprop("occupations", float, shape=("nspins", "nkpts", "nbands"))
 
 # Miscellaneous:
-_defineprop('dipole', float, shape=3)
-_defineprop('charges', float, shape='natoms')
-_defineprop('magmom', float)
-_defineprop('magmoms', float, shape='natoms')  # XXX spinors?
-_defineprop('polarization', float, shape=3)
-_defineprop('dielectric_tensor', float, shape=(3, 3))
-_defineprop('born_effective_charges', float, shape=('natoms', 3, 3))
+_defineprop("dipole", float, shape=3)
+_defineprop("charges", float, shape="natoms")
+_defineprop("magmom", float)
+_defineprop("magmoms", float, shape="natoms")  # XXX spinors?
+_defineprop("polarization", float, shape=3)
+_defineprop("dielectric_tensor", float, shape=(3, 3))
+_defineprop("born_effective_charges", float, shape=("natoms", 3, 3))
 
 # We might want to allow properties that are part of Atoms, such as
 # positions, numbers, pbc, cell.  It would be reasonable for those

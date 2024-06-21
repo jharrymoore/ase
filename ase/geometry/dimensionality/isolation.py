@@ -47,7 +47,7 @@ def orthogonal_basis(X, Y=None):
 
 
 def select_cutoff(atoms):
-    intervals = analyze_dimensionality(atoms, method='RDA', merge=False)
+    intervals = analyze_dimensionality(atoms, method="RDA", merge=False)
     dimtype = max(merge_intervals(intervals), key=lambda x: x.score).dimtype
     m = next(e for e in intervals if e.dimtype == dimtype)
     if m.b == float("inf"):
@@ -96,10 +96,10 @@ def select_chain_rotation(scaled):
     for s in scaled:
         vhat = np.array([s[0], s[1], 0])
         norm = np.linalg.norm(vhat)
-        if norm < 1E-6:
+        if norm < 1e-6:
             continue
         vhat /= norm
-        obj = np.sum(np.dot(scaled, vhat)**2)
+        obj = np.sum(np.dot(scaled, vhat) ** 2)
         best = max(best, (obj, vhat), key=lambda x: x[0])
     _, vhat = best
     cost, sint, _ = vhat
@@ -200,10 +200,8 @@ def isolate_monolayer(atoms, components, k, v):
 
 
 def isolate_bulk(atoms, components, k, v):
-    positions, numbers = build_supercomponent(atoms, components, k, v,
-                                              anchor=False)
-    atoms = Atoms(numbers=numbers, positions=positions, cell=atoms.cell,
-                  pbc=[1, 1, 1])
+    positions, numbers = build_supercomponent(atoms, components, k, v, anchor=False)
+    atoms = Atoms(numbers=numbers, positions=positions, cell=atoms.cell, pbc=[1, 1, 1])
     atoms.wrap(eps=0)
     return atoms
 
@@ -259,13 +257,13 @@ def isolate_components(atoms, kcutoff=None):
         dim = ranks[k]
 
         if dim == 0:
-            data[('0D', key)] = isolate_cluster(atoms, components, k, v)
+            data[("0D", key)] = isolate_cluster(atoms, components, k, v)
         elif dim == 1:
-            data[('1D', key)] = isolate_chain(atoms, components, k, v)
+            data[("1D", key)] = isolate_chain(atoms, components, k, v)
         elif dim == 2:
-            data[('2D', key)] = isolate_monolayer(atoms, components, k, v)
+            data[("2D", key)] = isolate_monolayer(atoms, components, k, v)
         elif dim == 3:
-            data[('3D', key)] = isolate_bulk(atoms, components, k, v)
+            data[("3D", key)] = isolate_bulk(atoms, components, k, v)
 
     result = collections.defaultdict(list)
     for (dim, _), atoms in data.items():

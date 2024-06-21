@@ -16,12 +16,16 @@ angle = radians(104.5)
 
 @pytest.fixture
 def initial():
-    return Atoms('HOHOH',
-                 positions=[(-sin(angle) * doht, 0., cos(angle) * doht),
-                            (0., 0., 0.),
-                            (0., 0., doh),
-                            (0., 0., doo),
-                            (sin(angle) * doht, 0., doo - cos(angle) * doht)])
+    return Atoms(
+        "HOHOH",
+        positions=[
+            (-sin(angle) * doht, 0.0, cos(angle) * doht),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, doh),
+            (0.0, 0.0, doo),
+            (sin(angle) * doht, 0.0, doo - cos(angle) * doht),
+        ],
+    )
 
 
 @pytest.fixture
@@ -63,7 +67,7 @@ def test_emt_h3o2m(initial, final, testdir):
     for image in images:
         print(image.get_distance(1, 2), image.get_potential_energy())
 
-    with BFGS(neb, trajectory='emt_h3o2m.traj') as dyn:
+    with BFGS(neb, trajectory="emt_h3o2m.traj") as dyn:
         dyn.run(fmax=0.05)
 
     for image in images:

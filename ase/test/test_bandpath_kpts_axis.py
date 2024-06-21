@@ -5,8 +5,8 @@ def test_bandpath_kpts_axis():
     a = 3.16
     atoms = Atoms(cell=[a, a, 12, 90, 90, 120], pbc=True)
     G = [0, 0, 0]
-    K = [1 / 3., 1 / 3., 0]
-    K_ = [-1 / 3., -1 / 3., 0]
+    K = [1 / 3.0, 1 / 3.0, 0]
+    K_ = [-1 / 3.0, -1 / 3.0, 0]
     path = [K, G, K_]
     nspecial_points = len(path)
 

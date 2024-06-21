@@ -8,7 +8,7 @@ from ase.calculators.bond_polarizability import LippincottStuttman, Linearized
 
 def test_CC_bond():
     """Test polarizabilties of a single CC bond"""
-    C2 = Atoms('C2', positions=[[0, 0, 0], [0, 0, 1.69]])
+    C2 = Atoms("C2", positions=[[0, 0, 0], [0, 0, 1.69]])
 
     def check_symmetry(alpha):
         alpha_diag = np.diagonal(alpha)
@@ -23,13 +23,13 @@ def test_CC_bond():
 
 def test_symmetry():
     for lin in [LippincottStuttman(), Linearized()]:
-        assert lin('B', 'N', 1) == lin('N', 'B', 1)
+        assert lin("B", "N", 1) == lin("N", "B", 1)
 
 
 def test_2to3():
     """Compare polarizabilties of one and two bonds"""
-    Si2 = Atoms('Si2', positions=[[0, 0, 0], [0, 0, 2.5]])
-    Si3 = Atoms('Si3', positions=[[0, 0, -2.5], [0, 0, 0], [0, 0, 2.5]])
+    Si2 = Atoms("Si2", positions=[[0, 0, 0], [0, 0, 2.5]])
+    Si3 = Atoms("Si3", positions=[[0, 0, -2.5], [0, 0, 0], [0, 0, 2.5]])
     bp = BondPolarizability()
     bp2 = bp(Si2)
     # polarizability is a tensor

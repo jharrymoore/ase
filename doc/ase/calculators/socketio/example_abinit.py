@@ -5,16 +5,16 @@ from ase.calculators.socketio import SocketIOCalculator
 from ase.constraints import ExpCellFilter
 
 
-atoms = bulk('Si')
+atoms = bulk("Si")
 atoms.rattle(stdev=0.1, seed=42)
 
 # Configuration parameters; please edit as appropriate
-pps = '/path/to/pseudopotentials'
-pseudopotentials = {'Si': '14-Si.LDA.fhi'}
-exe = 'abinit'
+pps = "/path/to/pseudopotentials"
+pseudopotentials = {"Si": "14-Si.LDA.fhi"}
+exe = "abinit"
 
-unixsocket = 'ase_abinit'
-command = f'{exe} PREFIX.in --ipi {unixsocket}:UNIX > PREFIX.log'
+unixsocket = "ase_abinit"
+command = f"{exe} PREFIX.in --ipi {unixsocket}:UNIX > PREFIX.log"
 # (In the command, note that PREFIX.in must precede --ipi.)
 
 
@@ -47,8 +47,7 @@ kwargs = dict(
 
 abinit = Abinit(**kwargs)
 
-opt = BFGS(ExpCellFilter(atoms),
-           trajectory='opt.traj')
+opt = BFGS(ExpCellFilter(atoms), trajectory="opt.traj")
 
 with SocketIOCalculator(abinit, unixsocket=unixsocket) as atoms.calc:
     opt.run(fmax=0.01)

@@ -22,7 +22,7 @@ def test_singlepointcalc(testdir):
 
         assert funconstrained2 == funconstrained
 
-    atoms = fcc111('Cu', (2, 2, 1), vacuum=10.)
+    atoms = fcc111("Cu", (2, 2, 1), vacuum=10.0)
     atoms[0].x += 0.2
     atoms.set_constraint(FixAtoms(indices=[atom.index for atom in atoms]))
 
@@ -32,12 +32,12 @@ def test_singlepointcalc(testdir):
     f = float(atoms.get_forces(apply_constraint=False)[0, 0])
 
     # Save and reload with a SinglePointCalculator.
-    atoms.write('singlepointtest.traj')
-    atoms = read('singlepointtest.traj')
+    atoms.write("singlepointtest.traj")
+    atoms = read("singlepointtest.traj")
     check_forces()
 
     # Manually change a value.
     forces = atoms.get_forces(apply_constraint=False)
-    forces[0, 0] = 42.
+    forces[0, 0] = 42.0
     forces = atoms.get_forces(apply_constraint=False)
     assert forces[0, 0] == f

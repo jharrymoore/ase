@@ -12,11 +12,11 @@ def write_vti(filename, atoms, data=None):
 
     if isinstance(atoms, list):
         if len(atoms) > 1:
-            raise ValueError('Can only write one configuration to a VTI file!')
+            raise ValueError("Can only write one configuration to a VTI file!")
         atoms = atoms[0]
 
     if data is None:
-        raise ValueError('VTK XML Image Data (VTI) format requires data!')
+        raise ValueError("VTK XML Image Data (VTI) format requires data!")
 
     data = np.asarray(data)
 
@@ -26,7 +26,7 @@ def write_vti(filename, atoms, data=None):
     cell = atoms.get_cell()
 
     if not np.all(cell == np.diag(np.diag(cell))):
-        raise ValueError('Unit cell must be orthogonal')
+        raise ValueError("Unit cell must be orthogonal")
 
     bbox = np.array(list(zip(np.zeros(3), cell.diagonal()))).ravel()
 
@@ -48,7 +48,7 @@ def write_vti(filename, atoms, data=None):
 
     # Allocate a VTK array of type double and copy data
     da = vtkDoubleArray()
-    da.SetName('scalars')
+    da.SetName("scalars")
     da.SetNumberOfComponents(1)
     da.SetNumberOfTuples(np.prod(data.shape))
 
@@ -85,13 +85,17 @@ def write_vti(filename, atoms, data=None):
 
 
 def write_vtu(filename, atoms, data=None):
-    from vtk import (VTK_MAJOR_VERSION, vtkUnstructuredGrid, vtkPoints,
-                     vtkXMLUnstructuredGridWriter)
+    from vtk import (
+        VTK_MAJOR_VERSION,
+        vtkUnstructuredGrid,
+        vtkPoints,
+        vtkXMLUnstructuredGridWriter,
+    )
     from vtk.util.numpy_support import numpy_to_vtk
 
     if isinstance(atoms, list):
         if len(atoms) > 1:
-            raise ValueError('Can only write one configuration to a VTI file!')
+            raise ValueError("Can only write one configuration to a VTI file!")
         atoms = atoms[0]
 
     # Create a VTK grid of structured points
@@ -117,6 +121,7 @@ def write_vtu(filename, atoms, data=None):
 
     # add covalent radii
     from ase.data import covalent_radii
+
     radii = numpy_to_vtk(covalent_radii[atoms.numbers], deep=1)
     ugd.GetPointData().AddArray(radii)
     radii.SetName("radii")

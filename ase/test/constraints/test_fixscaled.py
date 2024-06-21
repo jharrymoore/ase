@@ -26,5 +26,5 @@ def test_fixscaled_misc():
     # XXX not providing Atoms to dof
     assert constraint.get_removed_dof(None) == sum(mask) * len(indices)
     dct = constraint.todict()
-    assert dct['kwargs']['a'] == indices
-    assert '2, 3, 4' in str(constraint)
+    assert dct["kwargs"]["a"] == indices
+    assert "2, 3, 4" in str(constraint)

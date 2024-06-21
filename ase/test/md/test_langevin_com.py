@@ -19,7 +19,7 @@ def test_langevin_com():
     dt = 0.01
 
     # setup
-    atoms = bulk('CuAg', 'rocksalt', a=4.0).repeat(size)
+    atoms = bulk("CuAg", "rocksalt", a=4.0).repeat(size)
     atoms.pbc = False
     atoms.calc = EMT()
 
@@ -30,14 +30,14 @@ def test_langevin_com():
     # run NVT
     mtot = atoms.get_momenta().sum(axis=0)
 
-    print('initial momenta', mtot)
-    print('initial forces', atoms.get_forces().sum(axis=0))
+    print("initial momenta", mtot)
+    print("initial forces", atoms.get_forces().sum(axis=0))
 
     dyn.run(10)
 
     m2 = atoms.get_momenta().sum(axis=0)
-    print('momenta', m2)
-    print('forces', atoms.get_forces().sum(axis=0))
+    print("momenta", m2)
+    print("forces", atoms.get_forces().sum(axis=0))
     print()
 
     assert norm(m2) < 1e-8

@@ -13,9 +13,9 @@ from ase.atoms import Atoms
 from ase.io import read
 from ase.units import Bohr
 
-ATOMS = 'atoms'
-CASTEP = 'castep'
-DATA = 'data'
+ATOMS = "atoms"
+CASTEP = "castep"
+DATA = "data"
 
 
 def write_cube(file_obj, atoms, data=None, origin=None, comment=None):
@@ -53,9 +53,7 @@ def write_cube(file_obj, atoms, data=None, origin=None, comment=None):
     else:
         origin = np.asarray(origin) / Bohr
 
-    file_obj.write(
-        "{0:5}{1:12.6f}{2:12.6f}{3:12.6f}\n".format(
-            len(atoms), *origin))
+    file_obj.write("{0:5}{1:12.6f}{2:12.6f}{3:12.6f}\n".format(len(atoms), *origin))
 
     for i in range(3):
         n = data.shape[i]
@@ -66,8 +64,7 @@ def write_cube(file_obj, atoms, data=None, origin=None, comment=None):
     numbers = atoms.numbers
     for Z, (x, y, z) in zip(numbers, positions):
         file_obj.write(
-            "{0:5}{1:12.6f}{2:12.6f}{3:12.6f}{4:12.6f}\n".format(
-                Z, 0.0, x, y, z)
+            "{0:5}{1:12.6f}{2:12.6f}{3:12.6f}{4:12.6f}\n".format(Z, 0.0, x, y, z)
         )
 
     data.tofile(file_obj, sep="\n", format="%e")
@@ -194,8 +191,9 @@ def read_cube(file_obj, read_data=True, program=None, verbose=False):
         # and the next begins.
         raw_volume = [float(s) for s in file_obj.read().split()]
         # Split each value at each point into a separate list.
-        raw_volumes = [np.array(raw_volume[offset::num_val])
-                       for offset in range(0, num_val)]
+        raw_volumes = [
+            np.array(raw_volume[offset::num_val]) for offset in range(0, num_val)
+        ]
 
         datas = []
 

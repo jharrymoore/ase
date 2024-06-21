@@ -2,14 +2,14 @@ def test_build():
     import numpy as np
     from ase import Atoms, Atom
 
-    a = Atoms([Atom('Cu')])
+    a = Atoms([Atom("Cu")])
     a.positions[:] += 1.0
     print(a.get_positions(), a.positions)
     a = a + a
     a += a
-    a.append(Atom('C'))
+    a.append(Atom("C"))
     a += Atoms([])
-    a += Atom('H', magmom=1)
+    a += Atom("H", magmom=1)
     print(a.get_initial_magnetic_moments())
     print(a[0].number)
     print(a[[0, 1]].get_atomic_numbers())

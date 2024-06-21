@@ -24,8 +24,8 @@ def test_issue276(testdir):
         warnings.simplefilter("always")
         write("tmp2.xyz", at2)
         assert len(w) == 2
-        assert ('overwriting array' in str(w[0].message))
-        assert ('overwriting array' in str(w[1].message))
+        assert "overwriting array" in str(w[0].message)
+        assert "overwriting array" in str(w[1].message)
 
     at3 = read("tmp2.xyz")
     f3 = at3.get_forces()

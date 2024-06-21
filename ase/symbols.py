@@ -64,17 +64,17 @@ dtype=bool)
         self.numbers = np.asarray(numbers, int)
 
     @classmethod
-    def fromsymbols(cls, symbols) -> 'Symbols':
+    def fromsymbols(cls, symbols) -> "Symbols":
         numbers = symbols2numbers(symbols)
         return cls(np.array(numbers))
 
     @property
     def formula(self) -> Formula:
         """Formula object."""
-        string = Formula.from_list(self).format('reduce')
+        string = Formula.from_list(self).format("reduce")
         return Formula(string)
 
-    def __getitem__(self, key) -> Union['Symbols', str]:
+    def __getitem__(self, key) -> Union["Symbols", str]:
         num = self.numbers[key]
         if np.isscalar(num):
             return chemical_symbols[num]
@@ -95,13 +95,13 @@ dtype=bool)
         return len(self.numbers)
 
     def __str__(self) -> str:
-        return self.get_chemical_formula('reduce')
+        return self.get_chemical_formula("reduce")
 
     def __repr__(self) -> str:
-        return 'Symbols(\'{}\')'.format(self)
+        return "Symbols('{}')".format(self)
 
     def __eq__(self, obj) -> bool:
-        if not hasattr(obj, '__len__'):
+        if not hasattr(obj, "__len__"):
             return False
 
         try:
@@ -113,27 +113,29 @@ dtype=bool)
         return self.numbers == symbols.numbers
 
     def get_chemical_formula(
-            self,
-            mode: str = 'hill',
-            empirical: bool = False,
+        self,
+        mode: str = "hill",
+        empirical: bool = False,
     ) -> str:
         """Get chemical formula.
 
         See documentation of ase.atoms.Atoms.get_chemical_formula()."""
         # XXX Delegate the work to the Formula object!
-        if mode in ('reduce', 'all') and empirical:
-            warnings.warn("Empirical chemical formula not available "
-                          "for mode '{}'".format(mode))
+        if mode in ("reduce", "all") and empirical:
+            warnings.warn(
+                "Empirical chemical formula not available " "for mode '{}'".format(mode)
+            )
 
         if len(self) == 0:
-            return ''
+            return ""
 
         numbers = self.numbers
 
-        if mode == 'reduce':
+        if mode == "reduce":
             n = len(numbers)
-            changes = np.concatenate(([0], np.arange(1, n)[numbers[1:] !=
-                                                           numbers[:-1]]))
+            changes = np.concatenate(
+                ([0], np.arange(1, n)[numbers[1:] != numbers[:-1]])
+            )
             symbols = [chemical_symbols[e] for e in numbers[changes]]
             counts = np.append(changes[1:], n) - changes
 
@@ -142,27 +144,25 @@ dtype=bool)
                 tokens.append(s)
                 if c > 1:
                     tokens.append(str(c))
-            formula = ''.join(tokens)
-        elif mode == 'all':
-            formula = ''.join([chemical_symbols[n] for n in numbers])
+            formula = "".join(tokens)
+        elif mode == "all":
+            formula = "".join([chemical_symbols[n] for n in numbers])
         else:
             symbols = [chemical_symbols[Z] for Z in numbers]
-            f = Formula('', _tree=[(symbols, 1)])
+            f = Formula("", _tree=[(symbols, 1)])
             if empirical:
                 f, _ = f.reduce()
-            if mode in {'hill', 'metal'}:
+            if mode in {"hill", "metal"}:
                 formula = f.format(mode)
             else:
-                raise ValueError(
-                    "Use mode = 'all', 'reduce', 'hill' or 'metal'.")
+                raise ValueError("Use mode = 'all', 'reduce', 'hill' or 'metal'.")
 
         return formula
 
     def search(self, symbols) -> Integers:
         """Return the indices of elements with given symbol or symbols."""
         numbers = set(symbols2numbers(symbols))
-        indices = [i for i, number in enumerate(self.numbers)
-                   if number in numbers]
+        indices = [i for i, number in enumerate(self.numbers) if number in numbers]
         return np.array(indices, int)
 
     def species(self) -> Set[str]:

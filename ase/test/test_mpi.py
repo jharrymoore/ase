@@ -3,7 +3,7 @@ import sys
 from subprocess import run
 
 
-@pytest.mark.skip(reason='Does not work and no time to investigate.')
+@pytest.mark.skip(reason="Does not work and no time to investigate.")
 def test_mpi_unused_on_import():
     """Try to import all ASE modules and check that ase.parallel.world has not
     been used.  We want to delay use of world until after MPI4PY has been
@@ -13,14 +13,17 @@ def test_mpi_unused_on_import():
     interpreter."""
 
     # Should cover most of ASE:
-    modules = ['ase.optimize',
-               'ase.db',
-               'ase.gui']
+    modules = ["ase.optimize", "ase.db", "ase.gui"]
 
-    imports = 'import ' + ', '.join(modules)
+    imports = "import " + ", ".join(modules)
 
-    run([sys.executable,
-         '-c',
-         '{imports}; from ase.parallel import world; assert world.comm is None'
-         .format(imports=imports)],
-        check=True)
+    run(
+        [
+            sys.executable,
+            "-c",
+            "{imports}; from ase.parallel import world; assert world.comm is None".format(
+                imports=imports
+            ),
+        ],
+        check=True,
+    )

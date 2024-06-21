@@ -11,31 +11,23 @@ from ase.units import kB
 def test_basin(testdir):
     # Global minima from
     # Wales and Doye, J. Phys. Chem. A, vol 101 (1997) 5111-5116
-    E_global = {
-        4: -6.000000,
-        5: -9.103852,
-        6: -12.712062,
-        7: -16.505384}
+    E_global = {4: -6.000000, 5: -9.103852, 6: -12.712062, 7: -16.505384}
     N = 7
-    R = N**(1. / 3.)
+    R = N ** (1.0 / 3.0)
     np.random.seed(42)
     pos = np.random.uniform(-R, R, (N, 3))
-    s = Atoms('He' + str(N),
-              positions=pos)
+    s = Atoms("He" + str(N), positions=pos)
     s.calc = LennardJones()
-    original_positions = 1. * s.get_positions()
+    original_positions = 1.0 * s.get_positions()
 
-    ftraj = 'lowest.traj'
+    ftraj = "lowest.traj"
 
-    with BasinHopping(s,
-                      temperature=100 * kB,
-                      dr=0.5,
-                      trajectory=ftraj,
-                      optimizer_logfile=None) as GlobalOptimizer:
+    with BasinHopping(
+        s, temperature=100 * kB, dr=0.5, trajectory=ftraj, optimizer_logfile=None
+    ) as GlobalOptimizer:
         GlobalOptimizer.run(10)
         Emin, smin = GlobalOptimizer.get_minimum()
-        print("N=", N, 'minimal energy found', Emin,
-              ' global minimum:', E_global[N])
+        print("N=", N, "minimal energy found", Emin, " global minimum:", E_global[N])
 
         # recalc energy
         smin.calc = LennardJones()
@@ -47,7 +39,7 @@ def test_basin(testdir):
 
         # check that only minima were written
         last_energy = None
-        for im in io.read(ftraj, index=':'):
+        for im in io.read(ftraj, index=":"):
             energy = im.get_potential_energy()
             if last_energy is not None:
                 assert energy < last_energy

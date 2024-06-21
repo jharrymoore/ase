@@ -4,7 +4,7 @@ def test_repeat_FixAtoms():
 
     N = 2
 
-    atoms = molecule('CO2')
+    atoms = molecule("CO2")
     atoms.set_cell((15, 15, 15))
 
     # Indices method:

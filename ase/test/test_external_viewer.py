@@ -10,7 +10,7 @@ from ase.build import bulk
 
 @pytest.fixture
 def atoms():
-    return bulk('Au')
+    return bulk("Au")
 
 
 def test_view_ase(atoms):
@@ -24,7 +24,7 @@ def test_view_ase(atoms):
 
 def test_view_ase_via_cli(atoms):
     # Not a very good test, how can we assert something about the viewer?
-    viewer = view(atoms, viewer='ase_gui_cli')
+    viewer = view(atoms, viewer="ase_gui_cli")
     assert viewer.poll() is None
     viewer.terminate()
     status = viewer.wait()
@@ -33,7 +33,7 @@ def test_view_ase_via_cli(atoms):
 
 def test_bad_viewer(atoms):
     with pytest.raises(KeyError):
-        view(atoms, viewer='_nonexistent_viewer')
+        view(atoms, viewer="_nonexistent_viewer")
 
 
 def test_py_viewer_mock(atoms, monkeypatch):
@@ -41,18 +41,18 @@ def test_py_viewer_mock(atoms, monkeypatch):
         print(f'viewing {atoms} with mock "{self.name}"')
         return (atoms, self.name)
 
-    monkeypatch.setattr(PyViewer, 'sage', mock_view, raising=False)
+    monkeypatch.setattr(PyViewer, "sage", mock_view, raising=False)
 
-    (atoms1, name1) = view(atoms, viewer='sage')
-    assert name1 == 'sage'
+    (atoms1, name1) = view(atoms, viewer="sage")
+    assert name1 == "sage"
     assert atoms1 == atoms
 
-    atoms2, name2 = view(atoms, viewer='sage', repeat=(2, 2, 2), block=True)
-    assert name2 == 'sage'
+    atoms2, name2 = view(atoms, viewer="sage", repeat=(2, 2, 2), block=True)
+    assert name2 == "sage"
     assert len(atoms2) == 8 * len(atoms)
 
 
-@pytest.mark.parametrize('viewer', CLIViewer.viewers())
+@pytest.mark.parametrize("viewer", CLIViewer.viewers())
 def test_cli_viewer_tempfile(atoms, viewer):
     with viewer.mktemp(atoms) as path:
         atoms1 = read(path)
@@ -65,7 +65,7 @@ def test_cli_viewer_tempfile(atoms, viewer):
 
 @pytest.fixture
 def mock_viewer():
-    return CLIViewer('dummy', 'traj', [sys.executable, '-m', 'ase', 'info'])
+    return CLIViewer("dummy", "traj", [sys.executable, "-m", "ase", "info"])
 
 
 def test_cli_viewer_blocking(atoms, mock_viewer):

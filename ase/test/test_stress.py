@@ -7,13 +7,13 @@ from ase.optimize import BFGS
 
 # Theoretical infinite-cutoff LJ FCC unit cell parameters
 vol0 = 4 * 0.91615977036  # theoretical minimum
-a0 = vol0**(1 / 3)
+a0 = vol0 ** (1 / 3)
 
 
 @pytest.fixture
 def atoms():
     """two atoms at potential minimum"""
-    atoms = bulk('X', 'fcc', a=a0)
+    atoms = bulk("X", "fcc", a=a0)
 
     atoms.calc = LennardJones()
 
@@ -23,7 +23,7 @@ def atoms():
 def test_stress_voigt_shape(atoms):
     # test voigt shape
     for ideal_gas in (False, True):
-        kw = {'include_ideal_gas': ideal_gas}
+        kw = {"include_ideal_gas": ideal_gas}
 
         assert atoms.get_stress(voigt=True, **kw).shape == (6,)
         assert atoms.get_stress(voigt=False, **kw).shape == (3, 3)
@@ -36,11 +36,10 @@ def test_stress_voigt_shape(atoms):
 def test_stress(atoms):
     cell0 = atoms.get_cell()
 
-    atoms.set_cell(np.dot(atoms.cell,
-                          [[1.02, 0, 0.03],
-                           [0, 0.99, -0.02],
-                           [0.1, -0.01, 1.03]]),
-                   scale_atoms=True)
+    atoms.set_cell(
+        np.dot(atoms.cell, [[1.02, 0, 0.03], [0, 0.99, -0.02], [0.1, -0.01, 1.03]]),
+        scale_atoms=True,
+    )
 
     atoms *= (1, 2, 3)
     cell0 *= np.array([1, 2, 3])[:, np.newaxis]

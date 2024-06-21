@@ -8,9 +8,9 @@ from ase import data
 from ase.lattice.cubic import FaceCenteredCubic
 
 
-symb = 'Cu'
+symb = "Cu"
 Z = data.atomic_numbers[symb]
-a0 = data.reference_states[Z]['a']  # type: ignore
+a0 = data.reference_states[Z]["a"]  # type: ignore
 
 
 def checkang(a, b, phi):
@@ -56,9 +56,12 @@ def test_vacuum_all_directions(atoms):
 
 @pytest.fixture
 def atoms_guc():
-    return FaceCenteredCubic(size=(5, 5, 5),
-                             directions=[[1, 0, 0], [0, 1, 0], [1, 0, 1]],
-                             symbol=symb, pbc=(1, 1, 0))
+    return FaceCenteredCubic(
+        size=(5, 5, 5),
+        directions=[[1, 0, 0], [0, 1, 0], [1, 0, 1]],
+        symbol=symb,
+        pbc=(1, 1, 0),
+    )
 
 
 def test_general_unit_cell(atoms_guc):
@@ -116,6 +119,6 @@ def test_center_empty():
 
 
 def test_center_nocell():
-    atoms = Atoms('H', positions=[[1., 2., 3.]])
+    atoms = Atoms("H", positions=[[1.0, 2.0, 3.0]])
     atoms.center()
     assert atoms.positions == pytest.approx(0)

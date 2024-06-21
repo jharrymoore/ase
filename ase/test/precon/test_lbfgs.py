@@ -11,7 +11,7 @@ from ase.constraints import FixBondLength, FixAtoms
 @pytest.mark.slow
 def test_preconlbfgs():
     N = 1
-    a0 = bulk('Cu', cubic=True)
+    a0 = bulk("Cu", cubic=True)
     a0 *= (N, N, N)
 
     # perturb the atoms

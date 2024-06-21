@@ -8,10 +8,18 @@ from ase.optimize.optimize import Optimizer
 
 class BFGS(Optimizer):
     # default parameters
-    defaults = {**Optimizer.defaults, 'alpha': 70.0}
+    defaults = {**Optimizer.defaults, "alpha": 70.0}
 
-    def __init__(self, atoms, restart=None, logfile='-', trajectory=None,
-                 maxstep=None, master=None, alpha=None):
+    def __init__(
+        self,
+        atoms,
+        restart=None,
+        logfile="-",
+        trajectory=None,
+        maxstep=None,
+        master=None,
+        alpha=None,
+    ):
         """BFGS optimizer.
 
         Parameters:
@@ -47,15 +55,17 @@ class BFGS(Optimizer):
         """
         self.maxstep = maxstep
         if self.maxstep is None:
-            self.maxstep = self.defaults['maxstep']
+            self.maxstep = self.defaults["maxstep"]
 
         if self.maxstep > 1.0:
-            warnings.warn('You are using a *very* large value for '
-                          'the maximum step size: %.1f Å' % maxstep)
+            warnings.warn(
+                "You are using a *very* large value for "
+                "the maximum step size: %.1f Å" % maxstep
+            )
 
         self.alpha = alpha
         if self.alpha is None:
-            self.alpha = self.defaults['alpha']
+            self.alpha = self.defaults["alpha"]
 
         Optimizer.__init__(self, atoms, restart, logfile, trajectory, master)
 
@@ -100,7 +110,7 @@ class BFGS(Optimizer):
         #         self.logfile.flush()
 
         dpos = np.dot(V, np.dot(forces, V) / np.fabs(omega)).reshape((-1, 3))
-        steplengths = (dpos**2).sum(1)**0.5
+        steplengths = (dpos**2).sum(1) ** 0.5
         self.pos0 = pos.flat.copy()
         self.forces0 = forces.copy()
         return dpos, steplengths
@@ -143,7 +153,8 @@ class BFGS(Optimizer):
         """Initialize hessian from old trajectory."""
         if isinstance(traj, str):
             from ase.io.trajectory import Trajectory
-            traj = Trajectory(traj, 'r')
+
+            traj = Trajectory(traj, "r")
         self.H = None
         atoms = traj[0]
         pos0 = atoms.get_positions().ravel()

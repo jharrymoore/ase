@@ -23,9 +23,17 @@ Optional dependencies
       inversion of the preconditioner, again important for large systems.
 """
 
-from ase.optimize.precon.precon import (Precon, Exp, C1, Pfrommer,
-                                        FF, Exp_FF, make_precon,
-                                        PreconImages, SplineFit)
+from ase.optimize.precon.precon import (
+    Precon,
+    Exp,
+    C1,
+    Pfrommer,
+    FF,
+    Exp_FF,
+    make_precon,
+    PreconImages,
+    SplineFit,
+)
 from ase.optimize.precon.lbfgs import PreconLBFGS
 from ase.optimize.precon.fire import PreconFIRE
 
@@ -38,11 +46,22 @@ class PreconODE12r(ODE12r):
     """
 
     def __init__(self, *args, **kwargs):
-        if 'precon' not in kwargs:
-            kwargs['precon'] = 'Exp'
+        if "precon" not in kwargs:
+            kwargs["precon"] = "Exp"
         ODE12r.__init__(self, *args, **kwargs)
 
 
-__all__ = ['make_precon', 'PreconImages', 'SplineFit',
-           'Precon', 'Exp', 'C1', 'Pfrommer', 'FF', 'Exp_FF',
-           'PreconLBFGS', 'PreconFIRE', 'PreconODE12r']
+__all__ = [
+    "make_precon",
+    "PreconImages",
+    "SplineFit",
+    "Precon",
+    "Exp",
+    "C1",
+    "Pfrommer",
+    "FF",
+    "Exp_FF",
+    "PreconLBFGS",
+    "PreconFIRE",
+    "PreconODE12r",
+]

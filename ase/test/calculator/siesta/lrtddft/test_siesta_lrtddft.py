@@ -6,13 +6,13 @@ import numpy as np
 
 def test_siesta_lrtddft(siesta_factory):
 
-    pynao = pytest.importorskip('pynao')
+    pynao = pytest.importorskip("pynao")
     print("pynao version: ", pynao.__version__)
 
     # Define the systems
-    ch4 = molecule('CH4')
+    ch4 = molecule("CH4")
 
-    lrtddft = SiestaLRTDDFT(label="siesta", xc_code='LDA,PZ')
+    lrtddft = SiestaLRTDDFT(label="siesta", xc_code="LDA,PZ")
 
     # run siesta
     lrtddft.get_ground_state(ch4)

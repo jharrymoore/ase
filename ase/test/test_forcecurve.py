@@ -7,14 +7,13 @@ from ase.io import read
 
 
 def test_forcecurve(testdir, plt):
-    atoms = bulk('Au', cubic=True) * (2, 1, 1)
+    atoms = bulk("Au", cubic=True) * (2, 1, 1)
     atoms.calc = EMT()
     atoms.rattle(stdev=0.05)
 
-    with VelocityVerlet(atoms, timestep=12.0 * fs,
-                        trajectory='tmp.traj') as md:
+    with VelocityVerlet(atoms, timestep=12.0 * fs, trajectory="tmp.traj") as md:
         md.run(steps=10)
-    images = read('tmp.traj', ':')
+    images = read("tmp.traj", ":")
     force_curve(images)
 
     # import pylab as plt

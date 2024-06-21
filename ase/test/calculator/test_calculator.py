@@ -10,53 +10,48 @@ def test_directory_and_label():
 
     calc = Calculator()
 
-    assert calc.directory == '.'
+    assert calc.directory == "."
     assert calc.label is None
 
-    calc.directory = 'somedir'
+    calc.directory = "somedir"
 
-    assert calc.directory == 'somedir'
-    assert calc.label == 'somedir/'
+    assert calc.directory == "somedir"
+    assert calc.label == "somedir/"
 
     # We cannot redundantly specify directory
     with pytest.raises(ValueError):
-        calc = Calculator(directory='somedir',
-                          label='anotherdir/label')
+        calc = Calculator(directory="somedir", label="anotherdir/label")
 
     # Test only directory in directory
-    calc = Calculator(directory='somedir',
-                      label='label')
+    calc = Calculator(directory="somedir", label="label")
 
-    assert calc.directory == 'somedir'
-    assert calc.label == 'somedir/label'
+    assert calc.directory == "somedir"
+    assert calc.label == "somedir/label"
 
-    wdir = '/home/somedir'
-    calc = Calculator(directory=wdir,
-                      label='label')
+    wdir = "/home/somedir"
+    calc = Calculator(directory=wdir, label="label")
 
     assert calc.directory == normalize(wdir)
-    assert calc.label == normalize(wdir) + '/label'
+    assert calc.label == normalize(wdir) + "/label"
 
     # Test we can handle pathlib directories
-    wdir = Path('/home/somedir')
-    calc = Calculator(directory=wdir,
-                      label='label')
+    wdir = Path("/home/somedir")
+    calc = Calculator(directory=wdir, label="label")
     assert calc.directory == normalize(wdir)
-    assert calc.label == normalize(wdir) + '/label'
+    assert calc.label == normalize(wdir) + "/label"
 
     with pytest.raises(ValueError):
-        calc = Calculator(directory=wdir,
-                          label='somedir/label')
+        calc = Calculator(directory=wdir, label="somedir/label")
 
     # Passing in empty directories with directories in label should be OK
-    for wdir in ['somedir', '/home/directory']:
-        label = wdir + '/label'
-        expected_label = normalize(wdir) + '/label'
-        calc = Calculator(directory='', label=label)
+    for wdir in ["somedir", "/home/directory"]:
+        label = wdir + "/label"
+        expected_label = normalize(wdir) + "/label"
+        calc = Calculator(directory="", label=label)
         assert calc.label == expected_label
         assert calc.directory == normalize(wdir)
 
-        calc = Calculator(directory='.', label=label)
+        calc = Calculator(directory=".", label=label)
         assert calc.label == expected_label
         assert calc.directory == normalize(wdir)
 

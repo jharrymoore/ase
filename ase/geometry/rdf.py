@@ -14,11 +14,15 @@ class VolumeNotDefined(Exception):
     pass
 
 
-def get_rdf(atoms: Atoms, rmax: float, nbins: int,
-            distance_matrix: Optional[np.ndarray] = None,
-            elements: Optional[Union[List[int], Tuple]] = None,
-            no_dists: Optional[bool] = False,
-            volume: Optional[float] = None):
+def get_rdf(
+    atoms: Atoms,
+    rmax: float,
+    nbins: int,
+    distance_matrix: Optional[np.ndarray] = None,
+    elements: Optional[Union[List[int], Tuple]] = None,
+    no_dists: Optional[bool] = False,
+    volume: Optional[float] = None,
+):
     """Returns two numpy arrays; the radial distribution function
     and the corresponding distances of the supplied atoms object.
     If no_dists = True then only the first array is returned.
@@ -114,9 +118,10 @@ def check_cell_and_r_max(atoms: Atoms, rmax: float) -> None:
             if h < 2 * rmax:
                 recommended_r_max = get_recommended_r_max(cell, pbc)
                 raise CellTooSmall(
-                    'The cell is not large enough in '
-                    f'direction {i}: {h:.3f} < 2*rmax={2 * rmax: .3f}. '
-                    f'Recommended rmax = {recommended_r_max}')
+                    "The cell is not large enough in "
+                    f"direction {i}: {h:.3f} < 2*rmax={2 * rmax: .3f}. "
+                    f"Recommended rmax = {recommended_r_max}"
+                )
 
 
 def get_recommended_r_max(cell: Cell, pbc: List[bool]) -> float:
@@ -124,8 +129,9 @@ def get_recommended_r_max(cell: Cell, pbc: List[bool]) -> float:
     vol = cell.volume
     for i in range(3):
         if pbc[i]:
-            axb = np.cross(cell[(i + 1) % 3, :],  # type: ignore
-                           cell[(i + 2) % 3, :])  # type: ignore
+            axb = np.cross(
+                cell[(i + 1) % 3, :], cell[(i + 2) % 3, :]  # type: ignore
+            )  # type: ignore
             h = vol / np.linalg.norm(axb)
             recommended_r_max = min(h / 2 * 0.99, recommended_r_max)
     return recommended_r_max

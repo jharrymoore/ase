@@ -24,14 +24,13 @@ class GULPOptimizer:
         self.calc = calc
 
     def todict(self):
-        return {'type': 'optimization',
-                'optimizer': 'GULPOptimizer'}
+        return {"type": "optimization", "optimizer": "GULPOptimizer"}
 
     def run(self, fmax=None, steps=None, **gulp_kwargs):
         if fmax is not None:
-            gulp_kwargs['gmax'] = fmax
+            gulp_kwargs["gmax"] = fmax
         if steps is not None:
-            gulp_kwargs['maxcyc'] = steps
+            gulp_kwargs["maxcyc"] = steps
 
         self.calc.set(**gulp_kwargs)
         self.atoms.calc = self.calc
@@ -41,33 +40,44 @@ class GULPOptimizer:
 
 
 class GULP(FileIOCalculator):
-    implemented_properties = ['energy', 'free_energy', 'forces', 'stress']
-    command = 'gulp < PREFIX.gin > PREFIX.got'
+    implemented_properties = ["energy", "free_energy", "forces", "stress"]
+    command = "gulp < PREFIX.gin > PREFIX.got"
     discard_results_on_any_change = True
     default_parameters = dict(
-        keywords='conp gradients',
+        keywords="conp gradients",
         options=[],
         shel=[],
         library="ffsioh.lib",
-        conditions=None)
+        conditions=None,
+    )
 
     def get_optimizer(self, atoms):
         gulp_keywords = self.parameters.keywords.split()
-        if 'opti' not in gulp_keywords:
-            raise ValueError('Can only create optimizer from GULP calculator '
-                             'with "opti" keyword.  Current keywords: {}'
-                             .format(gulp_keywords))
+        if "opti" not in gulp_keywords:
+            raise ValueError(
+                "Can only create optimizer from GULP calculator "
+                'with "opti" keyword.  Current keywords: {}'.format(gulp_keywords)
+            )
 
         opt = GULPOptimizer(atoms, self)
         return opt
 
-    def __init__(self, restart=None,
-                 ignore_bad_restart_file=FileIOCalculator._deprecated,
-                 label='gulp', atoms=None, optimized=None,
-                 Gnorm=1000.0, steps=1000, conditions=None, **kwargs):
+    def __init__(
+        self,
+        restart=None,
+        ignore_bad_restart_file=FileIOCalculator._deprecated,
+        label="gulp",
+        atoms=None,
+        optimized=None,
+        Gnorm=1000.0,
+        steps=1000,
+        conditions=None,
+        **kwargs
+    ):
         """Construct GULP-calculator object."""
-        FileIOCalculator.__init__(self, restart, ignore_bad_restart_file,
-                                  label, atoms, **kwargs)
+        FileIOCalculator.__init__(
+            self, restart, ignore_bad_restart_file, label, atoms, **kwargs
+        )
         self.optimized = optimized
         self.Gnorm = Gnorm
         self.steps = steps
@@ -87,17 +97,19 @@ class GULP(FileIOCalculator):
 
         # Build string to hold .gin input file:
         s = p.keywords
-        s += '\ntitle\nASE calculation\nend\n\n'
+        s += "\ntitle\nASE calculation\nend\n\n"
 
         if all(self.atoms.pbc):
             cell_params = self.atoms.cell.cellpar()
             # Formating is necessary since Gulp max-line-length restriction
-            s += 'cell\n{0:9.6f} {1:9.6f} {2:9.6f} ' \
-                 '{3:8.5f} {4:8.5f} {5:8.5f}\n'.format(*cell_params)
-            s += 'frac\n'
+            s += (
+                "cell\n{0:9.6f} {1:9.6f} {2:9.6f} "
+                "{3:8.5f} {4:8.5f} {5:8.5f}\n".format(*cell_params)
+            )
+            s += "frac\n"
             coords = self.atoms.get_scaled_positions()
         else:
-            s += 'cart\n'
+            s += "cart\n"
             coords = self.atoms.get_positions()
 
         if self.conditions is not None:
@@ -108,48 +120,48 @@ class GULP(FileIOCalculator):
             labels = self.atoms.get_chemical_symbols()
 
         for xyz, symbol in zip(coords, labels):
-            s += ' {0:2} core' \
-                 ' {1:10.7f}  {2:10.7f}  {3:10.7f}\n' .format(symbol, *xyz)
+            s += " {0:2} core" " {1:10.7f}  {2:10.7f}  {3:10.7f}\n".format(symbol, *xyz)
             if symbol in p.shel:
-                s += ' {0:2} shel' \
-                     ' {1:10.7f}  {2:10.7f}  {3:10.7f}\n' .format(symbol, *xyz)
+                s += " {0:2} shel" " {1:10.7f}  {2:10.7f}  {3:10.7f}\n".format(
+                    symbol, *xyz
+                )
 
         if p.library:
-            s += '\nlibrary {0}\n'.format(p.library)
+            s += "\nlibrary {0}\n".format(p.library)
 
         if p.options:
             for t in p.options:
-                s += '%s\n' % t
-        with open(self.prefix + '.gin', 'w') as fd:
+                s += "%s\n" % t
+        with open(self.prefix + ".gin", "w") as fd:
             fd.write(s)
 
     def read_results(self):
         FileIOCalculator.read(self, self.label)
-        if not os.path.isfile(self.label + '.got'):
+        if not os.path.isfile(self.label + ".got"):
             raise ReadError
 
-        with open(self.label + '.got') as fd:
+        with open(self.label + ".got") as fd:
             lines = fd.readlines()
 
         cycles = -1
         self.optimized = None
         for i, line in enumerate(lines):
-            m = re.match(r'\s*Total lattice energy\s*=\s*(\S+)\s*eV', line)
+            m = re.match(r"\s*Total lattice energy\s*=\s*(\S+)\s*eV", line)
             if m:
                 energy = float(m.group(1))
-                self.results['energy'] = energy
-                self.results['free_energy'] = energy
+                self.results["energy"] = energy
+                self.results["free_energy"] = energy
 
-            elif line.find('Optimisation achieved') != -1:
+            elif line.find("Optimisation achieved") != -1:
                 self.optimized = True
 
-            elif line.find('Final Gnorm') != -1:
+            elif line.find("Final Gnorm") != -1:
                 self.Gnorm = float(line.split()[-1])
 
-            elif line.find('Cycle:') != -1:
+            elif line.find("Cycle:") != -1:
                 cycles += 1
 
-            elif line.find('Final Cartesian derivatives') != -1:
+            elif line.find("Final Cartesian derivatives") != -1:
                 s = i + 5
                 forces = []
                 while True:
@@ -162,9 +174,9 @@ class GULP(FileIOCalculator):
                     G = [-float(x) * eV / Ang for x in g]
                     forces.append(G)
                 forces = np.array(forces)
-                self.results['forces'] = forces
+                self.results["forces"] = forces
 
-            elif line.find('Final internal derivatives') != -1:
+            elif line.find("Final internal derivatives") != -1:
                 s = i + 5
                 forces = []
                 while True:
@@ -178,7 +190,7 @@ class GULP(FileIOCalculator):
                     # numbers. This prevents the code to break if numbers are
                     # too big.
 
-                    '''for t in range(3-len(g)):
+                    """for t in range(3-len(g)):
                         g.append(' ')
                     for j in range(2):
                         min_index=[i+1 for i,e in enumerate(g[j][1:])
@@ -195,14 +207,14 @@ class GULP(FileIOCalculator):
                                 break
                         if j==1 and len(min_index) != 0:
                             g[2]=g[1][min_index[0]:]
-                            g[1]=g[1][:min_index[0]]'''
+                            g[1]=g[1][:min_index[0]]"""
 
                     G = [-float(x) * eV / Ang for x in g]
                     forces.append(G)
                 forces = np.array(forces)
-                self.results['forces'] = forces
+                self.results["forces"] = forces
 
-            elif line.find('Final cartesian coordinates of atoms') != -1:
+            elif line.find("Final cartesian coordinates of atoms") != -1:
                 s = i + 5
                 positions = []
                 while True:
@@ -217,17 +229,17 @@ class GULP(FileIOCalculator):
                 positions = np.array(positions)
                 self.atoms.set_positions(positions)
 
-            elif line.find('Final stress tensor components') != -1:
-                res = [0., 0., 0., 0., 0., 0.]
+            elif line.find("Final stress tensor components") != -1:
+                res = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
                 for j in range(3):
                     var = lines[i + j + 3].split()[1]
                     res[j] = float(var)
                     var = lines[i + j + 3].split()[3]
                     res[j + 3] = float(var)
                 stress = np.array(res)
-                self.results['stress'] = stress
+                self.results["stress"] = stress
 
-            elif line.find('Final Cartesian lattice vectors') != -1:
+            elif line.find("Final Cartesian lattice vectors") != -1:
                 lattice_vectors = np.zeros((3, 3))
                 s = i + 2
                 for j in range(s, s + 3):
@@ -236,12 +248,10 @@ class GULP(FileIOCalculator):
                         lattice_vectors[j - s][k] = float(temp[k])
                 self.atoms.set_cell(lattice_vectors)
                 if self.fractional_coordinates is not None:
-                    self.fractional_coordinates = np.array(
-                        self.fractional_coordinates)
-                    self.atoms.set_scaled_positions(
-                        self.fractional_coordinates)
+                    self.fractional_coordinates = np.array(self.fractional_coordinates)
+                    self.atoms.set_scaled_positions(self.fractional_coordinates)
 
-            elif line.find('Final fractional coordinates of atoms') != -1:
+            elif line.find("Final fractional coordinates of atoms") != -1:
                 s = i + 5
                 scaled_positions = []
                 while True:
@@ -267,10 +277,12 @@ class GULP(FileIOCalculator):
         return self.Gnorm
 
     def library_check(self):
-        if self.parameters['library'] is not None:
-            if 'GULP_LIB' not in os.environ:
-                raise RuntimeError("Be sure to have set correctly $GULP_LIB "
-                                   "or to have the force field library.")
+        if self.parameters["library"] is not None:
+            if "GULP_LIB" not in os.environ:
+                raise RuntimeError(
+                    "Be sure to have set correctly $GULP_LIB "
+                    "or to have the force field library."
+                )
 
 
 class Conditions:
@@ -290,9 +302,15 @@ class Conditions:
         self.atoms_labels = atoms.get_chemical_symbols()
         self.atom_types = []
 
-    def min_distance_rule(self, sym1, sym2,
-                          ifcloselabel1=None, ifcloselabel2=None,
-                          elselabel1=None, max_distance=3.0):
+    def min_distance_rule(
+        self,
+        sym1,
+        sym2,
+        ifcloselabel1=None,
+        ifcloselabel2=None,
+        elselabel1=None,
+        max_distance=3.0,
+    ):
         """Find pairs of atoms to label based on proximity.
 
         This is for, e.g., the ffsioh or catlow force field, where we
@@ -343,19 +361,23 @@ class Conditions:
                 dist_12 = 1000
                 index_assigned_sym2.append(i)
                 for t in range(len(self.atoms_symbols)):
-                    if (self.atoms_symbols[t] == sym1
+                    if (
+                        self.atoms_symbols[t] == sym1
                         and dist_mat[i, t] < dist_12
-                            and t not in index_assigned_sym1):
+                        and t not in index_assigned_sym1
+                    ):
                         dist_12 = dist_mat[i, t]
                         closest_sym1_index = t
                 index_assigned_sym1.append(closest_sym1_index)
 
         for i1, i2 in zip(index_assigned_sym1, index_assigned_sym2):
             if dist_mat[i1, i2] > max_distance:
-                raise ValueError('Cannot unambiguously apply minimum-distance '
-                                 'rule because pairings are not obvious.  '
-                                 'If you wish to ignore this, then increase '
-                                 'max_distance.')
+                raise ValueError(
+                    "Cannot unambiguously apply minimum-distance "
+                    "rule because pairings are not obvious.  "
+                    "If you wish to ignore this, then increase "
+                    "max_distance."
+                )
 
         for s in range(len(self.atoms_symbols)):
             if s in index_assigned_sym1:

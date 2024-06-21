@@ -17,7 +17,7 @@ class NNMatComparator:
         self.mic = mic
 
     def looks_like(self, a1, a2):
-        """ Return if structure a1 or a2 are similar or not. """
+        """Return if structure a1 or a2 are similar or not."""
         elements = self.elements
         if elements == []:
             elements = sorted(set(a1.get_chemical_symbols()))

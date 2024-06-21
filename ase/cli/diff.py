@@ -52,7 +52,8 @@ class CLICommand:
     @staticmethod
     def add_arguments(parser):
         add = parser.add_argument
-        add('file',
+        add(
+            "file",
             help="""Possible file entries are
 
     * 2 non-trajectory files: difference between them
@@ -64,38 +65,67 @@ class CLICommand:
 
     Use [FILE]@[SLICE] to select images.
                     """,
-            nargs='+')
-        add('-r',
-            '--rank-order',
-            metavar='FIELD',
-            nargs='?',
-            const='d',
+            nargs="+",
+        )
+        add(
+            "-r",
+            "--rank-order",
+            metavar="FIELD",
+            nargs="?",
+            const="d",
             type=str,
             help="""Order atoms by rank, see --template-help for possible
 fields.
 
 The default value, when specified, is d.  When not
 specified, ordering is the same as that provided by the
-generator.  For hierarchical sorting, see template.""")
-        add('-c', '--calculator-outputs', action="store_true",
-            help="display calculator outputs of forces and energy")
-        add('--max-lines', metavar='N', type=int,
+generator.  For hierarchical sorting, see template.""",
+        )
+        add(
+            "-c",
+            "--calculator-outputs",
+            action="store_true",
+            help="display calculator outputs of forces and energy",
+        )
+        add(
+            "--max-lines",
+            metavar="N",
+            type=int,
             help="show only so many lines (atoms) in each table "
-            ", useful if rank ordering")
-        add('-t', '--template', metavar='TEMPLATE', nargs='?', const='rc',
-            help="""See --template-help for the help on this option.""")
-        add('--template-help', help="""Prints the help for the template file.
-                Usage `ase diff - --template-help`""", action="store_true")
-        add('-s', '--summary-functions', metavar='SUMFUNCS', nargs='?',
+            ", useful if rank ordering",
+        )
+        add(
+            "-t",
+            "--template",
+            metavar="TEMPLATE",
+            nargs="?",
+            const="rc",
+            help="""See --template-help for the help on this option.""",
+        )
+        add(
+            "--template-help",
+            help="""Prints the help for the template file.
+                Usage `ase diff - --template-help`""",
+            action="store_true",
+        )
+        add(
+            "-s",
+            "--summary-functions",
+            metavar="SUMFUNCS",
+            nargs="?",
             help="""Specify the summary functions.
             Possible values are `rmsd` and `dE`.
-            Comma separate more than one summary function.""")
-        add('--log-file', metavar='LOGFILE', help="print table to file")
-        add('--as-csv', action="store_true",
-            help="output table in csv format")
-        add('--precision', metavar='PREC',
-            default=2, type=int,
-            help="precision used in both display and sorting")
+            Comma separate more than one summary function.""",
+        )
+        add("--log-file", metavar="LOGFILE", help="print table to file")
+        add("--as-csv", action="store_true", help="output table in csv format")
+        add(
+            "--precision",
+            metavar="PREC",
+            default=2,
+            type=int,
+            help="precision used in both display and sorting",
+        )
 
     @staticmethod
     def run(args, parser):
@@ -105,12 +135,12 @@ generator.  For hierarchical sorting, see template.""")
             print(template_help)
             return
 
-        encoding = 'utf-8'
+        encoding = "utf-8"
 
         if args.log_file is None:
             out = io.TextIOWrapper(sys.stdout.buffer, encoding=encoding)
         else:
-            out = open(args.log_file, 'w', encoding=encoding)
+            out = open(args.log_file, "w", encoding=encoding)
 
         with out:
             CLICommand.diff(args, out)
@@ -124,37 +154,37 @@ generator.  For hierarchical sorting, see template.""")
             field_specs_on_conditions,
             summary_functions_on_conditions,
             rmsd,
-            energy_delta)
+            energy_delta,
+        )
         from ase.io import read
 
         if args.template is None:
             field_specs = field_specs_on_conditions(
-                args.calculator_outputs, args.rank_order)
+                args.calculator_outputs, args.rank_order
+            )
         else:
-            field_specs = args.template.split(',')
+            field_specs = args.template.split(",")
             if not args.calculator_outputs:
                 for field_spec in field_specs:
-                    if 'f' in field_spec:
+                    if "f" in field_spec:
                         raise CLIError(
                             "field requiring calculation outputs "
-                            "without --calculator-outputs")
+                            "without --calculator-outputs"
+                        )
 
         if args.summary_functions is None:
-            summary_functions = summary_functions_on_conditions(
-                args.calculator_outputs)
+            summary_functions = summary_functions_on_conditions(args.calculator_outputs)
         else:
-            summary_functions_dct = {
-                'rmsd': rmsd,
-                'dE': energy_delta}
-            summary_functions = args.summary_functions.split(',')
+            summary_functions_dct = {"rmsd": rmsd, "dE": energy_delta}
+            summary_functions = args.summary_functions.split(",")
             if not args.calculator_outputs:
                 for sf in summary_functions:
-                    if sf == 'dE':
+                    if sf == "dE":
                         raise CLIError(
                             "summary function requiring calculation outputs "
-                            "without --calculator-outputs")
-            summary_functions = [summary_functions_dct[i]
-                                 for i in summary_functions]
+                            "without --calculator-outputs"
+                        )
+            summary_functions = [summary_functions_dct[i] for i in summary_functions]
 
         have_two_files = len(args.file) == 2
         file1 = args.file[0]
@@ -163,11 +193,12 @@ generator.  For hierarchical sorting, see template.""")
         natoms1 = len(atoms1)
 
         if have_two_files:
-            if args.file[1] == '-':
+            if args.file[1] == "-":
                 atoms2 = atoms1
 
                 def header_fmt(c):
-                    return 'image # {}'.format(c)
+                    return "image # {}".format(c)
+
             else:
                 file2 = args.file[1]
                 actual_filename, index = slice_split(file2)
@@ -180,24 +211,28 @@ generator.  For hierarchical sorting, see template.""")
                 if not same_length and not one_l_one:
                     raise CLIError(
                         "Trajectory files are not the same length "
-                        "and both > 1\n{}!={}".format(
-                            natoms1, natoms2))
+                        "and both > 1\n{}!={}".format(natoms1, natoms2)
+                    )
                 elif not same_length and one_l_one:
                     print(
                         "One file contains one image "
                         "and the other multiple images,\n"
                         "assuming you want to compare all images "
-                        "with one reference image")
+                        "with one reference image"
+                    )
                     if natoms1 > natoms2:
                         atoms2 = natoms1 * atoms2
                     else:
                         atoms1 = natoms2 * atoms1
 
                     def header_fmt(c):
-                        return 'sys-ref image # {}'.format(c)
+                        return "sys-ref image # {}".format(c)
+
                 else:
+
                     def header_fmt(c):
-                        return 'sys2-sys1 image # {}'.format(c)
+                        return "sys2-sys1 image # {}".format(c)
+
         else:
             atoms2 = atoms1.copy()
             atoms1 = atoms1[:-1]
@@ -205,22 +240,25 @@ generator.  For hierarchical sorting, see template.""")
             natoms2 = natoms1 = natoms1 - 1
 
             def header_fmt(c):
-                return 'images {}-{}'.format(c + 1, c)
+                return "images {}-{}".format(c + 1, c)
 
         natoms = natoms1  # = natoms2
 
-        output = ''
-        tableformat = TableFormat(precision=args.precision,
-                                  columnwidth=7 + args.precision)
+        output = ""
+        tableformat = TableFormat(
+            precision=args.precision, columnwidth=7 + args.precision
+        )
 
         table = Table(
             field_specs,
             max_lines=args.max_lines,
             tableformat=tableformat,
-            summary_functions=summary_functions)
+            summary_functions=summary_functions,
+        )
 
         for counter in range(natoms):
             table.title = header_fmt(counter)
-            output += table.make(atoms1[counter],
-                                 atoms2[counter], csv=args.as_csv) + '\n'
+            output += (
+                table.make(atoms1[counter], atoms2[counter], csv=args.as_csv) + "\n"
+            )
         print(output, file=out)

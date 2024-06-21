@@ -4,8 +4,9 @@ from ase.calculators.crystal import CRYSTAL
 
 
 def test_molecule(testdir):
-    with open('basis', 'w') as fd:
-        fd.write("""6 4
+    with open("basis", "w") as fd:
+        fd.write(
+            """6 4
     0 0 6 2.0 1.0
      3048.0 0.001826
      456.4 0.01406
@@ -20,21 +21,25 @@ def test_molecule(testdir):
      0.26 1.0 1.0
     0 3 1 0.0 1.0
      0.8 1.0
-    """)
+    """
+        )
 
-    geom = Atoms('OHH',
-                 positions=[(0, 0, 0), (1, 0, 0), (0, 1, 0)])
+    geom = Atoms("OHH", positions=[(0, 0, 0), (1, 0, 0), (0, 1, 0)])
 
     geom.calc = CRYSTAL(
-        label='water',
+        label="water",
         guess=True,
-        basis='sto-3g',
-        xc='PBE',
-        otherkeys=['scfdir', 'anderson',
-                   ['maxcycles', '500'],
-                   ['toldee', '6'],
-                   ['tolinteg', '7 7 7 7 14'],
-                   ['fmixing', '90']])
+        basis="sto-3g",
+        xc="PBE",
+        otherkeys=[
+            "scfdir",
+            "anderson",
+            ["maxcycles", "500"],
+            ["toldee", "6"],
+            ["tolinteg", "7 7 7 7 14"],
+            ["fmixing", "90"],
+        ],
+    )
 
     with BFGS(geom) as opt:
         opt.run(fmax=0.05)

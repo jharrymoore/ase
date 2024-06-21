@@ -3,10 +3,11 @@ def test_dimer():
     from ase.calculators.lj import LennardJones
     from ase.constraints import FixBondLength
 
-    dimer = Atoms([Atom('X', (0, 0, 0)),
-                   Atom('X', (0, 0, 1))],
-                  calculator=LennardJones(),
-                  constraint=FixBondLength(0, 1))
+    dimer = Atoms(
+        [Atom("X", (0, 0, 0)), Atom("X", (0, 0, 1))],
+        calculator=LennardJones(),
+        constraint=FixBondLength(0, 1),
+    )
     print(dimer.get_forces())
     print(dimer.positions)
     dimer.positions[:] += 0.1

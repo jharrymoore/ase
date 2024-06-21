@@ -31,41 +31,69 @@ class TurbomoleOptimizer:
         self.atoms.calc = self.calc
 
     def todict(self):
-        return {'type': 'optimization',
-                'optimizer': 'TurbomoleOptimizer'}
+        return {"type": "optimization", "optimizer": "TurbomoleOptimizer"}
 
     def run(self, fmax=None, steps=None):
         if fmax is not None:
-            self.calc.parameters['force convergence'] = fmax
+            self.calc.parameters["force convergence"] = fmax
             self.calc.parameters.verify()
         if steps is not None:
-            self.calc.parameters['geometry optimization iterations'] = steps
+            self.calc.parameters["geometry optimization iterations"] = steps
             self.calc.parameters.verify()
         self.calc.calculate()
         self.atoms.positions[:] = self.calc.atoms.positions
-        self.calc.parameters['task'] = 'energy'
+        self.calc.parameters["task"] = "energy"
 
 
 class Turbomole(FileIOCalculator):
 
     """constants"""
-    name = 'Turbomole'
 
-    implemented_properties = ['energy', 'forces', 'dipole', 'free_energy',
-                              'charges']
+    name = "Turbomole"
+
+    implemented_properties = ["energy", "forces", "dipole", "free_energy", "charges"]
 
     tm_files = [
-        'control', 'coord', 'basis', 'auxbasis', 'energy', 'gradient', 'mos',
-        'alpha', 'beta', 'statistics', 'GEO_OPT_CONVERGED', 'GEO_OPT_FAILED',
-        'not.converged', 'nextstep', 'hessapprox', 'job.last', 'job.start',
-        'optinfo', 'statistics', 'converged', 'vibspectrum',
-        'vib_normal_modes', 'hessian', 'dipgrad', 'dscf_problem', 'pc.txt',
-        'pc_gradients.txt'
+        "control",
+        "coord",
+        "basis",
+        "auxbasis",
+        "energy",
+        "gradient",
+        "mos",
+        "alpha",
+        "beta",
+        "statistics",
+        "GEO_OPT_CONVERGED",
+        "GEO_OPT_FAILED",
+        "not.converged",
+        "nextstep",
+        "hessapprox",
+        "job.last",
+        "job.start",
+        "optinfo",
+        "statistics",
+        "converged",
+        "vibspectrum",
+        "vib_normal_modes",
+        "hessian",
+        "dipgrad",
+        "dscf_problem",
+        "pc.txt",
+        "pc_gradients.txt",
     ]
     tm_tmp_files = [
-        'errvec', 'fock', 'oldfock', 'dens', 'ddens', 'diff_densmat',
-        'diff_dft_density', 'diff_dft_oper', 'diff_fockmat', 'diis_errvec',
-        'diis_oldfock'
+        "errvec",
+        "fock",
+        "oldfock",
+        "dens",
+        "ddens",
+        "diff_densmat",
+        "diff_dft_density",
+        "diff_dft_oper",
+        "diff_fockmat",
+        "diis_errvec",
+        "diis_oldfock",
     ]
 
     # initialize attributes
@@ -89,10 +117,20 @@ class Turbomole(FileIOCalculator):
     hostname = None
     pcpot = None
 
-    def __init__(self, label=None, calculate_energy='dscf',
-                 calculate_forces='grad', post_HF=False, atoms=None,
-                 restart=False, define_str=None, control_kdg=None,
-                 control_input=None, reset_tolerance=1e-2, **kwargs):
+    def __init__(
+        self,
+        label=None,
+        calculate_energy="dscf",
+        calculate_forces="grad",
+        post_HF=False,
+        atoms=None,
+        restart=False,
+        define_str=None,
+        control_kdg=None,
+        control_input=None,
+        reset_tolerance=1e-2,
+        **kwargs
+    ):
 
         super().__init__(label=label)
         self.parameters = TurbomoleParameters()
@@ -136,7 +174,7 @@ class Turbomole(FileIOCalculator):
 
         # if a define string is specified by user then run define
         if self.parameters.define_str:
-            execute(['define'], input_str=self.parameters.define_str)
+            execute(["define"], input_str=self.parameters.define_str)
 
         self._set_post_define()
 
@@ -167,19 +205,17 @@ class Turbomole(FileIOCalculator):
 
     def set_parameters(self):
         """loads the default parameters and updates with actual values"""
-        if self.parameters.get('use resolution of identity'):
-            self.calculate_energy = 'ridft'
-            self.calculate_forces = 'rdgrad'
+        if self.parameters.get("use resolution of identity"):
+            self.calculate_energy = "ridft"
+            self.calculate_forces = "rdgrad"
 
     def reset(self):
         """removes all turbomole input, output and scratch files,
         and deletes results dict and the atoms object"""
         self.atoms = None
         self.results = {}
-        self.results['calculation parameters'] = {}
-        ase_files = [
-            f for f in os.listdir(
-                self.directory) if f.startswith('ASE.TM.')]
+        self.results["calculation parameters"] = {}
+        ase_files = [f for f in os.listdir(self.directory) if f.startswith("ASE.TM.")]
         for f in self.tm_files + self.tm_tmp_files + ase_files:
             if os.path.exists(f):
                 os.remove(f)
@@ -194,26 +230,26 @@ class Turbomole(FileIOCalculator):
         version.
         """
         changes = self.check_state(atoms, tol=1e-13)
-        if self.atoms == atoms or 'positions' not in changes:
+        if self.atoms == atoms or "positions" not in changes:
             # print('two atoms obj are (almost) equal')
-            if self.updated and os.path.isfile('coord'):
+            if self.updated and os.path.isfile("coord"):
                 self.updated = False
-                a = read('coord').get_positions()
+                a = read("coord").get_positions()
                 if np.allclose(a, atoms.get_positions(), rtol=0, atol=1e-13):
                     return
             else:
                 return
 
         changes = self.check_state(atoms, tol=self.reset_tolerance)
-        if 'positions' in changes:
+        if "positions" in changes:
             # print(two atoms obj are different')
             self.reset()
         else:
             # print('two atoms obj are slightly different')
-            if self.parameters['use redundant internals']:
+            if self.parameters["use redundant internals"]:
                 self.reset()
 
-        write('coord', atoms)
+        write("coord", atoms)
         self.atoms = atoms.copy()
         self.update_energy = True
         self.update_forces = True
@@ -226,33 +262,33 @@ class Turbomole(FileIOCalculator):
             return
         self.parameters.verify()
         if not self.atoms:
-            raise RuntimeError('atoms missing during initialization')
-        if not os.path.isfile('coord'):
-            raise IOError('file coord not found')
+            raise RuntimeError("atoms missing during initialization")
+        if not os.path.isfile("coord"):
+            raise IOError("file coord not found")
 
         # run define
         define_str = self.parameters.get_define_str(len(self.atoms))
-        execute(['define'], input_str=define_str)
+        execute(["define"], input_str=define_str)
 
         # process non-default initial guess
-        iguess = self.parameters['initial guess']
-        if isinstance(iguess, dict) and 'use' in iguess.keys():
+        iguess = self.parameters["initial guess"]
+        if isinstance(iguess, dict) and "use" in iguess.keys():
             # "use" initial guess
-            if self.parameters['multiplicity'] != 1 or self.parameters['uhf']:
-                define_str = '\n\n\ny\nuse ' + iguess['use'] + '\nn\nn\nq\n'
+            if self.parameters["multiplicity"] != 1 or self.parameters["uhf"]:
+                define_str = "\n\n\ny\nuse " + iguess["use"] + "\nn\nn\nq\n"
             else:
-                define_str = '\n\n\ny\nuse ' + iguess['use'] + '\nn\nq\n'
-            execute(['define'], input_str=define_str)
-        elif self.parameters['initial guess'] == 'hcore':
+                define_str = "\n\n\ny\nuse " + iguess["use"] + "\nn\nq\n"
+            execute(["define"], input_str=define_str)
+        elif self.parameters["initial guess"] == "hcore":
             # "hcore" initial guess
-            if self.parameters['multiplicity'] != 1 or self.parameters['uhf']:
-                delete_data_group('uhfmo_alpha')
-                delete_data_group('uhfmo_beta')
-                add_data_group('uhfmo_alpha', 'none file=alpha')
-                add_data_group('uhfmo_beta', 'none file=beta')
+            if self.parameters["multiplicity"] != 1 or self.parameters["uhf"]:
+                delete_data_group("uhfmo_alpha")
+                delete_data_group("uhfmo_beta")
+                add_data_group("uhfmo_alpha", "none file=alpha")
+                add_data_group("uhfmo_beta", "none file=beta")
             else:
-                delete_data_group('scfmo')
-                add_data_group('scfmo', 'none file=mos')
+                delete_data_group("scfmo")
+                add_data_group("scfmo", "none file=mos")
 
         self._set_post_define()
 
@@ -263,9 +299,9 @@ class Turbomole(FileIOCalculator):
         if self.atoms != atoms:
             return True
         for prop in properties:
-            if prop == 'energy' and self.e_total is None:
+            if prop == "energy" and self.e_total is None:
                 return True
-            elif prop == 'forces' and self.forces is None:
+            elif prop == "forces" and self.forces is None:
                 return True
         return False
 
@@ -273,13 +309,13 @@ class Turbomole(FileIOCalculator):
         """execute the requested job"""
         if atoms is None:
             atoms = self.atoms
-        if self.parameters['task'] in ['energy', 'energy calculation']:
+        if self.parameters["task"] in ["energy", "energy calculation"]:
             self.get_potential_energy(atoms)
-        if self.parameters['task'] in ['gradient', 'gradient calculation']:
+        if self.parameters["task"] in ["gradient", "gradient calculation"]:
             self.get_forces(atoms)
-        if self.parameters['task'] in ['optimize', 'geometry optimization']:
+        if self.parameters["task"] in ["optimize", "geometry optimization"]:
             self.relax_geometry(atoms)
-        if self.parameters['task'] in ['frequencies', 'normal mode analysis']:
+        if self.parameters["task"] in ["frequencies", "normal mode analysis"]:
             self.normal_mode_analysis(atoms)
         self.read_results()
 
@@ -291,21 +327,21 @@ class Turbomole(FileIOCalculator):
         if self.converged and not self.update_geometry:
             return
         self.initialize()
-        jobex_command = ['jobex']
-        if self.parameters['use resolution of identity']:
-            jobex_command.append('-ri')
-        if self.parameters['force convergence']:
-            par = self.parameters['force convergence']
+        jobex_command = ["jobex"]
+        if self.parameters["use resolution of identity"]:
+            jobex_command.append("-ri")
+        if self.parameters["force convergence"]:
+            par = self.parameters["force convergence"]
             conv = floor(-log10(par / Ha * Bohr))
-            jobex_command.extend(['-gcart', str(int(conv))])
-        if self.parameters['energy convergence']:
-            par = self.parameters['energy convergence']
+            jobex_command.extend(["-gcart", str(int(conv))])
+        if self.parameters["energy convergence"]:
+            par = self.parameters["energy convergence"]
             conv = floor(-log10(par / Ha))
-            jobex_command.extend(['-energy', str(int(conv))])
-        geom_iter = self.parameters['geometry optimization iterations']
+            jobex_command.extend(["-energy", str(int(conv))])
+        geom_iter = self.parameters["geometry optimization iterations"]
         if geom_iter is not None:
             assert isinstance(geom_iter, int)
-            jobex_command.extend(['-c', str(geom_iter)])
+            jobex_command.extend(["-c", str(geom_iter)])
         self.converged = False
         execute(jobex_command)
         # check convergence
@@ -316,7 +352,7 @@ class Turbomole(FileIOCalculator):
             self.update_geometry = False
             self.update_hessian = True
         # read results
-        new_struct = read('coord')
+        new_struct = read("coord")
         atoms.set_positions(new_struct.get_positions())
         self.atoms = atoms.copy()
         self.read_energy()
@@ -324,6 +360,7 @@ class Turbomole(FileIOCalculator):
     def normal_mode_analysis(self, atoms=None):
         """execute normal mode analysis with modules aoforce or NumForce"""
         from ase.constraints import FixAtoms
+
         if atoms is None:
             atoms = self.atoms
         self.set_atoms(atoms)
@@ -334,34 +371,34 @@ class Turbomole(FileIOCalculator):
             fixatoms = []
             for constr in atoms.constraints:
                 if isinstance(constr, FixAtoms):
-                    ckwargs = constr.todict()['kwargs']
-                    if 'indices' in ckwargs.keys():
-                        fixatoms.extend(ckwargs['indices'])
-            if self.parameters['numerical hessian'] is None:
+                    ckwargs = constr.todict()["kwargs"]
+                    if "indices" in ckwargs.keys():
+                        fixatoms.extend(ckwargs["indices"])
+            if self.parameters["numerical hessian"] is None:
                 if len(fixatoms) > 0:
-                    define_str = '\n\ny\n'
+                    define_str = "\n\ny\n"
                     for index in fixatoms:
-                        define_str += 'm ' + str(index + 1) + ' 999.99999999\n'
-                    define_str += '*\n*\nn\nq\n'
-                    execute(['define'], input_str=define_str)
-                    dg = read_data_group('atoms')
-                    regex = r'(mass\s*=\s*)999.99999999'
-                    dg = re.sub(regex, r'\g<1>9999999999.9', dg)
-                    dg += '\n'
-                    delete_data_group('atoms')
+                        define_str += "m " + str(index + 1) + " 999.99999999\n"
+                    define_str += "*\n*\nn\nq\n"
+                    execute(["define"], input_str=define_str)
+                    dg = read_data_group("atoms")
+                    regex = r"(mass\s*=\s*)999.99999999"
+                    dg = re.sub(regex, r"\g<1>9999999999.9", dg)
+                    dg += "\n"
+                    delete_data_group("atoms")
                     add_data_group(dg, raw=True)
-                execute(['aoforce'])
+                execute(["aoforce"])
             else:
-                nforce_cmd = ['NumForce']
-                pdict = self.parameters['numerical hessian']
-                if self.parameters['use resolution of identity']:
-                    nforce_cmd.append('-ri')
+                nforce_cmd = ["NumForce"]
+                pdict = self.parameters["numerical hessian"]
+                if self.parameters["use resolution of identity"]:
+                    nforce_cmd.append("-ri")
                 if len(fixatoms) > 0:
-                    nforce_cmd.extend(['-frznuclei', '-central', '-c'])
-                if 'central' in pdict.keys():
-                    nforce_cmd.append('-central')
-                if 'delta' in pdict.keys():
-                    nforce_cmd.extend(['-d', str(pdict['delta'] / Bohr)])
+                    nforce_cmd.extend(["-frznuclei", "-central", "-c"])
+                if "central" in pdict.keys():
+                    nforce_cmd.append("-central")
+                if "delta" in pdict.keys():
+                    nforce_cmd.extend(["-d", str(pdict["delta"] / Bohr)])
                 if self.update_forces:
                     self.get_forces(atoms)
                 execute(nforce_cmd)
@@ -369,7 +406,7 @@ class Turbomole(FileIOCalculator):
 
     def read_restart(self):
         """read a previous calculation from control file"""
-        self.atoms = read('coord')
+        self.atoms = read("coord")
         self.atoms.calc = self
         self.converged = read_convergence(self.restart, self.parameters)
         self.read_results()
@@ -392,7 +429,7 @@ class Turbomole(FileIOCalculator):
             self.read_vibrational_spectrum,
             self.read_charges,
             self.read_point_charges,
-            self.read_run_parameters
+            self.read_run_parameters,
         ]
         for method in read_methods:
             try:
@@ -407,7 +444,7 @@ class Turbomole(FileIOCalculator):
     def read_energy(self):
         """Read energy from Turbomole energy file."""
         reader.read_energy(self.results, self.post_HF)
-        self.e_total = self.results['total energy']
+        self.e_total = self.results["total energy"]
 
     def read_forces(self):
         """Read forces from Turbomole gradient file."""
@@ -460,7 +497,7 @@ class Turbomole(FileIOCalculator):
     def read_dipole_moment(self):
         """Read the dipole moment"""
         reader.read_dipole_moment(self.results)
-        dip_vec = self.results['electric dipole moment']['vector']['array']
+        dip_vec = self.results["electric dipole moment"]["vector"]["array"]
         self.dipole = np.array(dip_vec) * Bohr
 
     def read_charges(self):
@@ -494,7 +531,7 @@ class Turbomole(FileIOCalculator):
 
     def get_optimizer(self, atoms, trajectory=None, logfile=None):
         """returns a TurbomoleOptimizer object"""
-        self.parameters['task'] = 'optimize'
+        self.parameters["task"] = "optimize"
         self.parameters.verify()
         return TurbomoleOptimizer(atoms, self)
 
@@ -556,25 +593,25 @@ class Turbomole(FileIOCalculator):
             atoms = self.atoms.copy()
 
         persist_property = {
-            'energy': 'e_total',
-            'forces': 'forces',
-            'dipole': 'dipole',
-            'free_energy': 'e_total',
-            'charges': 'charges'
+            "energy": "e_total",
+            "forces": "forces",
+            "dipole": "dipole",
+            "free_energy": "e_total",
+            "charges": "charges",
         }
         property_getter = {
-            'energy': self.get_potential_energy,
-            'forces': self.get_forces,
-            'dipole': self.get_dipole_moment,
-            'free_energy': self.get_potential_energy,
-            'charges': self.get_charges
+            "energy": self.get_potential_energy,
+            "forces": self.get_forces,
+            "dipole": self.get_dipole_moment,
+            "free_energy": self.get_potential_energy,
+            "charges": self.get_charges,
         }
         getter_args = {
-            'energy': [atoms],
-            'forces': [atoms],
-            'dipole': [atoms],
-            'free_energy': [atoms, True],
-            'charges': [atoms]
+            "energy": [atoms],
+            "forces": [atoms],
+            "dipole": [atoms],
+            "free_energy": [atoms, True],
+            "charges": [atoms],
         }
 
         if allow_calculation:
@@ -598,10 +635,10 @@ class Turbomole(FileIOCalculator):
     def get_forces_on_point_charges(self):
         """return forces acting on point charges"""
         self.get_forces(self.atoms)
-        lines = read_data_group('point_charge_gradients').split('\n')[1:]
+        lines = read_data_group("point_charge_gradients").split("\n")[1:]
         forces = []
         for line in lines:
-            linef = line.strip().replace('D', 'E')
+            linef = line.strip().replace("D", "E")
             forces.append([float(x) for x in linef.split()])
         # Note the '-' sign for turbomole, to get forces
         return -np.array(forces) * Ha / Bohr
@@ -611,31 +648,31 @@ class Turbomole(FileIOCalculator):
         if pcpot is not None and pcpot != self.pcpot:
             self.pcpot = pcpot
         if self.pcpot.mmcharges is None or self.pcpot.mmpositions is None:
-            raise RuntimeError('external point charges not defined')
+            raise RuntimeError("external point charges not defined")
 
         if not self.pc_initialized:
-            if len(read_data_group('point_charges')) == 0:
-                add_data_group('point_charges', 'file=pc.txt')
-            if len(read_data_group('point_charge_gradients')) == 0:
-                add_data_group(
-                    'point_charge_gradients',
-                    'file=pc_gradients.txt'
-                )
-            drvopt = read_data_group('drvopt')
-            if 'point charges' not in drvopt:
-                drvopt += '\n   point charges\n'
-                delete_data_group('drvopt')
+            if len(read_data_group("point_charges")) == 0:
+                add_data_group("point_charges", "file=pc.txt")
+            if len(read_data_group("point_charge_gradients")) == 0:
+                add_data_group("point_charge_gradients", "file=pc_gradients.txt")
+            drvopt = read_data_group("drvopt")
+            if "point charges" not in drvopt:
+                drvopt += "\n   point charges\n"
+                delete_data_group("drvopt")
                 add_data_group(drvopt, raw=True)
             self.pc_initialized = True
 
         if self.pcpot.updated:
-            with open('pc.txt', 'w') as pcfile:
-                pcfile.write('$point_charges nocheck list\n')
+            with open("pc.txt", "w") as pcfile:
+                pcfile.write("$point_charges nocheck list\n")
                 for (x, y, z), charge in zip(
-                        self.pcpot.mmpositions, self.pcpot.mmcharges):
-                    pcfile.write('%20.14f  %20.14f  %20.14f  %20.14f\n'
-                                 % (x / Bohr, y / Bohr, z / Bohr, charge))
-                pcfile.write('$end \n')
+                    self.pcpot.mmpositions, self.pcpot.mmcharges
+                ):
+                    pcfile.write(
+                        "%20.14f  %20.14f  %20.14f  %20.14f\n"
+                        % (x / Bohr, y / Bohr, z / Bohr, charge)
+                    )
+                pcfile.write("$end \n")
             self.pcpot.updated = False
 
     def read_point_charges(self):
@@ -646,7 +683,7 @@ class Turbomole(FileIOCalculator):
 
     def embed(self, charges=None, positions=None):
         """embed atoms in an array of point-charges; function used in
-            qmmm calculations."""
+        qmmm calculations."""
         self.pcpot = PointChargePotential(charges, positions)
         return self.pcpot
 

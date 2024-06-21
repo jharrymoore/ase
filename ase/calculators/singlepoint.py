@@ -1,9 +1,12 @@
 import numpy as np
 
 from ase.outputs import Properties
-from ase.calculators.calculator import (Calculator, all_properties,
-                                        PropertyNotImplementedError,
-                                        PropertyNotPresent)
+from ase.calculators.calculator import (
+    Calculator,
+    all_properties,
+    PropertyNotImplementedError,
+    PropertyNotPresent,
+)
 from ase.utils import lazyproperty
 
 
@@ -15,7 +18,7 @@ class SinglePointCalculator(Calculator):
     boundary conditions are changed, then asking for
     energy/forces/stress will raise an exception."""
 
-    name = 'unknown'
+    name = "unknown"
 
     def __init__(self, atoms, **results):
         """Save energy, forces, stress, ... for the current configuration."""
@@ -25,7 +28,7 @@ class SinglePointCalculator(Calculator):
             assert property in all_properties, property
             if value is None:
                 continue
-            if property in ['energy', 'magmom', 'free_energy']:
+            if property in ["energy", "magmom", "free_energy"]:
                 self.results[property] = value
             else:
                 self.results[property] = np.array(value, float)
@@ -35,11 +38,11 @@ class SinglePointCalculator(Calculator):
         tokens = []
         for key, val in sorted(self.results.items()):
             if np.isscalar(val):
-                txt = '{}={}'.format(key, val)
+                txt = "{}={}".format(key, val)
             else:
-                txt = '{}=...'.format(key)
+                txt = "{}=...".format(key)
             tokens.append(txt)
-        return '{}({})'.format(self.__class__.__name__, ', '.join(tokens))
+        return "{}({})".format(self.__class__.__name__, ", ".join(tokens))
 
     def get_property(self, name, atoms=None, allow_calculation=True):
         if atoms is None:
@@ -47,7 +50,8 @@ class SinglePointCalculator(Calculator):
         if name not in self.results or self.check_state(atoms):
             if allow_calculation:
                 raise PropertyNotImplementedError(
-                    'The property "{0}" is not available.'.format(name))
+                    'The property "{0}" is not available.'.format(name)
+                )
             return None
 
         result = self.results[name]
@@ -81,17 +85,27 @@ def arrays_to_kpoints(eigenvalues, occupations, weights):
     for s in range(nspins):
         for k in range(nkpts):
             kpt = SinglePointKPoint(
-                weight=weights[k], s=s, k=k,
-                eps_n=eigenvalues[s, k], f_n=occupations[s, k])
+                weight=weights[k],
+                s=s,
+                k=k,
+                eps_n=eigenvalues[s, k],
+                f_n=occupations[s, k],
+            )
             kpts.append(kpt)
     return kpts
 
 
 class SinglePointDFTCalculator(SinglePointCalculator):
-    def __init__(self, atoms,
-                 efermi=None, bzkpts=None, ibzkpts=None, bz2ibz=None,
-                 kpts=None,
-                 **results):
+    def __init__(
+        self,
+        atoms,
+        efermi=None,
+        bzkpts=None,
+        ibzkpts=None,
+        bz2ibz=None,
+        kpts=None,
+        **results
+    ):
         self.bz_kpts = bzkpts
         self.ibz_kpts = ibzkpts
         self.bz2ibz = bz2ibz
@@ -129,7 +143,7 @@ class SinglePointDFTCalculator(SinglePointCalculator):
         elif len(values) == 1:
             return values.pop()
         else:
-            raise RuntimeError('Multiple array sizes')
+            raise RuntimeError("Multiple array sizes")
 
     def get_spin_polarized(self):
         """Is it a spin-polarized calculation?"""
@@ -153,7 +167,7 @@ class SinglePointDFTCalculator(SinglePointCalculator):
         return None
 
     def get_k_point_weights(self):
-        """ Retunrs the weights of the k points """
+        """Retunrs the weights of the k points"""
         if self.kpts is not None:
             weights = []
             for kpoint in self.kpts:
@@ -180,7 +194,7 @@ class SinglePointDFTCalculator(SinglePointCalculator):
     def get_homo_lumo(self):
         """Return HOMO and LUMO energies."""
         if self.kpts is None:
-            raise RuntimeError('No kpts')
+            raise RuntimeError("No kpts")
         eH = -np.inf
         eL = np.inf
         for spin in range(self.get_number_of_spins()):
@@ -192,16 +206,16 @@ class SinglePointDFTCalculator(SinglePointCalculator):
     def get_homo_lumo_by_spin(self, spin=0):
         """Return HOMO and LUMO energies for a given spin."""
         if self.kpts is None:
-            raise RuntimeError('No kpts')
+            raise RuntimeError("No kpts")
         for kpt in self.kpts:
             if kpt.s == spin:
                 break
         else:
-            raise RuntimeError('No k-point with spin {0}'.format(spin))
+            raise RuntimeError("No k-point with spin {0}".format(spin))
         if self.eFermi is None:
-            raise RuntimeError('Fermi level is not available')
-        eH = -1.e32
-        eL = 1.e32
+            raise RuntimeError("Fermi level is not available")
+        eH = -1.0e32
+        eL = 1.0e32
         for kpt in self.kpts:
             if kpt.s == spin:
                 for e in kpt.eps_n:
@@ -224,6 +238,7 @@ def propertygetter(func):
         if value is None:
             raise PropertyNotPresent(func.__name__)
         return value
+
     return lazyproperty(getter)
 
 
@@ -275,8 +290,13 @@ class OutputPropertyWrapper:
 
     def properties(self) -> Properties:
         dct = {}
-        for name in ['eigenvalues', 'occupations', 'fermi_level',
-                     'kpoint_weights', 'ibz_kpoints']:
+        for name in [
+            "eigenvalues",
+            "occupations",
+            "fermi_level",
+            "kpoint_weights",
+            "ibz_kpoints",
+        ]:
             try:
                 value = getattr(self, name)
             except PropertyNotPresent:

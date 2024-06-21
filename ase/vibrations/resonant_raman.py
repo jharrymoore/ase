@@ -11,12 +11,18 @@ from ase.vibrations.raman import Raman, RamanCalculatorBase
 
 
 class ResonantRamanCalculator(RamanCalculatorBase, Vibrations):
-    """Base class for resonant Raman calculators using finite differences.
-    """
+    """Base class for resonant Raman calculators using finite differences."""
 
-    def __init__(self, atoms, ExcitationsCalculator, *args,
-                 exkwargs=None, exext='.ex.gz', overlap=False,
-                 **kwargs):
+    def __init__(
+        self,
+        atoms,
+        ExcitationsCalculator,
+        *args,
+        exkwargs=None,
+        exext=".ex.gz",
+        overlap=False,
+        **kwargs
+    ):
         """
         Parameters
         ----------
@@ -70,13 +76,12 @@ class ResonantRamanCalculator(RamanCalculatorBase, Vibrations):
 
             ov_ij = int dr displaced*_i(r) eqilibrium_j(r)
             """
-            ov_nn = self.overlap(self.atoms.calc,
-                                 self.eq_calculator)
+            ov_nn = self.overlap(self.atoms.calc, self.eq_calculator)
             if world.rank == 0:
                 disp.save_ov_nn(ov_nn)
 
         disp.calculate_and_save_exlist(atoms)
-        return {'forces': forces}
+        return {"forces": forces}
 
     def run(self):
         if self.overlap:
@@ -84,8 +89,8 @@ class ResonantRamanCalculator(RamanCalculatorBase, Vibrations):
             self.atoms.get_potential_energy()
             self.eq_calculator = self.atoms.calc
             Path(self.name).mkdir(parents=True, exist_ok=True)
-            fname = Path(self.name) / 'tmp.gpw'
-            self.eq_calculator.write(fname, 'all')
+            fname = Path(self.name) / "tmp.gpw"
+            self.eq_calculator.write(fname, "all")
             self.eq_calculator = self.eq_calculator.__class__(restart=fname)
             try:
                 # XXX GPAW specific
@@ -96,19 +101,23 @@ class ResonantRamanCalculator(RamanCalculatorBase, Vibrations):
 
 
 class ResonantRaman(Raman):
-    """Base Class for resonant Raman intensities using finite differences.
-    """
+    """Base Class for resonant Raman intensities using finite differences."""
 
-    def __init__(self, atoms, Excitations, *args,
-                 observation=None,
-                 form='v',         # form of the dipole operator
-                 exkwargs=None,      # kwargs to be passed to Excitations
-                 exext='.ex.gz',   # extension for Excitation names
-                 overlap=False,
-                 minoverlap=0.02,
-                 minrep=0.8,
-                 comm=world,
-                 **kwargs):
+    def __init__(
+        self,
+        atoms,
+        Excitations,
+        *args,
+        observation=None,
+        form="v",  # form of the dipole operator
+        exkwargs=None,  # kwargs to be passed to Excitations
+        exext=".ex.gz",  # extension for Excitation names
+        overlap=False,
+        minoverlap=0.02,
+        minrep=0.8,
+        comm=world,
+        **kwargs
+    ):
         """
         Parameters
         ----------
@@ -149,9 +158,9 @@ class ResonantRaman(Raman):
         """
 
         if observation is None:
-            observation = {'geometry': '-Z(XX)Z'}
+            observation = {"geometry": "-Z(XX)Z"}
 
-        kwargs['exext'] = exext
+        kwargs["exext"] = exext
         Raman.__init__(self, atoms, *args, **kwargs)
         assert self.vibrations.nfree == 2
 
@@ -165,8 +174,7 @@ class ResonantRaman(Raman):
         self.overlap = overlap
         if not isinstance(minoverlap, dict):
             # assume it's a number
-            self.minoverlap = {'orbitals': minoverlap,
-                               'excitations': minoverlap}
+            self.minoverlap = {"orbitals": minoverlap, "excitations": minoverlap}
         else:
             self.minoverlap = minoverlap
         self.minrep = minrep
@@ -196,7 +204,8 @@ class ResonantRaman(Raman):
         raman intensity, unit Ang**4/amu
         """
         alpha2_r, gamma2_r, delta2_r = self._invariants(
-            self.electronic_me_Qcc(omega, gamma, **kwargs))
+            self.electronic_me_Qcc(omega, gamma, **kwargs)
+        )
         return 45 * alpha2_r + delta * delta2_r + 7 * gamma2_r
 
     @property
@@ -228,10 +237,8 @@ class ResonantRaman(Raman):
         for a, i in zip(self.myindices, self.myxyz):
             mdisp = self._disp(a, i, -1)
             pdisp = self._disp(a, i, 1)
-            matching = append(exm_object_list,
-                              mdisp, matching)
-            matching = append(exp_object_list,
-                              pdisp, matching)
+            matching = append(exm_object_list, mdisp, matching)
+            matching = append(exp_object_list, pdisp, matching)
 
         def select(exl, matching):
             mlst = [ex for ex in exl if ex in matching]
@@ -248,9 +255,9 @@ class ResonantRaman(Raman):
             r += 1
 
         self.ex0E_p = np.array([ex.energy * eu for ex in ex0])
-        self.ex0m_pc = (np.array(
-            [ex.get_dipole_me(form=self.dipole_form) for ex in ex0]) *
-            u.Bohr)
+        self.ex0m_pc = (
+            np.array([ex.get_dipole_me(form=self.dipole_form) for ex in ex0]) * u.Bohr
+        )
         exmE_rp = []
         expE_rp = []
         exF_rp = []
@@ -260,15 +267,9 @@ class ResonantRaman(Raman):
         for a, i in zip(self.myindices, self.myxyz):
             exmE_rp.append([em.energy for em in exm[r]])
             expE_rp.append([ep.energy for ep in exp[r]])
-            exF_rp.append(
-                [(em.energy - ep.energy)
-                 for ep, em in zip(exp[r], exm[r])])
-            exmm_rpc.append(
-                [ex.get_dipole_me(form=self.dipole_form)
-                 for ex in exm[r]])
-            expm_rpc.append(
-                [ex.get_dipole_me(form=self.dipole_form)
-                 for ex in exp[r]])
+            exF_rp.append([(em.energy - ep.energy) for ep, em in zip(exp[r], exm[r])])
+            exmm_rpc.append([ex.get_dipole_me(form=self.dipole_form) for ex in exm[r]])
+            expm_rpc.append([ex.get_dipole_me(form=self.dipole_form) for ex in exp[r]])
             r += 1
         # indicees: r=coordinate, p=excitation
         # energies in eV
@@ -295,21 +296,17 @@ class ResonantRaman(Raman):
             ex_p = disp.read_exobj()
             ov_nn = disp.load_ov_nn()
             # remove numerical garbage
-            ov_nn = np.where(np.abs(ov_nn) > self.minoverlap['orbitals'],
-                             ov_nn, 0)
+            ov_nn = np.where(np.abs(ov_nn) > self.minoverlap["orbitals"], ov_nn, 0)
             ov_pp = ex_p.overlap(ov_nn, ex0)
-            ov_pp = np.where(np.abs(ov_pp) > self.minoverlap['excitations'],
-                             ov_pp, 0)
+            ov_pp = np.where(np.abs(ov_pp) > self.minoverlap["excitations"], ov_pp, 0)
             rep0_p *= (ov_pp.real**2 + ov_pp.imag**2).sum(axis=0)
             return ex_p, ov_pp
 
         def rotate(ex_p, ov_pp):
             e_p = np.array([ex.energy for ex in ex_p])
-            m_pc = np.array(
-                [ex.get_dipole_me(form=self.dipole_form) for ex in ex_p])
+            m_pc = np.array([ex.get_dipole_me(form=self.dipole_form) for ex in ex_p])
             r_pp = ov_pp.T
-            return ((r_pp.real**2 + r_pp.imag**2).dot(e_p),
-                    r_pp.dot(m_pc))
+            return ((r_pp.real**2 + r_pp.imag**2).dot(e_p), r_pp.dot(m_pc))
 
         exmE_rp = []
         expE_rp = []
@@ -336,9 +333,10 @@ class ResonantRaman(Raman):
         select = np.where(rep0_p > self.minrep)[0]
 
         self.ex0E_p = np.array([ex.energy * eu for ex in ex0])[select]
-        self.ex0m_pc = (np.array(
-            [ex.get_dipole_me(form=self.dipole_form)
-             for ex in ex0])[select] * u.Bohr)
+        self.ex0m_pc = (
+            np.array([ex.get_dipole_me(form=self.dipole_form) for ex in ex0])[select]
+            * u.Bohr
+        )
 
         if len(self.myr):
             # indicees: r=coordinate, p=excitation
@@ -351,8 +349,9 @@ class ResonantRaman(Raman):
             self.exmm_rpc = np.array(exmm_rpc)[:, select, :] * u.Bohr
             self.expm_rpc = np.array(expm_rpc)[:, select, :] * u.Bohr
             # matrix element derivatives in e
-            self.exdmdr_rpc = (np.array(exdmdr_rpc)[:, select, :] *
-                               u.Bohr / 2 / self.delta)
+            self.exdmdr_rpc = (
+                np.array(exdmdr_rpc)[:, select, :] * u.Bohr / 2 / self.delta
+            )
         else:
             # did not read
             self.exmE_rp = self.expE_rp = self.exF_rp = np.empty((0))
@@ -362,7 +361,7 @@ class ResonantRaman(Raman):
         """Read data from a pre-performed calculation."""
         self.vibrations.read(*args, **kwargs)
         self.init_parallel_read()
-        if not hasattr(self, 'ex0E_p'):
+        if not hasattr(self, "ex0E_p"):
             if self.overlap:
                 self.read_excitations_overlap()
             else:
@@ -373,15 +372,23 @@ class ResonantRaman(Raman):
     def get_cross_sections(self, omega, gamma):
         """Returns Raman cross sections for each vibration."""
         I_v = self.intensity(omega, gamma)
-        pre = 1. / 16 / np.pi**2 / u._eps0**2 / u._c**4
+        pre = 1.0 / 16 / np.pi**2 / u._eps0**2 / u._c**4
         # frequency of scattered light
         omS_v = omega - self.om_Q
         return pre * omega * omS_v**3 * I_v
 
-    def get_spectrum(self, omega, gamma=0.1,
-                     start=None, end=None, npts=None, width=20,
-                     type='Gaussian',
-                     intensity_unit='????', normalize=False):
+    def get_spectrum(
+        self,
+        omega,
+        gamma=0.1,
+        start=None,
+        end=None,
+        npts=None,
+        width=20,
+        type="Gaussian",
+        intensity_unit="????",
+        normalize=False,
+    ):
         """Get resonant Raman spectrum.
 
         The method returns wavenumbers in cm^-1 with corresponding
@@ -391,7 +398,7 @@ class ResonantRaman(Raman):
         """
 
         self.type = type.lower()
-        assert self.type in ['gaussian', 'lorentzian']
+        assert self.type in ["gaussian", "lorentzian"]
 
         frequencies = self.get_energies().real / u.invcm
         intensities = self.get_cross_sections(omega, gamma)
@@ -407,106 +414,117 @@ class ResonantRaman(Raman):
             npts = int((end - start) / width * 10 + 1)
 
         prefactor = 1
-        if self.type == 'lorentzian':
-            intensities = intensities * width * np.pi / 2.
+        if self.type == "lorentzian":
+            intensities = intensities * width * np.pi / 2.0
             if normalize:
-                prefactor = 2. / width / np.pi
+                prefactor = 2.0 / width / np.pi
         else:
-            sigma = width / 2. / np.sqrt(2. * np.log(2.))
+            sigma = width / 2.0 / np.sqrt(2.0 * np.log(2.0))
             if normalize:
-                prefactor = 1. / sigma / np.sqrt(2 * np.pi)
+                prefactor = 1.0 / sigma / np.sqrt(2 * np.pi)
         # Make array with spectrum data
         spectrum = np.empty(npts)
         energies = np.linspace(start, end, npts)
         for i, energy in enumerate(energies):
             energies[i] = energy
-            if self.type == 'lorentzian':
-                spectrum[i] = (intensities * 0.5 * width / np.pi /
-                               ((frequencies - energy)**2 +
-                                0.25 * width**2)).sum()
+            if self.type == "lorentzian":
+                spectrum[i] = (
+                    intensities
+                    * 0.5
+                    * width
+                    / np.pi
+                    / ((frequencies - energy) ** 2 + 0.25 * width**2)
+                ).sum()
             else:
-                spectrum[i] = (intensities *
-                               np.exp(-(frequencies - energy)**2 /
-                                      2. / sigma**2)).sum()
+                spectrum[i] = (
+                    intensities
+                    * np.exp(-((frequencies - energy) ** 2) / 2.0 / sigma**2)
+                ).sum()
         return [energies, prefactor * spectrum]
 
-    def write_spectrum(self, omega, gamma,
-                       out='resonant-raman-spectra.dat',
-                       start=200, end=4000,
-                       npts=None, width=10,
-                       type='Gaussian'):
+    def write_spectrum(
+        self,
+        omega,
+        gamma,
+        out="resonant-raman-spectra.dat",
+        start=200,
+        end=4000,
+        npts=None,
+        width=10,
+        type="Gaussian",
+    ):
         """Write out spectrum to file.
 
         Start and end
         point, and width of the Gaussian/Lorentzian should be given
         in cm^-1."""
-        energies, spectrum = self.get_spectrum(omega, gamma,
-                                               start, end, npts, width,
-                                               type)
+        energies, spectrum = self.get_spectrum(
+            omega, gamma, start, end, npts, width, type
+        )
 
         # Write out spectrum in file. First column is absolute intensities.
         outdata = np.empty([len(energies), 3])
         outdata.T[0] = energies
         outdata.T[1] = spectrum
 
-        with paropen(out, 'w') as fd:
-            fd.write('# Resonant Raman spectrum\n')
-            if hasattr(self, '_approx'):
-                fd.write('# approximation: {0}\n'.format(self._approx))
+        with paropen(out, "w") as fd:
+            fd.write("# Resonant Raman spectrum\n")
+            if hasattr(self, "_approx"):
+                fd.write("# approximation: {0}\n".format(self._approx))
             for key in self.observation:
-                fd.write('# {0}: {1}\n'.format(key, self.observation[key]))
-            fd.write('# omega={0:g} eV, gamma={1:g} eV\n'
-                     .format(omega, gamma))
+                fd.write("# {0}: {1}\n".format(key, self.observation[key]))
+            fd.write("# omega={0:g} eV, gamma={1:g} eV\n".format(omega, gamma))
             if width is not None:
-                fd.write('# %s folded, width=%g cm^-1\n'
-                         % (type.title(), width))
-            fd.write('# [cm^-1]  [a.u.]\n')
+                fd.write("# %s folded, width=%g cm^-1\n" % (type.title(), width))
+            fd.write("# [cm^-1]  [a.u.]\n")
 
             for row in outdata:
-                fd.write('%.3f  %15.5g\n' %
-                         (row[0], row[1]))
+                fd.write("%.3f  %15.5g\n" % (row[0], row[1]))
 
-    def summary(self, omega, gamma=0.1,
-                method='standard', direction='central',
-                log=sys.stdout):
+    def summary(
+        self, omega, gamma=0.1, method="standard", direction="central", log=sys.stdout
+    ):
         """Print summary for given omega [eV]"""
         self.read(method, direction)
         hnu = self.get_energies()
         intensities = self.get_absolute_intensities(omega, gamma)
         te = int(np.log10(intensities.max())) - 2
-        scale = 10**(-te)
+        scale = 10 ** (-te)
         if not te:
-            ts = ''
+            ts = ""
         elif te > -2 and te < 3:
             ts = str(10**te)
         else:
-            ts = '10^{0}'.format(te)
+            ts = "10^{0}".format(te)
 
         if isinstance(log, str):
-            log = paropen(log, 'a')
+            log = paropen(log, "a")
 
-        parprint('-------------------------------------', file=log)
-        parprint(' excitation at ' + str(omega) + ' eV', file=log)
-        parprint(' gamma ' + str(gamma) + ' eV', file=log)
-        parprint(' method:', self.vibrations.method, file=log)
-        parprint(' approximation:', self.approximation, file=log)
-        parprint(' Mode    Frequency        Intensity', file=log)
-        parprint('  #    meV     cm^-1      [{0}A^4/amu]'.format(ts), file=log)
-        parprint('-------------------------------------', file=log)
+        parprint("-------------------------------------", file=log)
+        parprint(" excitation at " + str(omega) + " eV", file=log)
+        parprint(" gamma " + str(gamma) + " eV", file=log)
+        parprint(" method:", self.vibrations.method, file=log)
+        parprint(" approximation:", self.approximation, file=log)
+        parprint(" Mode    Frequency        Intensity", file=log)
+        parprint("  #    meV     cm^-1      [{0}A^4/amu]".format(ts), file=log)
+        parprint("-------------------------------------", file=log)
         for n, e in enumerate(hnu):
             if e.imag != 0:
-                c = 'i'
+                c = "i"
                 e = e.imag
             else:
-                c = ' '
+                c = " "
                 e = e.real
-            parprint('%3d %6.1f%s  %7.1f%s  %9.2f' %
-                     (n, 1000 * e, c, e / u.invcm, c, intensities[n] * scale),
-                     file=log)
-        parprint('-------------------------------------', file=log)
-        parprint('Zero-point energy: %.3f eV' %
-                 self.vibrations.get_zero_point_energy(),
-                 file=log)
+            parprint(
+                "%3d %6.1f%s  %7.1f%s  %9.2f"
+                % (n, 1000 * e, c, e / u.invcm, c, intensities[n] * scale),
+                file=log,
+            )
+        parprint("-------------------------------------", file=log)
+        parprint(
+            "Zero-point energy: %.3f eV" % self.vibrations.get_zero_point_energy(),
+            file=log,
+        )
 
 
 class LrResonantRaman(ResonantRaman):
@@ -530,39 +548,36 @@ class LrResonantRaman(ResonantRaman):
         exm_object_list = []
         exp_object_list = []
         for a in self.indices:
-            for i in 'xyz':
+            for i in "xyz":
                 disp1 = self._disp(a, i, -1)
                 disp2 = self._disp(a, i, 1)
 
-                matching = append(exm_object_list,
-                                  disp1,
-                                  matching)
-                matching = append(exp_object_list,
-                                  disp2,
-                                  matching)
+                matching = append(exm_object_list, disp1, matching)
+                matching = append(exp_object_list, disp2, matching)
 
         def select(exl, matching):
             exl.diagonalize(**self.exkwargs)
             mlist = list(exl)
-#            mlst = [ex for ex in exl if ex in matching]
-#            assert(len(mlst) == len(matching))
+            #            mlst = [ex for ex in exl if ex in matching]
+            #            assert(len(mlst) == len(matching))
             return mlist
+
         ex0 = select(ex0_object, matching)
         exm = []
         exp = []
         r = 0
         for a in self.indices:
-            for i in 'xyz':
+            for i in "xyz":
                 exm.append(select(exm_object_list[r], matching))
                 exp.append(select(exp_object_list[r], matching))
                 r += 1
 
         self.ex0E_p = np.array([ex.energy * eu for ex in ex0])
-#        self.exmE_p = np.array([ex.energy * eu for ex in exm])
-#        self.expE_p = np.array([ex.energy * eu for ex in exp])
-        self.ex0m_pc = (np.array(
-            [ex.get_dipole_me(form=self.dipole_form) for ex in ex0]) *
-            u.Bohr)
+        #        self.exmE_p = np.array([ex.energy * eu for ex in exm])
+        #        self.expE_p = np.array([ex.energy * eu for ex in exp])
+        self.ex0m_pc = (
+            np.array([ex.get_dipole_me(form=self.dipole_form) for ex in ex0]) * u.Bohr
+        )
         self.exF_rp = []
         exmE_rp = []
         expE_rp = []
@@ -570,16 +585,18 @@ class LrResonantRaman(ResonantRaman):
         expm_rpc = []
         r = 0
         for a in self.indices:
-            for i in 'xyz':
+            for i in "xyz":
                 exmE_rp.append([em.energy for em in exm[r]])
                 expE_rp.append([ep.energy for ep in exp[r]])
                 self.exF_rp.append(
-                    [(em.energy - ep.energy)
-                     for ep, em in zip(exp[r], exm[r])])
+                    [(em.energy - ep.energy) for ep, em in zip(exp[r], exm[r])]
+                )
                 exmm_rpc.append(
-                    [ex.get_dipole_me(form=self.dipole_form) for ex in exm[r]])
+                    [ex.get_dipole_me(form=self.dipole_form) for ex in exm[r]]
+                )
                 expm_rpc.append(
-                    [ex.get_dipole_me(form=self.dipole_form) for ex in exp[r]])
+                    [ex.get_dipole_me(form=self.dipole_form) for ex in exp[r]]
+                )
                 r += 1
         self.exmE_rp = np.array(exmE_rp) * eu
         self.expE_rp = np.array(expE_rp) * eu

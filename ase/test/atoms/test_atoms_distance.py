@@ -10,7 +10,7 @@ def test_atoms_distance():
     # O-C Dist = 3
     # C-H Dist = 5 with mic=False
     # C-H Dist = 4 with mic=True
-    a = Atoms('HOC', positions=[(1, 1, 1), (3, 1, 1), (6, 1, 1)])
+    a = Atoms("HOC", positions=[(1, 1, 1), (3, 1, 1), (6, 1, 1)])
     a.set_cell((9, 2, 2))
     a.set_pbc((True, False, False))
 
@@ -31,14 +31,10 @@ def test_atoms_distance():
     assert (a.get_distances(0, [1, 2], mic=False) == [2, 5]).all()
 
     # Calculate all with mic=True
-    assert (a.get_all_distances(mic=True) == [[0, 2, 4],
-                                              [2, 0, 3],
-                                              [4, 3, 0]]).all()
+    assert (a.get_all_distances(mic=True) == [[0, 2, 4], [2, 0, 3], [4, 3, 0]]).all()
 
     # Calculate all with mic=False
-    assert (a.get_all_distances(mic=False) == [[0, 2, 5],
-                                               [2, 0, 3],
-                                               [5, 3, 0]]).all()
+    assert (a.get_all_distances(mic=False) == [[0, 2, 5], [2, 0, 3], [5, 3, 0]]).all()
 
     # Scale Distance
     old = a.get_distance(0, 1)
@@ -57,14 +53,11 @@ def test_atoms_distance():
 
 def test_antisymmetry():
     size = 2
-    atoms = FaceCenteredCubic(size=[size, size, size],
-                              symbol='Cu',
-                              latticeconstant=2,
-                              pbc=(1, 1, 1))
+    atoms = FaceCenteredCubic(
+        size=[size, size, size], symbol="Cu", latticeconstant=2, pbc=(1, 1, 1)
+    )
 
-    vmin, vlen = get_distances(atoms.get_positions(),
-                               cell=atoms.cell,
-                               pbc=True)
+    vmin, vlen = get_distances(atoms.get_positions(), cell=atoms.cell, pbc=True)
     assert (vlen == vlen.T).all()
 
     for i, j in itertools.combinations(range(len(atoms)), 2):

@@ -4,7 +4,7 @@ def test_fixcom():
     from ase.constraints import FixCom
     from ase.build import molecule
 
-    atoms = molecule('H2O')
+    atoms = molecule("H2O")
     atoms.center(vacuum=4)
     atoms.calc = EMT()
     cold = atoms.get_center_of_mass()

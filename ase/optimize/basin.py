@@ -17,16 +17,19 @@ class BasinHopping(Dynamics):
     David J. Wales and Harold A. Scheraga, Science, Vol. 285, 1368 (1999)
     """
 
-    def __init__(self, atoms,
-                 temperature=100 * kB,
-                 optimizer=FIRE,
-                 fmax=0.1,
-                 dr=0.1,
-                 logfile='-',
-                 trajectory='lowest.traj',
-                 optimizer_logfile='-',
-                 local_minima_trajectory='local_minima.traj',
-                 adjust_cm=True):
+    def __init__(
+        self,
+        atoms,
+        temperature=100 * kB,
+        optimizer=FIRE,
+        fmax=0.1,
+        dr=0.1,
+        logfile="-",
+        trajectory="lowest.traj",
+        optimizer_logfile="-",
+        local_minima_trajectory="local_minima.traj",
+        adjust_cm=True,
+    ):
         """Parameters:
 
         atoms: Atoms object
@@ -52,23 +55,26 @@ class BasinHopping(Dynamics):
         self.lm_trajectory = local_minima_trajectory
         if isinstance(local_minima_trajectory, str):
             self.lm_trajectory = self.closelater(
-                Trajectory(local_minima_trajectory, 'w', atoms))
+                Trajectory(local_minima_trajectory, "w", atoms)
+            )
 
         Dynamics.__init__(self, atoms, logfile, trajectory)
         self.initialize()
 
     def todict(self):
-        d = {'type': 'optimization',
-             'optimizer': self.__class__.__name__,
-             'local-minima-optimizer': self.optimizer.__name__,
-             'temperature': self.kT,
-             'max-force': self.fmax,
-             'maximal-step-width': self.dr}
+        d = {
+            "type": "optimization",
+            "optimizer": self.__class__.__name__,
+            "local-minima-optimizer": self.optimizer.__name__,
+            "temperature": self.kT,
+            "max-force": self.fmax,
+            "maximal-step-width": self.dr,
+        }
         return d
 
     def initialize(self):
         self.positions = 0.0 * self.atoms.get_positions()
-        self.Emin = self.get_energy(self.atoms.get_positions()) or 1.e32
+        self.Emin = self.get_energy(self.atoms.get_positions()) or 1.0e32
         self.rmin = self.atoms.get_positions()
         self.positions = self.atoms.get_positions()
         self.call_observers()
@@ -102,15 +108,16 @@ class BasinHopping(Dynamics):
         if self.logfile is None:
             return
         name = self.__class__.__name__
-        self.logfile.write('%s: step %d, energy %15.6f, emin %15.6f\n'
-                           % (name, step, En, Emin))
+        self.logfile.write(
+            "%s: step %d, energy %15.6f, emin %15.6f\n" % (name, step, En, Emin)
+        )
         self.logfile.flush()
 
     def move(self, ro):
         """Move atoms by a random step."""
         atoms = self.atoms
         # displace coordinates
-        disp = np.random.uniform(-1., 1., (len(atoms), 3))
+        disp = np.random.uniform(-1.0, 1.0, (len(atoms), 3))
         rn = ro + self.dr * disp
         atoms.set_positions(rn)
         if self.cm is not None:
@@ -133,8 +140,7 @@ class BasinHopping(Dynamics):
             self.positions = positions
             self.atoms.set_positions(positions)
 
-            with self.optimizer(self.atoms,
-                                logfile=self.optimizer_logfile) as opt:
+            with self.optimizer(self.atoms, logfile=self.optimizer_logfile) as opt:
                 opt.run(fmax=self.fmax)
             if self.lm_trajectory is not None:
                 self.lm_trajectory.write(self.atoms)

@@ -8,19 +8,18 @@ from ase.visualize.plot import plot_atoms
 
 
 def test_matplotlib_plot_info_occupancies(plt):
-    slab = FaceCenteredCubic('Au')
-    slab.info['occupancy'] = {'0': {'Au': 1}}
+    slab = FaceCenteredCubic("Au")
+    slab.info["occupancy"] = {"0": {"Au": 1}}
     fig, ax = plt.subplots()
     plot_atoms(slab, ax, show_unit_cell=0)
     assert len(ax.patches) == len(slab)
 
 
 def test_matplotlib_plot(plt):
-    slab = FaceCenteredCubic('Au', size=(2, 2, 2))
+    slab = FaceCenteredCubic("Au", size=(2, 2, 2))
 
     fig, ax = plt.subplots()
-    plot_atoms(slab, ax, radii=0.5, rotation=('10x,10y,10z'),
-               show_unit_cell=0)
+    plot_atoms(slab, ax, radii=0.5, rotation=("10x,10y,10z"), show_unit_cell=0)
 
     assert len(ax.patches) == len(slab)
 
@@ -44,11 +43,10 @@ class TestPlotManager:
         assert np.allclose(ax.lines[0].get_xydata().transpose(), xy_data)
 
     def test_plot_manager_axis_file(self, testdir, xy_data, figure):
-        filename = 'plot.png'
+        filename = "plot.png"
         x, y = xy_data
         ax = figure.add_subplot(111)
-        with SimplePlottingAxes(ax=ax, show=False,
-                                filename=filename) as return_ax:
+        with SimplePlottingAxes(ax=ax, show=False, filename=filename) as return_ax:
             assert return_ax is ax
             ax.plot(x, y)
 

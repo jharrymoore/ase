@@ -9,8 +9,8 @@ from ase.calculators.calculator import FileIOCalculator, EnvironmentError
 
 
 class GaussianDynamics:
-    calctype = 'optimizer'
-    delete = ['force']
+    calctype = "optimizer"
+    delete = ["force"]
     keyword: Optional[str] = None
     special_keywords: Dict[str, str] = dict()
 
@@ -20,14 +20,15 @@ class GaussianDynamics:
             self.calc = calc
         else:
             if self.atoms.calc is None:
-                raise ValueError("{} requires a valid Gaussian calculator "
-                                 "object!".format(self.__class__.__name__))
+                raise ValueError(
+                    "{} requires a valid Gaussian calculator "
+                    "object!".format(self.__class__.__name__)
+                )
 
             self.calc = self.atoms.calc
 
     def todict(self):
-        return {'type': self.calctype,
-                'optimizer': self.__class__.__name__}
+        return {"type": self.calctype, "optimizer": self.__class__.__name__}
 
     def delete_keywords(self, kwargs):
         """removes list of keywords (delete) from kwargs"""
@@ -66,7 +67,7 @@ class GaussianDynamics:
         else:
             converged = True
 
-        atoms = read(self.calc.label + '.log')
+        atoms = read(self.calc.label + ".log")
         self.atoms.cell = atoms.cell
         self.atoms.positions = atoms.positions
 
@@ -79,56 +80,63 @@ class GaussianDynamics:
 
 
 class GaussianOptimizer(GaussianDynamics):
-    keyword = 'opt'
+    keyword = "opt"
     special_keywords = {
-        'fmax': '{}',
-        'steps': 'maxcycle={}',
+        "fmax": "{}",
+        "steps": "maxcycle={}",
     }
 
 
 class GaussianIRC(GaussianDynamics):
-    keyword = 'irc'
+    keyword = "irc"
     special_keywords = {
-        'direction': '{}',
-        'steps': 'maxpoints={}',
+        "direction": "{}",
+        "steps": "maxpoints={}",
     }
 
 
 class Gaussian(FileIOCalculator):
-    implemented_properties = ['energy', 'forces', 'dipole']
-    command = 'GAUSSIAN < PREFIX.com > PREFIX.log'
+    implemented_properties = ["energy", "forces", "dipole"]
+    command = "GAUSSIAN < PREFIX.com > PREFIX.log"
     discard_results_on_any_change = True
 
-    def __init__(self, *args, label='Gaussian', **kwargs):
+    def __init__(self, *args, label="Gaussian", **kwargs):
         FileIOCalculator.__init__(self, *args, label=label, **kwargs)
 
     def calculate(self, *args, **kwargs):
-        gaussians = ('g16', 'g09', 'g03')
-        if 'GAUSSIAN' in self.command:
+        gaussians = ("g16", "g09", "g03")
+        if "GAUSSIAN" in self.command:
             for gau in gaussians:
                 if which(gau):
-                    self.command = self.command.replace('GAUSSIAN', gau)
+                    self.command = self.command.replace("GAUSSIAN", gau)
                     break
             else:
-                raise EnvironmentError('Missing Gaussian executable {}'
-                                       .format(gaussians))
+                raise EnvironmentError(
+                    "Missing Gaussian executable {}".format(gaussians)
+                )
 
         FileIOCalculator.calculate(self, *args, **kwargs)
 
     def write_input(self, atoms, properties=None, system_changes=None):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
-        write(self.label + '.com', atoms, properties=properties,
-              format='gaussian-in', parallel=False, **self.parameters)
+        write(
+            self.label + ".com",
+            atoms,
+            properties=properties,
+            format="gaussian-in",
+            parallel=False,
+            **self.parameters
+        )
 
     def read_results(self):
-        output = read(self.label + '.log', format='gaussian-out')
+        output = read(self.label + ".log", format="gaussian-out")
         self.calc = output.calc
         self.results = output.calc.results
 
     # Method(s) defined in the old calculator, added here for
     # backwards compatibility
     def clean(self):
-        for suffix in ['.com', '.chk', '.log']:
+        for suffix in [".com", ".chk", ".log"]:
             try:
                 os.remove(os.path.join(self.directory, self.label + suffix))
             except OSError:

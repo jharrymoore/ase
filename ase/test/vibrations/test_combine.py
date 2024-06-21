@@ -5,10 +5,10 @@ from ase.test.utils import RandomCalculator
 
 
 def test_combine(testdir):
-    dirname = 'subdir'
-    vibname = 'ir'
+    dirname = "subdir"
+    vibname = "ir"
     with workdir(dirname, mkdir=True):
-        atoms = molecule('C2H6')
+        atoms = molecule("C2H6")
         ir = Infrared(atoms)
         assert ir.name == vibname
         ir.calc = RandomCalculator()
@@ -25,8 +25,8 @@ def test_combine(testdir):
         assert (freqs == vib.get_frequencies()).all()
 
         # Read the data from other working directory
-        with workdir('..'):
-            ir = Infrared(atoms, name=f'{dirname}/{vibname}')
+        with workdir(".."):
+            ir = Infrared(atoms, name=f"{dirname}/{vibname}")
             assert (freqs == ir.get_frequencies()).all()
 
         ir = Infrared(atoms)

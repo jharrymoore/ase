@@ -11,12 +11,12 @@ def read_eigenvalues_file(fd):
     unit = None
 
     for line in fd:
-        m = re.match(r'Eigenvalues\s*\[(.+?)\]', line)
+        m = re.match(r"Eigenvalues\s*\[(.+?)\]", line)
         if m is not None:
             unit = m.group(1)
             break
     line = next(fd)
-    assert line.strip().startswith('#st'), line
+    assert line.strip().startswith("#st"), line
 
     # fermilevel = None
     kpts = []
@@ -24,16 +24,16 @@ def read_eigenvalues_file(fd):
     occs = []
 
     for line in fd:
-        m = re.match(r'#k.*?\(\s*(.+?),\s*(.+?),\s*(.+?)\)', line)
+        m = re.match(r"#k.*?\(\s*(.+?),\s*(.+?),\s*(.+?)\)", line)
         if m:
             k = m.group(1, 2, 3)
             kpts.append(np.array(k, float))
             eigs.append({})
             occs.append({})
         else:
-            m = re.match(r'\s*\d+\s*(\S+)\s*(\S+)\s*(\S+)', line)
+            m = re.match(r"\s*\d+\s*(\S+)\s*(\S+)\s*(\S+)", line)
             if m is None:
-                m = re.match(r'Fermi energy\s*=\s*(\S+)\s*', line)
+                m = re.match(r"Fermi energy\s*=\s*(\S+)\s*", line)
                 assert m is not None
                 # We can also return the fermilevel but so far we just read
                 # it from the static/info instead.
@@ -64,13 +64,14 @@ def read_eigenvalues_file(fd):
 
     for k in range(nkpts):
         for arr, lst in [(eigsarr, eigs), (occsarr, occs)]:
-            arr[k, :, :] = [lst[k][sp] for sp
-                            in (['--'] if nspins == 1 else ['up', 'dn'])]
+            arr[k, :, :] = [
+                lst[k][sp] for sp in (["--"] if nspins == 1 else ["up", "dn"])
+            ]
 
     for arr in arrs:
         assert not np.isnan(arr).any()
 
-    eigsarr *= {'H': Hartree, 'eV': eV}[unit]
+    eigsarr *= {"H": Hartree, "eV": eV}[unit]
     return kptsarr, eigsarr, occsarr
 
 
@@ -78,7 +79,7 @@ def read_static_info_stress(fd):
     stress_cv = np.empty((3, 3))
 
     headers = next(fd)
-    assert headers.strip().startswith('T_{ij}')
+    assert headers.strip().startswith("T_{ij}")
     for i in range(3):
         line = next(fd)
         tokens = line.split()
@@ -89,20 +90,20 @@ def read_static_info_stress(fd):
 
 def read_static_info_kpoints(fd):
     for line in fd:
-        if line.startswith('List of k-points'):
+        if line.startswith("List of k-points"):
             break
 
     tokens = next(fd).split()
-    assert tokens == ['ik', 'k_x', 'k_y', 'k_z', 'Weight']
+    assert tokens == ["ik", "k_x", "k_y", "k_z", "Weight"]
     bar = next(fd)
-    assert bar.startswith('---')
+    assert bar.startswith("---")
 
     kpts = []
     weights = []
 
     for line in fd:
         # Format:        index   kx      ky      kz     weight
-        m = re.match(r'\s*\d+\s*(\S+)\s*(\S+)\s*(\S+)\s*(\S+)', line)
+        m = re.match(r"\s*\d+\s*(\S+)\s*(\S+)\s*(\S+)\s*(\S+)", line)
         if m is None:
             break
         kxyz = m.group(1, 2, 3)
@@ -123,10 +124,10 @@ def read_static_info_eigenvalues(fd, energy_unit):
     fermilevel = None
     for line in fd:
         line = line.strip()
-        if line.startswith('#'):
+        if line.startswith("#"):
             continue
         if not line[:1].isdigit():
-            m = re.match(r'Fermi energy\s*=\s*(\S+)', line)
+            m = re.match(r"Fermi energy\s*=\s*(\S+)", line)
             if m is not None:
                 fermilevel = float(m.group(1)) * energy_unit
             break
@@ -139,9 +140,9 @@ def read_static_info_eigenvalues(fd, energy_unit):
 
     nspins = len(values_sknx)
     if nspins == 1:
-        val = [values_sknx['--']]
+        val = [values_sknx["--"]]
     else:
-        val = [values_sknx['up'], values_sknx['dn']]
+        val = [values_sknx["up"], values_sknx["dn"]]
     val = np.array(val, float)
     nkpts, remainder = divmod(len(val[0]), nbands)
     assert remainder == 0
@@ -151,11 +152,13 @@ def read_static_info_eigenvalues(fd, energy_unit):
     eps_skn = eps_skn.transpose(1, 0, 2).copy()
     occ_skn = occ_skn.transpose(1, 0, 2).copy()
     assert eps_skn.flags.contiguous
-    d = dict(nspins=nspins,
-             nkpts=nkpts,
-             nbands=nbands,
-             eigenvalues=eps_skn,
-             occupations=occ_skn)
+    d = dict(
+        nspins=nspins,
+        nkpts=nkpts,
+        nbands=nbands,
+        eigenvalues=eps_skn,
+        occupations=occ_skn,
+    )
     if fermilevel is not None:
         d.update(fermi_level=fermilevel)
     return d
@@ -165,87 +168,89 @@ def read_static_info_energy(fd, energy_unit):
     def get(name):
         for line in fd:
             if line.strip().startswith(name):
-                return float(line.split('=')[-1].strip()) * energy_unit
-    return dict(energy=get('Total'), free_energy=get('Free'))
+                return float(line.split("=")[-1].strip()) * energy_unit
+
+    return dict(energy=get("Total"), free_energy=get("Free"))
 
 
 def read_static_info(fd):
     results = {}
 
     def get_energy_unit(line):  # Convert "title [unit]": ---> unit
-        return {'[eV]': eV, '[H]': Hartree}[line.split()[1].rstrip(':')]
+        return {"[eV]": eV, "[H]": Hartree}[line.split()[1].rstrip(":")]
 
     for line in fd:
-        if line.strip('*').strip().startswith('Brillouin zone'):
+        if line.strip("*").strip().startswith("Brillouin zone"):
             results.update(read_static_info_kpoints(fd))
-        elif line.startswith('Eigenvalues ['):
+        elif line.startswith("Eigenvalues ["):
             unit = get_energy_unit(line)
             results.update(read_static_info_eigenvalues(fd, unit))
-        elif line.startswith('Energy ['):
+        elif line.startswith("Energy ["):
             unit = get_energy_unit(line)
             results.update(read_static_info_energy(fd, unit))
-        elif line.startswith('Stress tensor'):
-            assert line.split()[-1] == '[H/b^3]'
+        elif line.startswith("Stress tensor"):
+            assert line.split()[-1] == "[H/b^3]"
             stress = read_static_info_stress(fd)
             stress *= Hartree / Bohr**3
             results.update(stress=stress)
-        elif line.startswith('Total Magnetic Moment'):
+        elif line.startswith("Total Magnetic Moment"):
             if 0:
                 line = next(fd)
                 values = line.split()
-                results['magmom'] = float(values[-1])
+                results["magmom"] = float(values[-1])
 
                 line = next(fd)
-                assert line.startswith('Local Magnetic Moments')
+                assert line.startswith("Local Magnetic Moments")
                 line = next(fd)
-                assert line.split() == ['Ion', 'mz']
+                assert line.split() == ["Ion", "mz"]
                 # Reading  Local Magnetic Moments
                 mag_moment = []
                 for line in fd:
-                    if line == '\n':
+                    if line == "\n":
                         break  # there is no more thing to search for
-                    line = line.replace('\n', ' ')
+                    line = line.replace("\n", " ")
                     values = line.split()
                     mag_moment.append(float(values[-1]))
 
-                results['magmoms'] = np.array(mag_moment)
-        elif line.startswith('Dipole'):
-            assert line.split()[-1] == '[Debye]'
+                results["magmoms"] = np.array(mag_moment)
+        elif line.startswith("Dipole"):
+            assert line.split()[-1] == "[Debye]"
             dipole = [float(next(fd).split()[-1]) for i in range(3)]
-            results['dipole'] = np.array(dipole) * Debye
-        elif line.startswith('Forces'):
+            results["dipole"] = np.array(dipole) * Debye
+        elif line.startswith("Forces"):
             forceunitspec = line.split()[-1]
-            forceunit = {'[eV/A]': eV / Angstrom,
-                         '[H/b]': Hartree / Bohr}[forceunitspec]
+            forceunit = {"[eV/A]": eV / Angstrom, "[H/b]": Hartree / Bohr}[
+                forceunitspec
+            ]
             forces = []
             line = next(fd)
-            assert line.strip().startswith('Ion')
+            assert line.strip().startswith("Ion")
             for line in fd:
-                if line.strip().startswith('---'):
+                if line.strip().startswith("---"):
                     break
                 tokens = line.split()[-3:]
                 forces.append([float(f) for f in tokens])
-            results['forces'] = np.array(forces) * forceunit
-        elif line.startswith('Fermi'):
+            results["forces"] = np.array(forces) * forceunit
+        elif line.startswith("Fermi"):
             tokens = line.split()
-            unit = {'eV': eV, 'H': Hartree}[tokens[-1]]
+            unit = {"eV": eV, "H": Hartree}[tokens[-1]]
             eFermi = float(tokens[-2]) * unit
-            results['efermi'] = eFermi
+            results["efermi"] = eFermi
 
-    if 'ibz_k_points' not in results:
-        results['ibz_k_points'] = np.zeros((1, 3))
-        results['k_point_weights'] = np.ones(1)
+    if "ibz_k_points" not in results:
+        results["ibz_k_points"] = np.zeros((1, 3))
+        results["k_point_weights"] = np.ones(1)
     if 0:  # 'efermi' not in results:
         # Find HOMO level.  Note: This could be a very bad
         # implementation with fractional occupations if the Fermi
         # level was not found otherwise.
-        all_energies = results['eigenvalues'].ravel()
-        all_occupations = results['occupations'].ravel()
+        all_energies = results["eigenvalues"].ravel()
+        all_occupations = results["occupations"].ravel()
         args = np.argsort(all_energies)
         for arg in args[::-1]:
             if all_occupations[arg] > 0.1:
                 break
         eFermi = all_energies[arg]
-        results['efermi'] = eFermi
+        results["efermi"] = eFermi
 
     return results

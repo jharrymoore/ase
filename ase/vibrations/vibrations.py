@@ -19,7 +19,7 @@ from collections import namedtuple
 class AtomicDisplacements:
     def _disp(self, a, i, step):
         if isinstance(i, str):  # XXX Simplify by removing this.
-            i = 'xyz'.index(i)
+            i = "xyz".index(i)
         return Displacement(a, i, np.sign(step), abs(step), self)
 
     def _eq_disp(self):
@@ -30,23 +30,22 @@ class AtomicDisplacements:
         return 3 * len(self.indices)
 
 
-class Displacement(namedtuple('Displacement', ['a', 'i', 'sign', 'ndisp',
-                                               'vib'])):
+class Displacement(namedtuple("Displacement", ["a", "i", "sign", "ndisp", "vib"])):
     @property
     def name(self):
         if self.sign == 0:
-            return 'eq'
+            return "eq"
 
-        axisname = 'xyz'[self.i]
-        dispname = self.ndisp * ' +-'[self.sign]
-        return f'{self.a}{axisname}{dispname}'
+        axisname = "xyz"[self.i]
+        dispname = self.ndisp * " +-"[self.sign]
+        return f"{self.a}{axisname}{dispname}"
 
     @property
     def _cached(self):
         return self.vib.cache[self.name]
 
     def forces(self):
-        return self._cached['forces'].copy()
+        return self._cached["forces"].copy()
 
     @property
     def step(self):
@@ -54,18 +53,18 @@ class Displacement(namedtuple('Displacement', ['a', 'i', 'sign', 'ndisp',
 
     # XXX dipole only valid for infrared
     def dipole(self):
-        return self._cached['dipole'].copy()
+        return self._cached["dipole"].copy()
 
     # XXX below stuff only valid for TDDFT excitation stuff
     def save_ov_nn(self, ov_nn):
-        np.save(Path(self.vib.exname) / (self.name + '.ov'), ov_nn)
+        np.save(Path(self.vib.exname) / (self.name + ".ov"), ov_nn)
 
     def load_ov_nn(self):
-        return np.load(Path(self.vib.exname) / (self.name + '.ov.npy'))
+        return np.load(Path(self.vib.exname) / (self.name + ".ov.npy"))
 
     @property
     def _exname(self):
-        return Path(self.vib.exname) / f'ex.{self.name}{self.vib.exext}'
+        return Path(self.vib.exname) / f"ex.{self.name}{self.vib.exext}"
 
     def calculate_and_save_static_polarizability(self, atoms):
         exobj = self.vib._new_exobj()
@@ -146,15 +145,14 @@ class Vibrations(AtomicDisplacements):
 
     """
 
-    def __init__(self, atoms, indices=None, name='vib', delta=0.01, nfree=2):
+    def __init__(self, atoms, indices=None, name="vib", delta=0.01, nfree=2):
         assert nfree in [2, 4]
         self.atoms = atoms
         self.calc = atoms.calc
         if indices is None:
             indices = range(len(atoms))
         if len(indices) != len(set(indices)):
-            raise ValueError(
-                'one (or more) indices included more than once')
+            raise ValueError("one (or more) indices included more than once")
         self.indices = np.asarray(indices)
 
         self.delta = delta
@@ -191,9 +189,10 @@ class Vibrations(AtomicDisplacements):
 
         if not self.cache.writable:
             raise RuntimeError(
-                'Cannot run calculation.  '
-                'Cache must be removed or split in order '
-                'to have only one sort of data structure at a time.')
+                "Cannot run calculation.  "
+                "Cache must be removed or split in order "
+                "to have only one sort of data structure at a time."
+            )
 
         self._check_old_pickles()
 
@@ -209,7 +208,8 @@ class Vibrations(AtomicDisplacements):
 
     def _check_old_pickles(self):
         from pathlib import Path
-        eq_pickle_path = Path(f'{self.name}.eq.pckl')
+
+        eq_pickle_path = Path(f"{self.name}.eq.pckl")
         pickle2json_instructions = f"""\
 Found old pickle files such as {eq_pickle_path}.  \
 Please remove them and recalculate or run \
@@ -228,7 +228,7 @@ Please remove them and recalculate or run \
         atoms = self.atoms if inplace else self.atoms.copy()
         displacements = self.displacements()
         eq_disp = next(displacements)
-        assert eq_disp.name == 'eq'
+        assert eq_disp.name == "eq"
         yield eq_disp, atoms
 
         for disp in displacements:
@@ -261,10 +261,10 @@ Please remove them and recalculate or run \
 
     def calculate(self, atoms, disp):
         results = {}
-        results['forces'] = self.calc.get_forces(atoms)
+        results["forces"] = self.calc.get_forces(atoms)
 
         if self.ir:
-            results['dipole'] = self.calc.get_dipole_moment(atoms)
+            results["dipole"] = self.calc.get_dipole_moment(atoms)
 
         return results
 
@@ -308,11 +308,11 @@ Please remove them and recalculate or run \
         self.cache = self.cache.split()
         return count
 
-    def read(self, method='standard', direction='central'):
+    def read(self, method="standard", direction="central"):
         self.method = method.lower()
         self.direction = direction.lower()
-        assert self.method in ['standard', 'frederiksen']
-        assert self.direction in ['central', 'forward', 'backward']
+        assert self.method in ["standard", "frederiksen"]
+        assert self.direction in ["central", "forward", "backward"]
 
         n = 3 * len(self.indices)
         H = np.empty((n, n))
@@ -320,7 +320,7 @@ Please remove them and recalculate or run \
 
         eq_disp = self._eq_disp()
 
-        if direction != 'central':
+        if direction != "central":
             feq = eq_disp.forces()
 
         for a, i in self._iter_ai():
@@ -329,28 +329,27 @@ Please remove them and recalculate or run \
 
             fminus = disp_minus.forces()
             fplus = disp_plus.forces()
-            if self.method == 'frederiksen':
+            if self.method == "frederiksen":
                 fminus[a] -= fminus.sum(0)
                 fplus[a] -= fplus.sum(0)
             if self.nfree == 4:
                 fminusminus = self._disp(a, i, -2).forces()
                 fplusplus = self._disp(a, i, 2).forces()
-                if self.method == 'frederiksen':
+                if self.method == "frederiksen":
                     fminusminus[a] -= fminusminus.sum(0)
                     fplusplus[a] -= fplusplus.sum(0)
-            if self.direction == 'central':
+            if self.direction == "central":
                 if self.nfree == 2:
-                    H[r] = .5 * (fminus - fplus)[self.indices].ravel()
+                    H[r] = 0.5 * (fminus - fplus)[self.indices].ravel()
                 else:
                     assert self.nfree == 4
-                    H[r] = H[r] = (-fminusminus +
-                                   8 * fminus -
-                                   8 * fplus +
-                                   fplusplus)[self.indices].ravel() / 12.0
-            elif self.direction == 'forward':
+                    H[r] = H[r] = (-fminusminus + 8 * fminus - 8 * fplus + fplusplus)[
+                        self.indices
+                    ].ravel() / 12.0
+            elif self.direction == "forward":
                 H[r] = (feq - fplus)[self.indices].ravel()
             else:
-                assert self.direction == 'backward'
+                assert self.direction == "backward"
                 H[r] = (fminus - feq)[self.indices].ravel()
             H[r] /= 2 * self.delta
             r += 1
@@ -358,11 +357,13 @@ Please remove them and recalculate or run \
         self.H = H
         masses = self.atoms.get_masses()
         if any(masses[self.indices] == 0):
-            raise RuntimeError('Zero mass encountered in one or more of '
-                               'the vibrated atoms. Use Atoms.set_masses()'
-                               ' to set all masses to non-zero values.')
+            raise RuntimeError(
+                "Zero mass encountered in one or more of "
+                "the vibrated atoms. Use Atoms.set_masses()"
+                " to set all masses to non-zero values."
+            )
 
-        self.im = np.repeat(masses[self.indices]**-0.5, 3)
+        self.im = np.repeat(masses[self.indices] ** -0.5, 3)
         self._vibrations = self.get_vibrations(read_cache=False)
 
         omega2, modes = np.linalg.eigh(self.im[:, None] * H * self.im)
@@ -370,10 +371,11 @@ Please remove them and recalculate or run \
 
         # Conversion factor:
         s = units._hbar * 1e10 / sqrt(units._e * units._amu)
-        self.hnu = s * omega2.astype(complex)**0.5
+        self.hnu = s * omega2.astype(complex) ** 0.5
 
-    def get_vibrations(self, method='standard', direction='central',
-                       read_cache=True, **kw):
+    def get_vibrations(
+        self, method="standard", direction="central", read_cache=True, **kw
+    ):
         """Get vibrations as VibrationsData object
 
         If read() has not yet been called, this will be called to assemble data
@@ -396,35 +398,38 @@ Please remove them and recalculate or run \
             return self._vibrations
 
         else:
-            if (self.H is None or method.lower() != self.method or
-                    direction.lower() != self.direction):
+            if (
+                self.H is None
+                or method.lower() != self.method
+                or direction.lower() != self.direction
+            ):
                 self.read(method, direction, **kw)
 
-            return VibrationsData.from_2d(self.atoms, self.H,
-                                          indices=self.indices)
+            return VibrationsData.from_2d(self.atoms, self.H, indices=self.indices)
 
-    def get_energies(self, method='standard', direction='central', **kw):
+    def get_energies(self, method="standard", direction="central", **kw):
         """Get vibration energies in eV."""
-        return self.get_vibrations(method=method,
-                                   direction=direction, **kw).get_energies()
+        return self.get_vibrations(
+            method=method, direction=direction, **kw
+        ).get_energies()
 
-    def get_frequencies(self, method='standard', direction='central'):
+    def get_frequencies(self, method="standard", direction="central"):
         """Get vibration frequencies in cm^-1."""
-        return self.get_vibrations(method=method,
-                                   direction=direction).get_frequencies()
+        return self.get_vibrations(method=method, direction=direction).get_frequencies()
 
-    def summary(self, method='standard', direction='central', freq=None,
-                log=sys.stdout):
+    def summary(
+        self, method="standard", direction="central", freq=None, log=sys.stdout
+    ):
         if freq is not None:
             energies = freq * units.invcm
         else:
             energies = self.get_energies(method=method, direction=direction)
 
         summary_lines = VibrationsData._tabulate_from_energies(energies)
-        log_text = '\n'.join(summary_lines) + '\n'
+        log_text = "\n".join(summary_lines) + "\n"
 
         if isinstance(log, str):
-            with paropen(log, 'a') as log_file:
+            with paropen(log, "a") as log_file:
                 log_file.write(log_text)
         else:
             log.write(log_text)
@@ -450,10 +455,10 @@ Please remove them and recalculate or run \
         else:
             n %= len(self.get_energies())
 
-        with ase.io.Trajectory('%s.%d.traj' % (self.name, n), 'w') as traj:
-            for image in (self.get_vibrations()
-                          .iter_animated_mode(n,
-                                              temperature=kT, frames=nimages)):
+        with ase.io.Trajectory("%s.%d.traj" % (self.name, n), "w") as traj:
+            for image in self.get_vibrations().iter_animated_mode(
+                n, temperature=kT, frames=nimages
+            ):
                 traj.write(image)
 
     def show_as_force(self, n, scale=0.2, show=True):
@@ -462,40 +467,56 @@ Please remove them and recalculate or run \
     def write_jmol(self):
         """Writes file for viewing of the modes with jmol."""
 
-        with open(self.name + '.xyz', 'w') as fd:
+        with open(self.name + ".xyz", "w") as fd:
             self._write_jmol(fd)
 
     def _write_jmol(self, fd):
         symbols = self.atoms.get_chemical_symbols()
         freq = self.get_frequencies()
         for n in range(3 * len(self.indices)):
-            fd.write('%6d\n' % len(self.atoms))
+            fd.write("%6d\n" % len(self.atoms))
 
             if freq[n].imag != 0:
-                c = 'i'
+                c = "i"
                 freq[n] = freq[n].imag
 
             else:
                 freq[n] = freq[n].real
-                c = ' '
+                c = " "
 
-            fd.write('Mode #%d, f = %.1f%s cm^-1'
-                     % (n, float(freq[n].real), c))
+            fd.write("Mode #%d, f = %.1f%s cm^-1" % (n, float(freq[n].real), c))
 
             if self.ir:
-                fd.write(', I = %.4f (D/Å)^2 amu^-1.\n' % self.intensities[n])
+                fd.write(", I = %.4f (D/Å)^2 amu^-1.\n" % self.intensities[n])
             else:
-                fd.write('.\n')
+                fd.write(".\n")
 
             mode = self.get_mode(n)
             for i, pos in enumerate(self.atoms.positions):
-                fd.write('%2s %12.5f %12.5f %12.5f %12.5f %12.5f %12.5f\n' %
-                         (symbols[i], pos[0], pos[1], pos[2],
-                          mode[i, 0], mode[i, 1], mode[i, 2]))
+                fd.write(
+                    "%2s %12.5f %12.5f %12.5f %12.5f %12.5f %12.5f\n"
+                    % (
+                        symbols[i],
+                        pos[0],
+                        pos[1],
+                        pos[2],
+                        mode[i, 0],
+                        mode[i, 1],
+                        mode[i, 2],
+                    )
+                )
 
-    def fold(self, frequencies, intensities,
-             start=800.0, end=4000.0, npts=None, width=4.0,
-             type='Gaussian', normalize=False):
+    def fold(
+        self,
+        frequencies,
+        intensities,
+        start=800.0,
+        end=4000.0,
+        npts=None,
+        width=4.0,
+        type="Gaussian",
+        normalize=False,
+    ):
         """Fold frequencies and intensities within the given range
         and folding method (Gaussian/Lorentzian).
         The energy unit is cm^-1.
@@ -504,37 +525,50 @@ Please remove them and recalculate or run \
         """
 
         lctype = type.lower()
-        assert lctype in ['gaussian', 'lorentzian']
+        assert lctype in ["gaussian", "lorentzian"]
         if not npts:
             npts = int((end - start) / width * 10 + 1)
         prefactor = 1
-        if lctype == 'lorentzian':
-            intensities = intensities * width * pi / 2.
+        if lctype == "lorentzian":
+            intensities = intensities * width * pi / 2.0
             if normalize:
-                prefactor = 2. / width / pi
+                prefactor = 2.0 / width / pi
         else:
-            sigma = width / 2. / sqrt(2. * log(2.))
+            sigma = width / 2.0 / sqrt(2.0 * log(2.0))
             if normalize:
-                prefactor = 1. / sigma / sqrt(2 * pi)
+                prefactor = 1.0 / sigma / sqrt(2 * pi)
 
         # Make array with spectrum data
         spectrum = np.empty(npts)
         energies = np.linspace(start, end, npts)
         for i, energy in enumerate(energies):
             energies[i] = energy
-            if lctype == 'lorentzian':
-                spectrum[i] = (intensities * 0.5 * width / pi /
-                               ((frequencies - energy)**2 +
-                                0.25 * width**2)).sum()
+            if lctype == "lorentzian":
+                spectrum[i] = (
+                    intensities
+                    * 0.5
+                    * width
+                    / pi
+                    / ((frequencies - energy) ** 2 + 0.25 * width**2)
+                ).sum()
             else:
-                spectrum[i] = (intensities *
-                               np.exp(-(frequencies - energy)**2 /
-                                      2. / sigma**2)).sum()
+                spectrum[i] = (
+                    intensities
+                    * np.exp(-((frequencies - energy) ** 2) / 2.0 / sigma**2)
+                ).sum()
         return [energies, prefactor * spectrum]
 
-    def write_dos(self, out='vib-dos.dat', start=800, end=4000,
-                  npts=None, width=10,
-                  type='Gaussian', method='standard', direction='central'):
+    def write_dos(
+        self,
+        out="vib-dos.dat",
+        start=800,
+        end=4000,
+        npts=None,
+        width=10,
+        type="Gaussian",
+        method="standard",
+        direction="central",
+    ):
         """Write out the vibrational density of states to file.
 
         First column is the wavenumber in cm^-1, the second column the
@@ -543,17 +577,17 @@ Please remove them and recalculate or run \
         should be given in cm^-1."""
         frequencies = self.get_frequencies(method, direction).real
         intensities = np.ones(len(frequencies))
-        energies, spectrum = self.fold(frequencies, intensities,
-                                       start, end, npts, width, type)
+        energies, spectrum = self.fold(
+            frequencies, intensities, start, end, npts, width, type
+        )
 
         # Write out spectrum in file.
         outdata = np.empty([len(energies), 2])
         outdata.T[0] = energies
         outdata.T[1] = spectrum
 
-        with open(out, 'w') as fd:
-            fd.write('# %s folded, width=%g cm^-1\n' % (type.title(), width))
-            fd.write('# [cm^-1] arbitrary\n')
+        with open(out, "w") as fd:
+            fd.write("# %s folded, width=%g cm^-1\n" % (type.title(), width))
+            fd.write("# [cm^-1] arbitrary\n")
             for row in outdata:
-                fd.write('%.3f  %15.5e\n' %
-                         (row[0], row[1]))
+                fd.write("%.3f  %15.5e\n" % (row[0], row[1]))

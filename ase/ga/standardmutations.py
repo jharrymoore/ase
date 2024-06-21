@@ -3,10 +3,12 @@ import numpy as np
 from math import cos, sin, pi
 from ase.cell import Cell
 from ase.calculators.lammpslib import convert_cell
-from ase.ga.utilities import (atoms_too_close,
-                              atoms_too_close_two_sets,
-                              gather_atoms_by_tag,
-                              get_rotation_matrix)
+from ase.ga.utilities import (
+    atoms_too_close,
+    atoms_too_close_two_sets,
+    gather_atoms_by_tag,
+    get_rotation_matrix,
+)
 from ase.ga.offspring_creator import OffspringCreator, CombinationMutation
 from ase import Atoms
 
@@ -40,9 +42,17 @@ class RattleMutation(OffspringCreator):
         By default numpy.random.
     """
 
-    def __init__(self, blmin, n_top, rattle_strength=0.8,
-                 rattle_prop=0.4, test_dist_to_slab=True, use_tags=False,
-                 verbose=False, rng=np.random):
+    def __init__(
+        self,
+        blmin,
+        n_top,
+        rattle_strength=0.8,
+        rattle_prop=0.4,
+        test_dist_to_slab=True,
+        use_tags=False,
+        verbose=False,
+        rng=np.random,
+    ):
         OffspringCreator.__init__(self, verbose, rng=rng)
         self.blmin = blmin
         self.n_top = n_top
@@ -51,7 +61,7 @@ class RattleMutation(OffspringCreator):
         self.test_dist_to_slab = test_dist_to_slab
         self.use_tags = use_tags
 
-        self.descriptor = 'RattleMutation'
+        self.descriptor = "RattleMutation"
         self.min_inputs = 1
 
     def get_new_individual(self, parents):
@@ -59,24 +69,24 @@ class RattleMutation(OffspringCreator):
 
         indi = self.mutate(f)
         if indi is None:
-            return indi, 'mutation: rattle'
+            return indi, "mutation: rattle"
 
         indi = self.initialize_individual(f, indi)
-        indi.info['data']['parents'] = [f.info['confid']]
+        indi.info["data"]["parents"] = [f.info["confid"]]
 
-        return self.finalize_individual(indi), 'mutation: rattle'
+        return self.finalize_individual(indi), "mutation: rattle"
 
     def mutate(self, atoms):
         """Does the actual mutation."""
         N = len(atoms) if self.n_top is None else self.n_top
-        slab = atoms[:len(atoms) - N]
+        slab = atoms[: len(atoms) - N]
         atoms = atoms[-N:]
         tags = atoms.get_tags() if self.use_tags else np.arange(N)
         pos_ref = atoms.get_positions()
         num = atoms.get_atomic_numbers()
         cell = atoms.get_cell()
         pbc = atoms.get_pbc()
-        st = 2. * self.rattle_strength
+        st = 2.0 * self.rattle_strength
 
         count = 0
         maxcount = 1000
@@ -97,8 +107,7 @@ class RattleMutation(OffspringCreator):
                 continue
 
             top = Atoms(num, positions=pos, cell=cell, pbc=pbc, tags=tags)
-            too_close = atoms_too_close(
-                top, self.blmin, use_tags=self.use_tags)
+            too_close = atoms_too_close(top, self.blmin, use_tags=self.use_tags)
             if not too_close and self.test_dist_to_slab:
                 too_close = atoms_too_close_two_sets(top, slab, self.blmin)
 
@@ -135,8 +144,16 @@ class PermutationMutation(OffspringCreator):
         By default numpy.random.
     """
 
-    def __init__(self, n_top, probability=0.33, test_dist_to_slab=True,
-                 use_tags=False, blmin=None, rng=np.random, verbose=False):
+    def __init__(
+        self,
+        n_top,
+        probability=0.33,
+        test_dist_to_slab=True,
+        use_tags=False,
+        blmin=None,
+        rng=np.random,
+        verbose=False,
+    ):
         OffspringCreator.__init__(self, verbose, rng=rng)
         self.n_top = n_top
         self.probability = probability
@@ -144,7 +161,7 @@ class PermutationMutation(OffspringCreator):
         self.use_tags = use_tags
         self.blmin = blmin
 
-        self.descriptor = 'PermutationMutation'
+        self.descriptor = "PermutationMutation"
         self.min_inputs = 1
 
     def get_new_individual(self, parents):
@@ -152,17 +169,17 @@ class PermutationMutation(OffspringCreator):
 
         indi = self.mutate(f)
         if indi is None:
-            return indi, 'mutation: permutation'
+            return indi, "mutation: permutation"
 
         indi = self.initialize_individual(f, indi)
-        indi.info['data']['parents'] = [f.info['confid']]
+        indi.info["data"]["parents"] = [f.info["confid"]]
 
-        return self.finalize_individual(indi), 'mutation: permutation'
+        return self.finalize_individual(indi), "mutation: permutation"
 
     def mutate(self, atoms):
         """Does the actual mutation."""
         N = len(atoms) if self.n_top is None else self.n_top
-        slab = atoms[:len(atoms) - N]
+        slab = atoms[: len(atoms) - N]
         atoms = atoms[-N:]
         if self.use_tags:
             gather_atoms_by_tag(atoms)
@@ -175,16 +192,17 @@ class PermutationMutation(OffspringCreator):
 
         unique_tags = np.unique(tags)
         n = len(unique_tags)
-        swaps = int(np.ceil(n * self.probability / 2.))
+        swaps = int(np.ceil(n * self.probability / 2.0))
 
         sym = []
         for tag in unique_tags:
             indices = np.where(tags == tag)[0]
-            s = ''.join([symbols[j] for j in indices])
+            s = "".join([symbols[j] for j in indices])
             sym.append(s)
 
-        assert len(np.unique(sym)) > 1, \
-            'Permutations with one atom (or molecule) type is not valid'
+        assert (
+            len(np.unique(sym)) > 1
+        ), "Permutations with one atom (or molecule) type is not valid"
 
         count = 0
         maxcount = 1000
@@ -208,8 +226,7 @@ class PermutationMutation(OffspringCreator):
             if self.blmin is None:
                 too_close = False
             else:
-                too_close = atoms_too_close(
-                    top, self.blmin, use_tags=self.use_tags)
+                too_close = atoms_too_close(top, self.blmin, use_tags=self.use_tags)
                 if not too_close and self.test_dist_to_slab:
                     too_close = atoms_too_close_two_sets(top, slab, self.blmin)
 
@@ -241,14 +258,13 @@ class MirrorMutation(OffspringCreator):
         By default numpy.random.
     """
 
-    def __init__(self, blmin, n_top, reflect=False, rng=np.random,
-                 verbose=False):
+    def __init__(self, blmin, n_top, reflect=False, rng=np.random, verbose=False):
         OffspringCreator.__init__(self, verbose, rng=rng)
         self.blmin = blmin
         self.n_top = n_top
         self.reflect = reflect
 
-        self.descriptor = 'MirrorMutation'
+        self.descriptor = "MirrorMutation"
         self.min_inputs = 1
 
     def get_new_individual(self, parents):
@@ -256,19 +272,19 @@ class MirrorMutation(OffspringCreator):
 
         indi = self.mutate(f)
         if indi is None:
-            return indi, 'mutation: mirror'
+            return indi, "mutation: mirror"
 
         indi = self.initialize_individual(f, indi)
-        indi.info['data']['parents'] = [f.info['confid']]
+        indi.info["data"]["parents"] = [f.info["confid"]]
 
-        return self.finalize_individual(indi), 'mutation: mirror'
+        return self.finalize_individual(indi), "mutation: mirror"
 
     def mutate(self, atoms):
-        """ Do the mutation of the atoms input. """
+        """Do the mutation of the atoms input."""
         reflect = self.reflect
         tc = True
-        slab = atoms[0:len(atoms) - self.n_top]
-        top = atoms[len(atoms) - self.n_top: len(atoms)]
+        slab = atoms[0 : len(atoms) - self.n_top]
+        top = atoms[len(atoms) - self.n_top : len(atoms)]
         num = top.numbers
         unique_types = list(set(num))
         nu = dict()
@@ -288,7 +304,7 @@ class MirrorMutation(OffspringCreator):
 
             # first select a randomly oriented cutting plane
             theta = pi * self.rng.random()
-            phi = 2. * pi * self.rng.random()
+            phi = 2.0 * pi * self.rng.random()
             n = (cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta))
             n = np.array(n)
 
@@ -308,7 +324,7 @@ class MirrorMutation(OffspringCreator):
             for (i, d) in D:
                 if num[i] not in nu_taken.keys():
                     nu_taken[num[i]] = 0
-                if nu_taken[num[i]] < nu[num[i]] / 2.:
+                if nu_taken[num[i]] < nu[num[i]] / 2.0:
                     p_use.append(pos[i])
                     n_use.append(num[i])
                     nu_taken[num[i]] += 1
@@ -316,7 +332,7 @@ class MirrorMutation(OffspringCreator):
             # calculate the mirrored position and add these.
             pn = []
             for p in p_use:
-                pt = p - 2. * np.dot(p - cm, n) * n
+                pt = p - 2.0 * np.dot(p - cm, n) * n
                 if reflect:
                     pt = -pt + 2 * cm + 2 * n * np.dot(pt - cm, n)
                 pn.append(pt)
@@ -371,7 +387,7 @@ class MirrorMutation(OffspringCreator):
 
 
 class StrainMutation(OffspringCreator):
-    """ Mutates a candidate by applying a randomly generated strain.
+    """Mutates a candidate by applying a randomly generated strain.
 
     For more information, see also:
 
@@ -415,9 +431,16 @@ class StrainMutation(OffspringCreator):
         By default numpy.random.
     """
 
-    def __init__(self, blmin, cellbounds=None, stddev=0.7,
-                 number_of_variable_cell_vectors=3, use_tags=False,
-                 rng=np.random, verbose=False):
+    def __init__(
+        self,
+        blmin,
+        cellbounds=None,
+        stddev=0.7,
+        number_of_variable_cell_vectors=3,
+        use_tags=False,
+        rng=np.random,
+        verbose=False,
+    ):
         OffspringCreator.__init__(self, verbose, rng=rng)
         self.blmin = blmin
         self.cellbounds = cellbounds
@@ -426,7 +449,7 @@ class StrainMutation(OffspringCreator):
         self.use_tags = use_tags
 
         self.scaling_volume = None
-        self.descriptor = 'StrainMutation'
+        self.descriptor = "StrainMutation"
         self.min_inputs = 1
 
     def update_scaling_volume(self, population, w_adapt=0.5, n_adapt=0):
@@ -454,15 +477,15 @@ class StrainMutation(OffspringCreator):
 
         indi = self.mutate(f)
         if indi is None:
-            return indi, 'mutation: strain'
+            return indi, "mutation: strain"
 
         indi = self.initialize_individual(f, indi)
-        indi.info['data']['parents'] = [f.info['confid']]
+        indi.info["data"]["parents"] = [f.info["confid"]]
 
-        return self.finalize_individual(indi), 'mutation: strain'
+        return self.finalize_individual(indi), "mutation: strain"
 
     def mutate(self, atoms):
-        """ Does the actual mutation. """
+        """Does the actual mutation."""
         cell_ref = atoms.get_cell()
         pos_ref = atoms.get_positions()
 
@@ -490,7 +513,7 @@ class StrainMutation(OffspringCreator):
             strain = np.identity(3)
             for i in range(self.number_of_variable_cell_vectors):
                 for j in range(i + 1):
-                    r = self.rng.normal(loc=0., scale=self.stddev)
+                    r = self.rng.normal(loc=0.0, scale=self.stddev)
                     if i == j:
                         strain[i, j] += r
                     else:
@@ -512,8 +535,8 @@ class StrainMutation(OffspringCreator):
             # volume scaling:
             if self.number_of_variable_cell_vectors > 0:
                 scaling = vol_ref / cell_new.volume
-                scaling **= 1. / self.number_of_variable_cell_vectors
-                cell_new[:self.number_of_variable_cell_vectors] *= scaling
+                scaling **= 1.0 / self.number_of_variable_cell_vectors
+                cell_new[: self.number_of_variable_cell_vectors] *= scaling
 
             # check cell dimensions:
             if not self.cellbounds.is_within_bounds(cell_new):
@@ -544,8 +567,7 @@ class StrainMutation(OffspringCreator):
             mutant.wrap()
 
             # check the interatomic distances
-            too_close = atoms_too_close(mutant, self.blmin,
-                                        use_tags=self.use_tags)
+            too_close = atoms_too_close(mutant, self.blmin, use_tags=self.use_tags)
 
         if count == maxcount:
             mutant = None
@@ -571,10 +593,10 @@ class PermuStrainMutation(CombinationMutation):
     """
 
     def __init__(self, permutationmutation, strainmutation, verbose=False):
-        super(PermuStrainMutation, self).__init__(permutationmutation,
-                                                  strainmutation,
-                                                  verbose=verbose)
-        self.descriptor = 'permustrain'
+        super(PermuStrainMutation, self).__init__(
+            permutationmutation, strainmutation, verbose=verbose
+        )
+        self.descriptor = "permustrain"
 
 
 class RotationalMutation(OffspringCreator):
@@ -620,9 +642,17 @@ class RotationalMutation(OffspringCreator):
         By default numpy.random.
     """
 
-    def __init__(self, blmin, n_top=None, fraction=0.33, tags=None,
-                 min_angle=1.57, test_dist_to_slab=True, rng=np.random,
-                 verbose=False):
+    def __init__(
+        self,
+        blmin,
+        n_top=None,
+        fraction=0.33,
+        tags=None,
+        min_angle=1.57,
+        test_dist_to_slab=True,
+        rng=np.random,
+        verbose=False,
+    ):
         OffspringCreator.__init__(self, verbose, rng=rng)
         self.blmin = blmin
         self.n_top = n_top
@@ -630,7 +660,7 @@ class RotationalMutation(OffspringCreator):
         self.tags = tags
         self.min_angle = min_angle
         self.test_dist_to_slab = test_dist_to_slab
-        self.descriptor = 'RotationalMutation'
+        self.descriptor = "RotationalMutation"
         self.min_inputs = 1
 
     def get_new_individual(self, parents):
@@ -638,17 +668,17 @@ class RotationalMutation(OffspringCreator):
 
         indi = self.mutate(f)
         if indi is None:
-            return indi, 'mutation: rotational'
+            return indi, "mutation: rotational"
 
         indi = self.initialize_individual(f, indi)
-        indi.info['data']['parents'] = [f.info['confid']]
+        indi.info["data"]["parents"] = [f.info["confid"]]
 
-        return self.finalize_individual(indi), 'mutation: rotational'
+        return self.finalize_individual(indi), "mutation: rotational"
 
     def mutate(self, atoms):
         """Does the actual mutation."""
         N = len(atoms) if self.n_top is None else self.n_top
-        slab = atoms[:len(atoms) - N]
+        slab = atoms[: len(atoms) - N]
         atoms = atoms[-N:]
 
         mutant = atoms.copy()
@@ -664,8 +694,7 @@ class RotationalMutation(OffspringCreator):
                 indices[tag] = hits
 
         n_rot = int(np.ceil(len(indices) * self.fraction))
-        chosen_tags = self.rng.choice(list(indices.keys()), size=n_rot,
-                                      replace=False)
+        chosen_tags = self.rng.choice(list(indices.keys()), size=n_rot, replace=False)
 
         too_close = True
         count = 0
@@ -723,7 +752,7 @@ class RattleRotationalMutation(CombinationMutation):
     """
 
     def __init__(self, rattlemutation, rotationalmutation, verbose=False):
-        super(RattleRotationalMutation, self).__init__(rattlemutation,
-                                                       rotationalmutation,
-                                                       verbose=verbose)
-        self.descriptor = 'rattlerotational'
+        super(RattleRotationalMutation, self).__init__(
+            rattlemutation, rotationalmutation, verbose=verbose
+        )
+        self.descriptor = "rattlerotational"

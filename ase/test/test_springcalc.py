@@ -7,10 +7,11 @@ from ase.calculators.test import gradient_test
 def test_springcalc():
     # setup
     k = 3.0
-    atoms_ideal = bulk('Al').repeat(3)
+    atoms_ideal = bulk("Al").repeat(3)
     calc = SpringCalculator(atoms_ideal.get_positions(), k)
-    displacements = np.array([(d, 2 * d, 3 * d)
-                             for d in np.linspace(0, 1, len(atoms_ideal))])
+    displacements = np.array(
+        [(d, 2 * d, 3 * d) for d in np.linspace(0, 1, len(atoms_ideal))]
+    )
 
     # calc forces and energy
     atoms = atoms_ideal.copy()
@@ -21,7 +22,7 @@ def test_springcalc():
 
     # reference forces and energy
     Epot_target = np.sum(k / 2.0 * displacements**2)
-    forces_target = - k * displacements
+    forces_target = -k * displacements
 
     assert np.allclose(forces, forces_target)
     assert np.isclose(Epot, Epot_target)

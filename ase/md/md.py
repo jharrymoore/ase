@@ -38,13 +38,15 @@ def process_temperature(temperature, temperature_K, orig_unit):
     Return value: Temperature in Kelvin.
     """
     if (temperature is not None) + (temperature_K is not None) != 1:
-        raise TypeError("Exactly one of the parameters 'temperature',"
-                        + " and 'temperature_K', must be given")
+        raise TypeError(
+            "Exactly one of the parameters 'temperature',"
+            + " and 'temperature_K', must be given"
+        )
     if temperature is not None:
         w = "Specify the temperature in K using the 'temperature_K' argument"
-        if orig_unit == 'K':
+        if orig_unit == "K":
             return temperature
-        elif orig_unit == 'eV':
+        elif orig_unit == "eV":
             warnings.warn(FutureWarning(w))
             return temperature / units.kB
         else:
@@ -57,8 +59,15 @@ def process_temperature(temperature, temperature_K, orig_unit):
 class MolecularDynamics(Dynamics):
     """Base-class for all MD classes."""
 
-    def __init__(self, atoms, timestep, trajectory, logfile=None,
-                 loginterval=1, append_trajectory=False):
+    def __init__(
+        self,
+        atoms,
+        timestep,
+        trajectory,
+        logfile=None,
+        loginterval=1,
+        append_trajectory=False,
+    ):
         """Molecular Dynamics object.
 
         Parameters:
@@ -97,13 +106,15 @@ class MolecularDynamics(Dynamics):
         self.max_steps = None
 
         if 0 in self.masses:
-            warnings.warn('Zero mass encountered in atoms; this will '
-                          'likely lead to errors if the massless atoms '
-                          'are unconstrained.')
+            warnings.warn(
+                "Zero mass encountered in atoms; this will "
+                "likely lead to errors if the massless atoms "
+                "are unconstrained."
+            )
 
         self.masses.shape = (-1, 1)
 
-        if not self.atoms.has('momenta'):
+        if not self.atoms.has("momenta"):
             self.atoms.set_momenta(np.zeros([len(self.atoms), 3]))
 
         # Trajectory is attached here instead of in Dynamics.__init__
@@ -117,22 +128,23 @@ class MolecularDynamics(Dynamics):
             self.attach(trajectory, interval=loginterval)
 
         if logfile:
-            logger = self.closelater(
-                MDLogger(dyn=self, atoms=atoms, logfile=logfile))
+            logger = self.closelater(MDLogger(dyn=self, atoms=atoms, logfile=logfile))
             self.attach(logger, loginterval)
 
     def todict(self):
-        return {'type': 'molecular-dynamics',
-                'md-type': self.__class__.__name__,
-                'timestep': self.dt}
+        return {
+            "type": "molecular-dynamics",
+            "md-type": self.__class__.__name__,
+            "timestep": self.dt,
+        }
 
     def irun(self, steps=50):
-        """ Call Dynamics.irun and adjust max_steps """
+        """Call Dynamics.irun and adjust max_steps"""
         self.max_steps = steps + self.nsteps
         return Dynamics.irun(self)
 
     def run(self, steps=50):
-        """ Call Dynamics.run and adjust max_steps """
+        """Call Dynamics.run and adjust max_steps"""
         self.max_steps = steps + self.nsteps
         return Dynamics.run(self)
 
@@ -140,7 +152,7 @@ class MolecularDynamics(Dynamics):
         return self.nsteps * self.dt
 
     def converged(self):
-        """ MD is 'converged' when number of maximum steps is reached. """
+        """MD is 'converged' when number of maximum steps is reached."""
         return self.nsteps >= self.max_steps
 
     def _get_com_velocity(self, velocity):

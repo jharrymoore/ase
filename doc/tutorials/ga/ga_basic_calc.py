@@ -7,7 +7,7 @@ import sys
 
 fname = sys.argv[1]
 
-print('Now relaxing {0}'.format(fname))
+print("Now relaxing {0}".format(fname))
 a = read(fname)
 
 a.calc = EMT()
@@ -16,8 +16,8 @@ vb = VariansBreak(a, dyn)
 dyn.attach(vb.write)
 dyn.run(fmax=0.05)
 
-a.info['key_value_pairs']['raw_score'] = -a.get_potential_energy()
+a.info["key_value_pairs"]["raw_score"] = -a.get_potential_energy()
 
-write(fname[:-5] + '_done.traj', a)
+write(fname[:-5] + "_done.traj", a)
 
-print('Done relaxing {0}'.format(fname))
+print("Done relaxing {0}".format(fname))

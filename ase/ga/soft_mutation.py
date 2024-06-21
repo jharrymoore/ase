@@ -64,24 +64,27 @@ class PairwiseHarmonicPotential:
     E(r_ij) = 0.5 * k_ij * (r_ij - r0_ij) ** 2
     """
 
-    def __init__(self, atoms, rcut=10.):
+    def __init__(self, atoms, rcut=10.0):
         self.atoms = atoms
         self.pos0 = atoms.get_positions()
         self.rcut = rcut
 
         # build neighborlist
         nat = len(self.atoms)
-        self.nl = NeighborList([self.rcut / 2.] * nat, skin=0., bothways=True,
-                               self_interaction=False)
+        self.nl = NeighborList(
+            [self.rcut / 2.0] * nat, skin=0.0, bothways=True, self_interaction=False
+        )
         self.nl.update(self.atoms)
 
         self.calculate_force_constants()
 
     def calculate_force_constants(self):
-        msg = 'Child class needs to define a calculate_force_constants() ' \
-              'method which computes the force constants and stores them ' \
-              'in self.force_constants (as a list which contains, for every ' \
-              'atom, a list of the atom\'s force constants with its neighbors.'
+        msg = (
+            "Child class needs to define a calculate_force_constants() "
+            "method which computes the force constants and stores them "
+            "in self.force_constants (as a list which contains, for every "
+            "atom, a list of the atom's force constants with its neighbors."
+        )
         raise NotImplementedError(msg)
 
     def get_forces(self, atoms):
@@ -106,8 +109,12 @@ def get_number_of_valence_electrons(Z):
     """Return the number of valence electrons for the element with
     atomic number Z, simply based on its periodic table group.
     """
-    groups = [[], [1, 3, 11, 19, 37, 55, 87], [2, 4, 12, 20, 38, 56, 88],
-              [21, 39, 57, 89]]
+    groups = [
+        [],
+        [1, 3, 11, 19, 37, 55, 87],
+        [2, 4, 12, 20, 38, 56, 88],
+        [21, 39, 57, 89],
+    ]
 
     for i in range(9):
         groups.append(i + np.array([22, 40, 72, 104]))
@@ -120,7 +127,7 @@ def get_number_of_valence_electrons(Z):
             nval = i if i < 13 else i - 10
             break
     else:
-        raise ValueError('Z=%d not included in this dataset.' % Z)
+        raise ValueError("Z=%d not included in this dataset." % Z)
 
     return nval
 
@@ -154,7 +161,7 @@ class BondElectroNegativityModel(PairwiseHarmonicPotential):
             p = pos[indices] + np.dot(offsets, cell)
             r = cdist(p, [pos[i]])
             r_ci = covalent_radii[num[i]]
-            s = 0.
+            s = 0.0
             for j, index in enumerate(indices):
                 d = r[j] - r_ci - covalent_radii[num[index]]
                 s += np.exp(-d / 0.37)
@@ -240,10 +247,16 @@ class SoftMutation(OffspringCreator):
         Whether to use the atomic tags to preserve molecular identity.
     """
 
-    def __init__(self, blmin, bounds=[0.5, 2.0],
-                 calculator=BondElectroNegativityModel, rcut=10.,
-                 used_modes_file='used_modes.json', use_tags=False,
-                 verbose=False):
+    def __init__(
+        self,
+        blmin,
+        bounds=[0.5, 2.0],
+        calculator=BondElectroNegativityModel,
+        rcut=10.0,
+        used_modes_file="used_modes.json",
+        use_tags=False,
+        verbose=False,
+    ):
         OffspringCreator.__init__(self, verbose)
         self.blmin = blmin
         self.bounds = bounds
@@ -251,7 +264,7 @@ class SoftMutation(OffspringCreator):
         self.rcut = rcut
         self.used_modes_file = used_modes_file
         self.use_tags = use_tags
-        self.descriptor = 'SoftMutation'
+        self.descriptor = "SoftMutation"
 
         self.used_modes = {}
         if self.used_modes_file is not None:
@@ -280,7 +293,7 @@ class SoftMutation(OffspringCreator):
                 f = atoms.get_forces()
                 row += -1 * direction * f.flatten()
 
-            row /= (2. * dx)
+            row /= 2.0 * dx
             hessian[i] = row
 
         hessian += np.copy(hessian).T
@@ -293,8 +306,8 @@ class SoftMutation(OffspringCreator):
         """Performs the vibrational analysis."""
         hessian = self._get_hessian(atoms, dx)
         if massweighing:
-            m = np.array([np.repeat(atoms.get_masses()**-0.5, 3)])
-            hessian *= (m * m.T)
+            m = np.array([np.repeat(atoms.get_masses() ** -0.5, 3)])
+            hessian *= m * m.T
 
         eigvals, eigvecs = np.linalg.eigh(hessian)
         modes = {eigval: eigvecs[:, i] for i, eigval in enumerate(eigvals)}
@@ -314,14 +327,14 @@ class SoftMutation(OffspringCreator):
 
     def read_used_modes(self, filename):
         """Read used modes from json file."""
-        with open(filename, 'r') as fd:
+        with open(filename, "r") as fd:
             modes = json.load(fd)
             self.used_modes = {int(k): modes[k] for k in modes}
         return
 
     def write_used_modes(self, filename):
         """Dump used modes to json file."""
-        with open(filename, 'w') as fd:
+        with open(filename, "w") as fd:
             json.dump(self.used_modes, fd)
         return
 
@@ -330,12 +343,12 @@ class SoftMutation(OffspringCreator):
 
         indi = self.mutate(f)
         if indi is None:
-            return indi, 'mutation: soft'
+            return indi, "mutation: soft"
 
         indi = self.initialize_individual(f, indi)
-        indi.info['data']['parents'] = [f.info['confid']]
+        indi.info["data"]["parents"] = [f.info["confid"]]
 
-        return self.finalize_individual(indi), 'mutation: soft'
+        return self.finalize_individual(indi), "mutation: soft"
 
     def mutate(self, atoms):
         """Does the actual mutation."""
@@ -360,7 +373,7 @@ class SoftMutation(OffspringCreator):
 
         keys = np.array(sorted(modes))
         index = 3
-        confid = atoms.info['confid']
+        confid = atoms.info["confid"]
         if confid in self.used_modes:
             while index in self.used_modes[confid]:
                 index += 1
@@ -379,7 +392,7 @@ class SoftMutation(OffspringCreator):
         # directions are tried.
 
         mutant = atoms.copy()
-        amplitude = 0.
+        amplitude = 0.0
         increment = 0.1
         direction = 1
         largest_norm = np.max(np.apply_along_axis(np.linalg.norm, 1, mode))
@@ -396,8 +409,7 @@ class SoftMutation(OffspringCreator):
             pos_new = expand(a, pos_new)
             mutant.set_positions(pos_new)
             mutant.wrap()
-            too_close = atoms_too_close(mutant, self.blmin,
-                                        use_tags=self.use_tags)
+            too_close = atoms_too_close(mutant, self.blmin, use_tags=self.use_tags)
             if too_close:
                 amplitude -= increment
                 pos_new = pos + direction * amplitude * mode

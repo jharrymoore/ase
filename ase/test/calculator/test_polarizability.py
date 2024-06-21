@@ -10,7 +10,7 @@ def test_shapes():
     exl = H2MorseExcitedStatesCalculator().calculate(atoms)
 
     alphaf = polarizability(exl, range(2))
-    assert alphaf.shape == (2, )
+    assert alphaf.shape == (2,)
     assert alphaf.dtype == float
     alphat = polarizability(exl, 5 + 2j, tensor=True)
     assert alphat.shape == (3, 3)
@@ -21,4 +21,4 @@ def test_shapes():
 
     # check tensor
     for af, at in zip(alphaf, alphat):
-        assert at.diagonal().sum() / 3 == pytest.approx(af, 1.e-8)
+        assert at.diagonal().sum() / 3 == pytest.approx(af, 1.0e-8)

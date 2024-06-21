@@ -3,34 +3,39 @@ from ase.optimize.optimize import Dynamics
 
 
 def subtract_projection(a, b):
-    '''returns new vector that removes vector a's projection vector b. Is
-    also equivalent to the vector rejection.'''
+    """returns new vector that removes vector a's projection vector b. Is
+    also equivalent to the vector rejection."""
     aout = a - np.vdot(a, b) / np.vdot(b, b) * b
     return aout
 
 
 def normalize(a):
-    '''Makes a unit vector out of a vector'''
+    """Makes a unit vector out of a vector"""
     return a / np.linalg.norm(a)
 
 
 class ContourExploration(Dynamics):
-
-    def __init__(self, atoms,
-                 maxstep=0.5,
-                 parallel_drift=0.1,
-                 energy_target=None,
-                 angle_limit=20,
-                 potentiostat_step_scale=None,
-                 remove_translation=False,
-                 use_frenet_serret=True,
-                 initialization_step_scale=1e-2,
-                 use_target_shift=True, target_shift_previous_steps=10,
-                 use_tangent_curvature=False,
-                 rng=np.random,
-                 force_consistent=None,
-                 trajectory=None, logfile=None,
-                 append_trajectory=False, loginterval=1):
+    def __init__(
+        self,
+        atoms,
+        maxstep=0.5,
+        parallel_drift=0.1,
+        energy_target=None,
+        angle_limit=20,
+        potentiostat_step_scale=None,
+        remove_translation=False,
+        use_frenet_serret=True,
+        initialization_step_scale=1e-2,
+        use_target_shift=True,
+        target_shift_previous_steps=10,
+        use_tangent_curvature=False,
+        rng=np.random,
+        force_consistent=None,
+        trajectory=None,
+        logfile=None,
+        append_trajectory=False,
+        loginterval=1,
+    ):
         """Contour Exploration object.
 
         Parameters:
@@ -156,7 +161,8 @@ class ContourExploration(Dynamics):
 
         if energy_target is None:
             self.energy_target = atoms.get_potential_energy(
-                force_consistent=self.force_consistent)
+                force_consistent=self.force_consistent
+            )
         else:
             self.energy_target = energy_target
 
@@ -165,8 +171,9 @@ class ContourExploration(Dynamics):
         # 'target_shift_previous_steps' steps to equilibrate and should prevent
         # occilations. These need to be initialized before the initialize_old
         # step to prevent a crash
-        self.previous_energies = np.full(target_shift_previous_steps,
-                                         self.energy_target)
+        self.previous_energies = np.full(
+            target_shift_previous_steps, self.energy_target
+        )
 
         # these first two are purely for logging,
         # auto scaling will still occur
@@ -176,10 +183,13 @@ class ContourExploration(Dynamics):
 
         # loginterval exists for the MolecularDynamics class but not for
         # the more general Dynamics class
-        Dynamics.__init__(self, atoms,
-                          logfile, trajectory,  # loginterval,
-                          append_trajectory=append_trajectory,
-                          )
+        Dynamics.__init__(
+            self,
+            atoms,
+            logfile,
+            trajectory,  # loginterval,
+            append_trajectory=append_trajectory,
+        )
 
         # we need velocities or NaNs will be produced,
         # if none are provided we make random ones
@@ -190,12 +200,14 @@ class ContourExploration(Dynamics):
 
     # Required stuff for Dynamics
     def todict(self):
-        return {'type': 'contour-exploration',
-                'dyn-type': self.__class__.__name__,
-                'stepsize': self.step_size}
+        return {
+            "type": "contour-exploration",
+            "dyn-type": self.__class__.__name__,
+            "stepsize": self.step_size,
+        }
 
     def run(self, steps=50):
-        """ Call Dynamics.run and adjust max_steps """
+        """Call Dynamics.run and adjust max_steps"""
         self.max_steps = steps + self.nsteps
         return Dynamics.run(self)
 
@@ -209,11 +221,11 @@ class ContourExploration(Dynamics):
                     "Energy",
                     "Curvature",
                     "Step_Size",
-                    "Energy_Deviation_per_atom")
+                    "Energy_Deviation_per_atom",
+                )
                 msg = "# %4s %15s %15s %12s %12s %15s\n" % args
                 self.logfile.write(msg)
-            e = self.atoms.get_potential_energy(
-                force_consistent=self.force_consistent)
+            e = self.atoms.get_potential_energy(force_consistent=self.force_consistent)
             dev_per_atom = (e - self.energy_target) / len(self.atoms)
             args = (
                 self.nsteps,
@@ -221,20 +233,21 @@ class ContourExploration(Dynamics):
                 e,
                 self.curvature,
                 self.step_size,
-                dev_per_atom)
+                dev_per_atom,
+            )
             msg = "%6d %15.6f %15.6f %12.6f %12.6f %24.9f\n" % args
             self.logfile.write(msg)
 
             self.logfile.flush()
 
     def rand_vect(self):
-        '''Returns a random (Natoms,3) vector'''
+        """Returns a random (Natoms,3) vector"""
         vect = self.rng.random((len(self.atoms), 3)) - 0.5
         return vect
 
     def create_drift_unit_vector(self, N, T):
-        '''Creates a random drift unit vector with no projection on N or T and
-        with out a net translation so systems don't wander'''
+        """Creates a random drift unit vector with no projection on N or T and
+        with out a net translation so systems don't wander"""
         drift = self.rand_vect()
         drift = subtract_projection(drift, N)
         drift = subtract_projection(drift, T)
@@ -244,35 +257,36 @@ class ContourExploration(Dynamics):
         return D
 
     def compute_step_contributions(self, potentiostat_step_size):
-        '''Computes the orthogonal component sizes of the step so that the net
-        step obeys the smaller of step_size or maxstep.'''
+        """Computes the orthogonal component sizes of the step so that the net
+        step obeys the smaller of step_size or maxstep."""
         if abs(potentiostat_step_size) < self.step_size:
             delta_s_perpendicular = potentiostat_step_size
             contour_step_size = np.sqrt(
-                self.step_size**2 - potentiostat_step_size**2)
-            delta_s_parallel = np.sqrt(
-                1 - self.parallel_drift**2) * contour_step_size
+                self.step_size**2 - potentiostat_step_size**2
+            )
+            delta_s_parallel = np.sqrt(1 - self.parallel_drift**2) * contour_step_size
             delta_s_drift = contour_step_size * self.parallel_drift
 
         else:
             # in this case all priority goes to potentiostat terms
             delta_s_parallel = 0.0
             delta_s_drift = 0.0
-            delta_s_perpendicular = np.sign(
-                potentiostat_step_size) * self.step_size
+            delta_s_perpendicular = np.sign(potentiostat_step_size) * self.step_size
 
         return delta_s_perpendicular, delta_s_parallel, delta_s_drift
 
     def _compute_update_without_fs(self, potentiostat_step_size, scale=1.0):
-        '''Only uses the forces to compute an orthogonal update vector'''
+        """Only uses the forces to compute an orthogonal update vector"""
 
         # Without the use of curvature there is no way to estimate the
         # limiting step size
         self.step_size = self.maxstep * scale
 
-        delta_s_perpendicular, delta_s_parallel, delta_s_drift = \
-            self.compute_step_contributions(
-                potentiostat_step_size)
+        (
+            delta_s_perpendicular,
+            delta_s_parallel,
+            delta_s_drift,
+        ) = self.compute_step_contributions(potentiostat_step_size)
 
         dr_perpendicular = self.N * delta_s_perpendicular
         dr_parallel = delta_s_parallel * self.T
@@ -285,8 +299,8 @@ class ContourExploration(Dynamics):
         return dr
 
     def _compute_update_with_fs(self, potentiostat_step_size):
-        '''Uses the Frenet–Serret formulas to perform curvature based
-        extrapolation to compute the update vector'''
+        """Uses the Frenet–Serret formulas to perform curvature based
+        extrapolation to compute the update vector"""
         # this should keep the dr clear of the constraints
         # by using the actual change, not a velocity vector
         delta_r = self.r - self.rold
@@ -316,9 +330,11 @@ class ContourExploration(Dynamics):
             self.step_size = min(self.step_size, self.maxstep)
 
         # now we can compute a safe step
-        delta_s_perpendicular, delta_s_parallel, delta_s_drift = \
-            self.compute_step_contributions(
-                potentiostat_step_size)
+        (
+            delta_s_perpendicular,
+            delta_s_parallel,
+            delta_s_drift,
+        ) = self.compute_step_contributions(potentiostat_step_size)
 
         N_guess = self.N + dNds * delta_s_parallel
         T_guess = self.T + dTds * delta_s_parallel
@@ -329,9 +345,10 @@ class ContourExploration(Dynamics):
 
         dr_perpendicular = delta_s_perpendicular * (N_guess)
 
-        dr_parallel = delta_s_parallel * self.T * \
-            (1 - (delta_s_parallel * curvature)**2 / 6.0) \
+        dr_parallel = (
+            delta_s_parallel * self.T * (1 - (delta_s_parallel * curvature) ** 2 / 6.0)
             + self.N * (curvature / 2.0) * delta_s_parallel**2
+        )
 
         D = self.create_drift_unit_vector(N_guess, T_guess)
         dr_drift = D * delta_s_drift
@@ -344,17 +361,17 @@ class ContourExploration(Dynamics):
         return dr
 
     def update_previous_energies(self, energy):
-        '''Updates the energy history in self.previous_energies to include the
-         current energy.'''
+        """Updates the energy history in self.previous_energies to include the
+        current energy."""
         # np.roll shifts the values to keep nice sequential ordering.
         self.previous_energies = np.roll(self.previous_energies, 1)
         self.previous_energies[0] = energy
 
     def compute_potentiostat_step_size(self, forces, energy):
-        '''Computes the potentiostat step size by linear extrapolation of the
+        """Computes the potentiostat step size by linear extrapolation of the
         potential energy using the forces. The step size can be positive or
         negative depending on whether or not the energy is too high or too low.
-        '''
+        """
         if self.use_target_shift:
             target_shift = self.energy_target - np.mean(self.previous_energies)
         else:
@@ -365,8 +382,7 @@ class ContourExploration(Dynamics):
 
         f_norm = np.linalg.norm(forces)
         # can be positive or negative
-        potentiostat_step_size = (deltaU / f_norm) * \
-            self.potentiostat_step_scale
+        potentiostat_step_size = (deltaU / f_norm) * self.potentiostat_step_scale
         return potentiostat_step_size
 
     def step(self, f=None):
@@ -379,8 +395,7 @@ class ContourExploration(Dynamics):
         velocities = atoms.get_velocities()
         KEold = atoms.get_kinetic_energy()
 
-        energy = atoms.get_potential_energy(
-            force_consistent=self.force_consistent)
+        energy = atoms.get_potential_energy(force_consistent=self.force_consistent)
         self.update_previous_energies(energy)
         potentiostat_step_size = self.compute_potentiostat_step_size(f, energy)
 
@@ -397,8 +412,8 @@ class ContourExploration(Dynamics):
                 # we must have the old positions and vectors for an FS step
                 # if we don't, we can only do a small step
                 dr = self._compute_update_without_fs(
-                    potentiostat_step_size,
-                    scale=self.initialization_step_scale)
+                    potentiostat_step_size, scale=self.initialization_step_scale
+                )
         else:  # of course we can run less accuratly without FS.
             dr = self._compute_update_without_fs(potentiostat_step_size)
 

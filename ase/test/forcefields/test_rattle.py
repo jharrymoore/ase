@@ -10,12 +10,14 @@ from ase.constraints import FixBondLengths
 @pytest.mark.slow
 def test_rattle(testdir):
 
-    i = LJInteractions({('O', 'O'): (epsilon0, sigma0)})
+    i = LJInteractions({("O", "O"): (epsilon0, sigma0)})
 
-    for calc in [TIP3P(),
-                 SimpleQMMM([0, 1, 2], TIP3P(), TIP3P(), TIP3P()),
-                 EIQMMM([0, 1, 2], TIP3P(), TIP3P(), i)]:
-        dimer = s22('Water_dimer')
+    for calc in [
+        TIP3P(),
+        SimpleQMMM([0, 1, 2], TIP3P(), TIP3P(), TIP3P()),
+        EIQMMM([0, 1, 2], TIP3P(), TIP3P(), i),
+    ]:
+        dimer = s22("Water_dimer")
 
         for m in [0, 3]:
             dimer.set_angle(m + 1, m, m + 2, angleHOH)
@@ -30,10 +32,13 @@ def test_rattle(testdir):
         dimer.calc = calc
 
         e = dimer.get_potential_energy()
-        with VelocityVerlet(dimer, 8.0 * units.fs,
-                            trajectory=calc.name + '.traj',
-                            logfile=calc.name + '.log',
-                            loginterval=5) as md:
+        with VelocityVerlet(
+            dimer,
+            8.0 * units.fs,
+            trajectory=calc.name + ".traj",
+            logfile=calc.name + ".log",
+            loginterval=5,
+        ) as md:
             md.run(25)
         de = dimer.get_potential_energy() - e
         assert abs(de - -0.028) < 0.001

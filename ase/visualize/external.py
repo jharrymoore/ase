@@ -12,11 +12,11 @@ from ase.io import write
 
 def _pipe_to_ase_gui(atoms, repeat):
     buf = BytesIO()
-    write(buf, atoms, format='traj')
+    write(buf, atoms, format="traj")
 
-    args = [sys.executable, '-m', 'ase', 'gui', '-']
+    args = [sys.executable, "-m", "ase", "gui", "-"]
     if repeat:
-        args.append('--repeat={},{},{}'.format(*repeat))
+        args.append("--repeat={},{},{}".format(*repeat))
 
     proc = subprocess.Popen(args, stdin=subprocess.PIPE)
     proc.stdin.write(buf.getvalue())
@@ -37,18 +37,18 @@ class CLIViewer:
     @contextmanager
     def mktemp(self, atoms, data=None):
         ioformat = self.ioformat
-        suffix = '.' + ioformat.extensions[0]
+        suffix = "." + ioformat.extensions[0]
 
         if ioformat.isbinary:
-            mode = 'wb'
+            mode = "wb"
         else:
-            mode = 'w'
+            mode = "w"
 
-        with tempfile.TemporaryDirectory(prefix='ase-view-') as dirname:
+        with tempfile.TemporaryDirectory(prefix="ase-view-") as dirname:
             # We use a tempdir rather than a tempfile because it's
             # less hassle to handle the cleanup on Windows (files
             # cannot be open on multiple processes).
-            path = Path(dirname) / f'atoms{suffix}'
+            path = Path(dirname) / f"atoms{suffix}"
             with path.open(mode) as fd:
                 if data is None:
                     write(fd, atoms, format=self.fmt)
@@ -66,8 +66,8 @@ class CLIViewer:
             atoms = atoms.repeat(repeat)
 
         proc = subprocess.Popen(
-            [sys.executable, '-m', 'ase.visualize.external'],
-            stdin=subprocess.PIPE)
+            [sys.executable, "-m", "ase.visualize.external"], stdin=subprocess.PIPE
+        )
 
         pickle.dump((self, atoms, data), proc.stdin)
         proc.stdin.close()
@@ -78,12 +78,12 @@ class CLIViewer:
         # paraview_script = Path(__file__).parent / 'paraview_script.py'
         # Can we make paraview/vtkxml work on some test system?
         return [
-            cls('ase_gui_cli', 'traj', [sys.executable, '-m', 'ase.gui']),
-            cls('avogadro', 'cube', ['avogadro']),
-            cls('gopenmol', 'extxyz', ['runGOpenMol']),
-            cls('rasmol', 'proteindatabank', ['rasmol', '-pdb']),
-            cls('vmd', 'cube', ['vmd']),
-            cls('xmakemol', 'extxyz', ['xmakemol', '-f']),
+            cls("ase_gui_cli", "traj", [sys.executable, "-m", "ase.gui"]),
+            cls("avogadro", "cube", ["avogadro"]),
+            cls("gopenmol", "extxyz", ["runGOpenMol"]),
+            cls("rasmol", "proteindatabank", ["rasmol", "-pdb"]),
+            cls("vmd", "cube", ["vmd"]),
+            cls("xmakemol", "extxyz", ["xmakemol", "-f"]),
             # cls('paraview', 'vtu',
             #     ['paraview', f'--script={paraview_script}'])
         ]
@@ -106,14 +106,17 @@ class PyViewer:
 
     def sage(self, atoms):
         from ase.visualize.sage import view_sage_jmol
+
         return view_sage_jmol(atoms)
 
     def ngl(self, atoms):
         from ase.visualize.ngl import view_ngl
+
         return view_ngl(atoms)
 
     def x3d(self, atoms):
         from ase.visualize.x3d import view_x3d
+
         return view_x3d(atoms)
 
     def ase(self, atoms, repeat):
@@ -122,16 +125,15 @@ class PyViewer:
     @classmethod
     def viewers(cls):
         return [
-            cls('ase', supports_repeat=True),
-            cls('ngl'),
-            cls('sage'),
-            cls('x3d'),
+            cls("ase", supports_repeat=True),
+            cls("ngl"),
+            cls("sage"),
+            cls("x3d"),
         ]
 
 
-viewers = {viewer.name: viewer
-           for viewer in CLIViewer.viewers() + PyViewer.viewers()}
-viewers['nglview'] = viewers['ngl']
+viewers = {viewer.name: viewer for viewer in CLIViewer.viewers() + PyViewer.viewers()}
+viewers["nglview"] = viewers["ngl"]
 
 
 def main():
@@ -139,5 +141,5 @@ def main():
     cli_viewer.view_blocking(atoms, data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

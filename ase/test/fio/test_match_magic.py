@@ -1,5 +1,6 @@
 # flake8: noqa
 
+
 def test_match_magic():
     from ase.io.formats import ioformats
 
@@ -13,5 +14,5 @@ def test_match_magic():
 
     """
 
-    gpaw = ioformats['gpaw-out']
+    gpaw = ioformats["gpaw-out"]
     assert gpaw.match_magic(text)

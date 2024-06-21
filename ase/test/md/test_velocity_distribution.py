@@ -10,7 +10,7 @@ norm = np.linalg.norm
 @pytest.fixture
 def atoms():
     rng = np.random.RandomState(0)
-    atoms = molecule('CH3CH2OH')
+    atoms = molecule("CH3CH2OH")
     momenta = -0.5 + rng.random((len(atoms), 3))
     atoms.set_momenta(momenta)
     return atoms

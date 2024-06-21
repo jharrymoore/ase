@@ -35,8 +35,13 @@ from ase.data.g2_2 import molecule_names as molecule_names_g2_2
 from ase.data.g2_1 import get_ionization_energy
 from ase.data.g2_1 import get_atomization_energy
 
-__all__ = ['data', 'molecule_names', 'atom_names', 'get_ionization_energy',
-           'get_atomization_energy']
+__all__ = [
+    "data",
+    "molecule_names",
+    "atom_names",
+    "get_ionization_energy",
+    "get_atomization_energy",
+]
 
 data = data_g2_1.copy()
 data.update(data_g2_2)

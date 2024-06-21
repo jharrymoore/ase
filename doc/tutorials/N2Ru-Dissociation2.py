@@ -6,12 +6,12 @@ from ase.calculators.emt import EMT
 from ase.neb import NEB
 from ase.optimize.fire import FIRE as QuasiNewton
 
-initial = read('N2.traj')
-final = read('2N.traj')
+initial = read("N2.traj")
+final = read("2N.traj")
 
 configs = [initial.copy() for i in range(8)] + [final]
 
-constraint = FixAtoms(mask=[atom.symbol != 'N' for atom in initial])
+constraint = FixAtoms(mask=[atom.symbol != "N" for atom in initial])
 for config in configs:
     config.calc = EMT()
     config.set_constraint(constraint)

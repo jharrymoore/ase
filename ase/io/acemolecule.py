@@ -7,7 +7,7 @@ from ase.data import chemical_symbols
 
 
 def parse_geometry(filename):
-    '''Read atoms geometry from ACE-Molecule log file and put it to self.data.
+    """Read atoms geometry from ACE-Molecule log file and put it to self.data.
     Parameters
     ==========
     filename: ACE-Molecule log file.
@@ -17,15 +17,15 @@ def parse_geometry(filename):
     Dictionary of parsed geometry data.
     retval["Atomic_numbers"]: list of atomic numbers
     retval["Positions"]: list of [x, y, z] coordinates for each atoms.
-    '''
-    with open(filename, 'r') as fd:
+    """
+    with open(filename, "r") as fd:
         lines = fd.readlines()
         start_line = 0
         end_line = 0
         for i, line in enumerate(lines):
-            if line == '====================  Atoms  =====================\n':
+            if line == "====================  Atoms  =====================\n":
                 start_line = i
-            if start_line != 0 and len(line.split('=')) > 3:
+            if start_line != 0 and len(line.split("=")) > 3:
                 end_line = i
                 if not start_line == end_line:
                     break
@@ -41,7 +41,7 @@ def parse_geometry(filename):
 
 
 def read_acemolecule_out(filename):
-    '''Interface to ACEMoleculeReader, return values for corresponding quantity
+    """Interface to ACEMoleculeReader, return values for corresponding quantity
 
     Parameters
     ==========
@@ -59,7 +59,7 @@ def read_acemolecule_out(filename):
        returns force of each atoms as numpy array of shape (natoms, 3).
      - quantity = 'atoms':
        returns ASE atoms object.
-    '''
+    """
     data = parse_geometry(filename)
     atom_symbol = np.array(data["Atomic_numbers"])
     positions = np.array(data["Positions"])
@@ -67,15 +67,15 @@ def read_acemolecule_out(filename):
     energy = None
     forces = None
     excitation_energy = None
-#    results = {}
-#    if len(results)<1:
-    with open(filename, 'r') as fd:
+    #    results = {}
+    #    if len(results)<1:
+    with open(filename, "r") as fd:
         lines = fd.readlines()
 
     for i in range(len(lines) - 1, 1, -1):
         line = lines[i].split()
         if len(line) > 2:
-            if line[0] == 'Total' and line[1] == 'energy':
+            if line[0] == "Total" and line[1] == "energy":
                 energy = float(line[3])
                 break
     # energy must be modified, hartree to eV
@@ -83,9 +83,9 @@ def read_acemolecule_out(filename):
 
     forces = []
     for i in range(len(lines) - 1, 1, -1):
-        if '!============================' in lines[i]:
+        if "!============================" in lines[i]:
             endline_num = i
-        if '! Force:: List of total force in atomic unit' in lines[i]:
+        if "! Force:: List of total force in atomic unit" in lines[i]:
             startline_num = i + 2
             for j in range(startline_num, endline_num):
                 forces.append(lines[j].split()[3:6])
@@ -100,15 +100,15 @@ def read_acemolecule_out(filename):
     atoms.calc = calc
 
     results = {}
-    results['energy'] = energy
-    results['atoms'] = atoms
-    results['forces'] = forces
-    results['excitation-energy'] = excitation_energy
+    results["energy"] = energy
+    results["atoms"] = atoms
+    results["forces"] = forces
+    results["excitation-energy"] = excitation_energy
     return results
 
 
 def read_acemolecule_input(filename):
-    '''Reads a ACE-Molecule input file
+    """Reads a ACE-Molecule input file
     Parameters
     ==========
     filename: ACE-Molecule input file name
@@ -116,11 +116,11 @@ def read_acemolecule_input(filename):
     Returns
     =======
     ASE atoms object containing geometry only.
-    '''
-    with open(filename, 'r') as fd:
+    """
+    with open(filename, "r") as fd:
         for line in fd:
-            if len(line.split('GeometryFilename')) > 1:
+            if len(line.split("GeometryFilename")) > 1:
                 geometryfile = line.split()[1]
                 break
-    atoms = read(geometryfile, format='xyz')
+    atoms = read(geometryfile, format="xyz")
     return atoms

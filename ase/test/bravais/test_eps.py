@@ -21,13 +21,13 @@ def test_bravais_eps():
 
     print(mclc)
     print(bct)
-    assert mclc.name == 'MCLC'
-    assert bct.name == 'BCT'
+    assert mclc.name == "MCLC"
+    assert bct.name == "BCT"
 
     # Original cell is not perfect (rounding).
     perfect_bct_cell = bct.tocell()
     # perfect_bct_cellpar = bct.cellpar()
-    assert perfect_bct_cell.get_bravais_lattice().name == 'BCT'
+    assert perfect_bct_cell.get_bravais_lattice().name == "BCT"
 
 
 def test_mclc_eps():
@@ -49,4 +49,4 @@ def test_mclc_eps():
     cell = Cell.new([a, a, c, alpha, beta, gamma])
     lat = cell.get_bravais_lattice(eps=1e-2)
     print(lat)
-    assert lat.name == 'MCLC'
+    assert lat.name == "MCLC"

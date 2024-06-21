@@ -58,5 +58,5 @@ def test_gpaw_output():
 
     """
     fd = io.StringIO(text)
-    configs = read(fd, index=':', format='gpaw-out')
+    configs = read(fd, index=":", format="gpaw-out")
     assert len(configs) == 3

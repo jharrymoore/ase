@@ -11,19 +11,25 @@ from ase.calculators.emt import EMT
 from ase.io import Trajectory
 
 
-all_optimizers = ase.optimize.__all__ + ['PreconLBFGS', 'PreconFIRE',
-                                         'SciPyFminCG', 'SciPyFminBFGS']
-all_optimizers.remove('QuasiNewton')
-all_optimizers.remove('RestartError')
+all_optimizers = ase.optimize.__all__ + [
+    "PreconLBFGS",
+    "PreconFIRE",
+    "SciPyFminCG",
+    "SciPyFminBFGS",
+]
+all_optimizers.remove("QuasiNewton")
+all_optimizers.remove("RestartError")
 
 
 def get_optimizer(name):
     # types: (str) -> ase.optimize.Optimizer
-    if name.startswith('Precon'):
+    if name.startswith("Precon"):
         import ase.optimize.precon as precon
+
         return getattr(precon, name)
-    if name.startswith('SciPy'):
+    if name.startswith("SciPy"):
         import ase.optimize.sciopt as sciopt
+
         return getattr(sciopt, name)
     return getattr(ase.optimize, name)
 
@@ -75,8 +81,7 @@ class Wrapper:
         if self.eggbox:
             # Add egg-box error:
             s = np.dot(self.atoms.positions, self.x)
-            f += np.dot(np.sin(2 * pi * s),
-                        self.x.T) * (2 * pi * self.eggbox / 6)
+            f += np.dot(np.sin(2 * pi * s), self.x.T) * (2 * pi * self.eggbox / 6)
 
         t2 = time()
         self.texcl += t2 - t1
@@ -89,7 +94,7 @@ class Wrapper:
         if self.pos is not None and abs(pos - self.pos).max() > 1e-15:
             self.ready = False
             if self.nsteps == 200:
-                raise RuntimeError('Did not converge!')
+                raise RuntimeError("Did not converge!")
 
         self.pos = pos
         self.atoms.set_positions(pos)
@@ -110,29 +115,28 @@ class Wrapper:
 def run_test(atoms, optimizer, tag, fmax=0.02, eggbox=0.0):
     """Optimize atoms with optimizer."""
     wrapper = Wrapper(atoms, eggbox=eggbox)
-    relax = optimizer(wrapper, logfile=tag + '.log')
-    relax.attach(Trajectory(tag + '.traj', 'w', atoms=atoms))
+    relax = optimizer(wrapper, logfile=tag + ".log")
+    relax.attach(Trajectory(tag + ".traj", "w", atoms=atoms))
 
     tincl = -time()
-    error = ''
+    error = ""
 
     try:
         relax.run(fmax=fmax, steps=10000000)
     except Exception as x:
-        wrapper.nsteps = float('inf')
-        error = '{}: {}'.format(x.__class__.__name__, x)
+        wrapper.nsteps = float("inf")
+        error = "{}: {}".format(x.__class__.__name__, x)
         tb = traceback.format_exc()
 
-        with open(tag + '.err', 'w') as fd:
-            fd.write('{}\n{}\n'.format(error, tb))
+        with open(tag + ".err", "w") as fd:
+            fd.write("{}\n{}\n".format(error, tb))
 
     tincl += time()
 
     return error, wrapper.nsteps, wrapper.texcl, tincl
 
 
-def test_optimizer(systems, optimizer, calculator, prefix='', db=None,
-                   eggbox=0.0):
+def test_optimizer(systems, optimizer, calculator, prefix="", db=None, eggbox=0.0):
     """Test optimizer on systems."""
 
     for name, atoms in systems:
@@ -142,41 +146,45 @@ def test_optimizer(systems, optimizer, calculator, prefix='', db=None,
             if id is None:
                 continue
         atoms = atoms.copy()
-        tag = '{}{}-{}'.format(prefix, optname, name)
-        atoms.calc = calculator(txt=tag + '.txt')
-        error, nsteps, texcl, tincl = run_test(atoms, optimizer, tag,
-                                               eggbox=eggbox)
+        tag = "{}{}-{}".format(prefix, optname, name)
+        atoms.calc = calculator(txt=tag + ".txt")
+        error, nsteps, texcl, tincl = run_test(atoms, optimizer, tag, eggbox=eggbox)
 
         if db is not None:
-            db.write(atoms,
-                     id=id,
-                     optimizer=optname,
-                     name=name,
-                     error=error,
-                     n=nsteps,
-                     t=texcl,
-                     T=tincl,
-                     eggbox=eggbox)
+            db.write(
+                atoms,
+                id=id,
+                optimizer=optname,
+                name=name,
+                error=error,
+                n=nsteps,
+                t=texcl,
+                T=tincl,
+                eggbox=eggbox,
+            )
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Test ASE optimizers')
+    parser = argparse.ArgumentParser(description="Test ASE optimizers")
 
-    parser.add_argument('systems', help='File containing test systems.')
-    parser.add_argument('optimizer', nargs='*',
-                        help='Optimizer name(s).  Choose from: {}. '
-                        .format(', '.join(all_optimizers)) +
-                        'Default is all optimizers.')
-    parser.add_argument('-e', '--egg-box', type=float, default=0.0,
-                        help='Fake egg-box error in eV.')
+    parser.add_argument("systems", help="File containing test systems.")
+    parser.add_argument(
+        "optimizer",
+        nargs="*",
+        help="Optimizer name(s).  Choose from: {}. ".format(", ".join(all_optimizers))
+        + "Default is all optimizers.",
+    )
+    parser.add_argument(
+        "-e", "--egg-box", type=float, default=0.0, help="Fake egg-box error in eV."
+    )
 
     args = parser.parse_args()
 
-    systems = [(row.name, row.toatoms())
-               for row in ase.db.connect(args.systems).select()]
+    systems = [
+        (row.name, row.toatoms()) for row in ase.db.connect(args.systems).select()
+    ]
 
-    db = ase.db.connect('results.db')
+    db = ase.db.connect("results.db")
 
     if not args.optimizer:
         args.optimizer = all_optimizers
@@ -187,5 +195,5 @@ def main():
         test_optimizer(systems, optimizer, EMT, db=db, eggbox=args.egg_box)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

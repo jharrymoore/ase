@@ -21,28 +21,30 @@ def Icosahedron(symbol, noshells, latticeconstant=None):
         `ase.data`.
     """
 
-    symbol, atomic_number, latticeconstant = get_element_info(
-        symbol, latticeconstant)
+    symbol, atomic_number, latticeconstant = get_element_info(symbol, latticeconstant)
 
     # Interpret noshells
     if noshells < 1:
-        raise ValueError(
-            "The number of shells must be equal to or greater than one.")
+        raise ValueError("The number of shells must be equal to or greater than one.")
 
     t = 0.5 + np.sqrt(5) / 2.0
 
-    verticies = np.array([[t, 0., 1.],
-                          [t, 0., -1.],
-                          [-t, 0., 1.],
-                          [-t, 0., -1.],
-                          [1., t, 0.],
-                          [-1., t, 0.],
-                          [1., -t, 0.],
-                          [-1., -t, 0.],
-                          [0., 1., t],
-                          [0., -1., t],
-                          [0., 1., -t],
-                          [0., -1., -t]])
+    verticies = np.array(
+        [
+            [t, 0.0, 1.0],
+            [t, 0.0, -1.0],
+            [-t, 0.0, 1.0],
+            [-t, 0.0, -1.0],
+            [1.0, t, 0.0],
+            [-1.0, t, 0.0],
+            [1.0, -t, 0.0],
+            [-1.0, -t, 0.0],
+            [0.0, 1.0, t],
+            [0.0, -1.0, t],
+            [0.0, 1.0, -t],
+            [0.0, -1.0, -t],
+        ]
+    )
 
     positions = []
     tags = []
@@ -61,17 +63,25 @@ def Icosahedron(symbol, noshells, latticeconstant=None):
 
         # Construct triangle planes (12)
         if n > 1:
-            map = {0: (8, 9), 1: (10, 11),
-                   2: (8, 9), 3: (10, 11),
-                   4: (0, 1), 5: (2, 3),
-                   6: (0, 1), 7: (2, 3),
-                   8: (4, 5), 9: (6, 7),
-                   10: (4, 5), 11: (6, 7)}
+            map = {
+                0: (8, 9),
+                1: (10, 11),
+                2: (8, 9),
+                3: (10, 11),
+                4: (0, 1),
+                5: (2, 3),
+                6: (0, 1),
+                7: (2, 3),
+                8: (4, 5),
+                9: (6, 7),
+                10: (4, 5),
+                11: (6, 7),
+            }
 
             for k in range(0, 12):
                 v0 = n * verticies[k]
-                v1 = (verticies[map[k][0]] - verticies[k])
-                v2 = (verticies[map[k][1]] - verticies[k])
+                v1 = verticies[map[k][0]] - verticies[k]
+                v2 = verticies[map[k][1]] - verticies[k]
                 for i in range(n):
                     for j in range(n - i):
                         if i == 0 and j == 0:
@@ -82,17 +92,29 @@ def Icosahedron(symbol, noshells, latticeconstant=None):
 
         # Fill missing triangle planes (8)
         if n > 2:
-            map = {0: (9, 6, 8, 4,),
-                   1: (11, 6, 10, 4),
-                   2: (9, 7, 8, 5,),
-                   3: (11, 7, 10, 5)}
+            map = {
+                0: (
+                    9,
+                    6,
+                    8,
+                    4,
+                ),
+                1: (11, 6, 10, 4),
+                2: (
+                    9,
+                    7,
+                    8,
+                    5,
+                ),
+                3: (11, 7, 10, 5),
+            }
 
             for k in range(0, 4):
                 v0 = n * verticies[k]
-                v1 = (verticies[map[k][0]] - verticies[k])
-                v2 = (verticies[map[k][1]] - verticies[k])
-                v3 = (verticies[map[k][2]] - verticies[k])
-                v4 = (verticies[map[k][3]] - verticies[k])
+                v1 = verticies[map[k][0]] - verticies[k]
+                v2 = verticies[map[k][1]] - verticies[k]
+                v3 = verticies[map[k][2]] - verticies[k]
+                v4 = verticies[map[k][3]] - verticies[k]
                 for i in range(1, n):
                     for j in range(1, n - i):
                         pos = v0 + i * v1 + j * v2

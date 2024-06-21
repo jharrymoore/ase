@@ -14,17 +14,18 @@ from ase.utils import reader, writer
 
 
 def default(obj):
-    if hasattr(obj, 'todict'):
+    if hasattr(obj, "todict"):
         dct = obj.todict()
 
         if not isinstance(dct, dict):
-            raise RuntimeError('todict() of {} returned object of type {} '
-                               'but should have returned dict'
-                               .format(obj, type(dct)))
-        if hasattr(obj, 'ase_objtype'):
+            raise RuntimeError(
+                "todict() of {} returned object of type {} "
+                "but should have returned dict".format(obj, type(dct))
+            )
+        if hasattr(obj, "ase_objtype"):
             # We modify the dictionary, so it is wise to take a copy.
             dct = dct.copy()
-            dct['__ase_objtype__'] = obj.ase_objtype
+            dct["__ase_objtype__"] = obj.ase_objtype
 
         return dct
     if isinstance(obj, np.ndarray):
@@ -35,20 +36,19 @@ def default(obj):
         # they are not always the same (e.g. for numpy arrays of strings).
         # Using obj.dtype.name can break the ability to recursively decode/
         # encode such arrays.
-        return {'__ndarray__': (obj.shape,
-                                str(obj.dtype),
-                                flatobj.tolist())}
+        return {"__ndarray__": (obj.shape, str(obj.dtype), flatobj.tolist())}
     if isinstance(obj, np.integer):
         return int(obj)
     if isinstance(obj, np.bool_):
         return bool(obj)
     if isinstance(obj, datetime.datetime):
-        return {'__datetime__': obj.isoformat()}
+        return {"__datetime__": obj.isoformat()}
     if isinstance(obj, complex):
-        return {'__complex__': (obj.real, obj.imag)}
+        return {"__complex__": (obj.real, obj.imag)}
 
-    raise TypeError(f'Cannot convert object of type {type(obj)} to '
-                    'dictionary for JSON')
+    raise TypeError(
+        f"Cannot convert object of type {type(obj)} to " "dictionary for JSON"
+    )
 
 
 class MyEncoder(json.JSONEncoder):
@@ -62,23 +62,22 @@ encode = MyEncoder().encode
 
 
 def object_hook(dct):
-    if '__datetime__' in dct:
-        return datetime.datetime.strptime(dct['__datetime__'],
-                                          '%Y-%m-%dT%H:%M:%S.%f')
+    if "__datetime__" in dct:
+        return datetime.datetime.strptime(dct["__datetime__"], "%Y-%m-%dT%H:%M:%S.%f")
 
-    if '__complex__' in dct:
-        return complex(*dct['__complex__'])
+    if "__complex__" in dct:
+        return complex(*dct["__complex__"])
 
-    if '__ndarray__' in dct:
-        return create_ndarray(*dct['__ndarray__'])
+    if "__ndarray__" in dct:
+        return create_ndarray(*dct["__ndarray__"])
 
     # No longer used (only here for backwards compatibility):
-    if '__complex_ndarray__' in dct:
-        r, i = (np.array(x) for x in dct['__complex_ndarray__'])
+    if "__complex_ndarray__" in dct:
+        r, i = (np.array(x) for x in dct["__complex_ndarray__"])
         return r + i * 1j
 
-    if '__ase_objtype__' in dct:
-        objtype = dct.pop('__ase_objtype__')
+    if "__ase_objtype__" in dct:
+        objtype = dct.pop("__ase_objtype__")
         dct = numpyfy(dct)
         return create_ase_object(objtype, dct)
 
@@ -99,25 +98,32 @@ def create_ase_object(objtype, dct):
     # We just try each object type one after another and instantiate
     # them manually, depending on which kind it is.
     # We can formalize this later if it ever becomes necessary.
-    if objtype == 'cell':
+    if objtype == "cell":
         from ase.cell import Cell
-        dct.pop('pbc', None)  # compatibility; we once had pbc
+
+        dct.pop("pbc", None)  # compatibility; we once had pbc
         obj = Cell(**dct)
-    elif objtype == 'bandstructure':
+    elif objtype == "bandstructure":
         from ase.spectrum.band_structure import BandStructure
+
         obj = BandStructure(**dct)
-    elif objtype == 'bandpath':
+    elif objtype == "bandpath":
         from ase.dft.kpoints import BandPath
-        obj = BandPath(path=dct.pop('labelseq'), **dct)
-    elif objtype == 'atoms':
+
+        obj = BandPath(path=dct.pop("labelseq"), **dct)
+    elif objtype == "atoms":
         from ase import Atoms
+
         obj = Atoms.fromdict(dct)
-    elif objtype == 'vibrationsdata':
+    elif objtype == "vibrationsdata":
         from ase.vibrations import VibrationsData
+
         obj = VibrationsData.fromdict(dct)
     else:
-        raise ValueError('Do not know how to decode object type {} '
-                         'into an actual object'.format(objtype))
+        raise ValueError(
+            "Do not know how to decode object type {} "
+            "into an actual object".format(objtype)
+        )
     assert obj.ase_objtype == objtype
     return obj
 
@@ -140,15 +146,14 @@ def fix_int_keys_in_dicts(obj):
     This function goes the other way.
     """
     if isinstance(obj, dict):
-        return {intkey(key): fix_int_keys_in_dicts(value)
-                for key, value in obj.items()}
+        return {intkey(key): fix_int_keys_in_dicts(value) for key, value in obj.items()}
     return obj
 
 
 def numpyfy(obj):
     if isinstance(obj, dict):
-        if '__complex_ndarray__' in obj:
-            r, i = (np.array(x) for x in obj['__complex_ndarray__'])
+        if "__complex_ndarray__" in obj:
+            r, i = (np.array(x) for x in obj["__complex_ndarray__"])
             return r + i * 1j
     if isinstance(obj, list) and len(obj) > 0:
         try:

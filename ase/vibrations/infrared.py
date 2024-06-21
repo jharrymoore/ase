@@ -136,34 +136,38 @@ class Infrared(Vibrations):
 
     """
 
-    def __init__(self, atoms, indices=None, name='ir', delta=0.01,
-                 nfree=2, directions=None):
-        Vibrations.__init__(self, atoms, indices=indices, name=name,
-                            delta=delta, nfree=nfree)
+    def __init__(
+        self, atoms, indices=None, name="ir", delta=0.01, nfree=2, directions=None
+    ):
+        Vibrations.__init__(
+            self, atoms, indices=indices, name=name, delta=delta, nfree=nfree
+        )
         if atoms.constraints:
-            print('WARNING! \n Your Atoms object is constrained. '
-                  'Some forces may be unintended set to zero. \n')
+            print(
+                "WARNING! \n Your Atoms object is constrained. "
+                "Some forces may be unintended set to zero. \n"
+            )
         if directions is None:
             self.directions = np.asarray([0, 1, 2])
         else:
             self.directions = np.asarray(directions)
         self.ir = True
 
-    def read(self, method='standard', direction='central'):
+    def read(self, method="standard", direction="central"):
         self.method = method.lower()
         self.direction = direction.lower()
-        assert self.method in ['standard', 'frederiksen']
+        assert self.method in ["standard", "frederiksen"]
 
-        if direction != 'central':
+        if direction != "central":
             raise NotImplementedError(
-                'Only central difference is implemented at the moment.')
+                "Only central difference is implemented at the moment."
+            )
 
         disp = self._eq_disp()
         forces_zero = disp.forces()
         dipole_zero = disp.dipole()
-        self.dipole_zero = (sum(dipole_zero**2)**0.5) / units.Debye
-        self.force_zero = max([sum((forces_zero[j])**2)**0.5
-                               for j in self.indices])
+        self.dipole_zero = (sum(dipole_zero**2) ** 0.5) / units.Debye
+        self.force_zero = max([sum((forces_zero[j]) ** 2) ** 0.5 for j in self.indices])
 
         ndof = 3 * len(self.indices)
         H = np.empty((ndof, ndof))
@@ -188,7 +192,7 @@ class Infrared(Vibrations):
 
                 fplusplus = disp_pp.forces()
                 dplusplus = disp_pp.dipole()
-            if self.method == 'frederiksen':
+            if self.method == "frederiksen":
                 fminus[a] += -fminus.sum(0)
                 fplus[a] += -fplus.sum(0)
                 if self.nfree == 4:
@@ -196,12 +200,12 @@ class Infrared(Vibrations):
                     fplusplus[a] += -fplus.sum(0)
             if self.nfree == 2:
                 H[r] = (fminus - fplus)[self.indices].ravel() / 2.0
-                dpdx[r] = (dminus - dplus)
+                dpdx[r] = dminus - dplus
             if self.nfree == 4:
-                H[r] = (-fminusminus + 8 * fminus - 8 * fplus +
-                        fplusplus)[self.indices].ravel() / 12.0
-                dpdx[r] = (-dplusplus + 8 * dplus - 8 * dminus +
-                           dminusminus) / 6.0
+                H[r] = (-fminusminus + 8 * fminus - 8 * fplus + fplusplus)[
+                    self.indices
+                ].ravel() / 12.0
+                dpdx[r] = (-dplusplus + 8 * dplus - 8 * dminus + dminusminus) / 6.0
             H[r] /= 2 * self.delta
             dpdx[r] /= 2 * self.delta
             for n in range(3):
@@ -214,72 +218,91 @@ class Infrared(Vibrations):
         H += H.copy().T
         self.H = H
 
-        self.im = np.repeat(masses[self.indices]**-0.5, 3)
+        self.im = np.repeat(masses[self.indices] ** -0.5, 3)
         omega2, modes = np.linalg.eigh(self.im[:, None] * H * self.im)
         self.modes = modes.T.copy()
 
         # Calculate intensities
-        dpdq = np.array([dpdx[j] / sqrt(masses[self.indices[j // 3]] *
-                                        units._amu / units._me)
-                         for j in range(ndof)])
+        dpdq = np.array(
+            [
+                dpdx[j] / sqrt(masses[self.indices[j // 3]] * units._amu / units._me)
+                for j in range(ndof)
+            ]
+        )
         dpdQ = np.dot(dpdq.T, modes)
         dpdQ = dpdQ.T
-        intensities = np.array([sum(dpdQ[j]**2) for j in range(ndof)])
+        intensities = np.array([sum(dpdQ[j] ** 2) for j in range(ndof)])
         # Conversion factor:
         s = units._hbar * 1e10 / sqrt(units._e * units._amu)
-        self.hnu = s * omega2.astype(complex)**0.5
+        self.hnu = s * omega2.astype(complex) ** 0.5
         # Conversion factor from atomic units to (D/Angstrom)^2/amu.
-        conv = (1.0 / units.Debye)**2 * units._amu / units._me
+        conv = (1.0 / units.Debye) ** 2 * units._amu / units._me
         self.intensities = intensities * conv
 
     def intensity_prefactor(self, intensity_unit):
-        if intensity_unit == '(D/A)2/amu':
-            return 1.0, '(D/Å)^2 amu^-1'
-        elif intensity_unit == 'km/mol':
+        if intensity_unit == "(D/A)2/amu":
+            return 1.0, "(D/Å)^2 amu^-1"
+        elif intensity_unit == "km/mol":
             # conversion factor from Porezag PRB 54 (1996) 7830
-            return 42.255, 'km/mol'
+            return 42.255, "km/mol"
         else:
-            raise RuntimeError('Intensity unit >' + intensity_unit +
-                               '< unknown.')
+            raise RuntimeError("Intensity unit >" + intensity_unit + "< unknown.")
 
-    def summary(self, method='standard', direction='central',
-                intensity_unit='(D/A)2/amu', log=stdout):
+    def summary(
+        self,
+        method="standard",
+        direction="central",
+        intensity_unit="(D/A)2/amu",
+        log=stdout,
+    ):
         hnu = self.get_energies(method, direction)
         s = 0.01 * units._e / units._c / units._hplanck
         iu, iu_string = self.intensity_prefactor(intensity_unit)
-        if intensity_unit == '(D/A)2/amu':
-            iu_format = '%9.4f'
-        elif intensity_unit == 'km/mol':
-            iu_string = '   ' + iu_string
-            iu_format = ' %7.1f'
+        if intensity_unit == "(D/A)2/amu":
+            iu_format = "%9.4f"
+        elif intensity_unit == "km/mol":
+            iu_string = "   " + iu_string
+            iu_format = " %7.1f"
         if isinstance(log, str):
-            log = paropen(log, 'a')
+            log = paropen(log, "a")
 
-        parprint('-------------------------------------', file=log)
-        parprint(' Mode    Frequency        Intensity', file=log)
-        parprint('  #    meV     cm^-1   ' + iu_string, file=log)
-        parprint('-------------------------------------', file=log)
+        parprint("-------------------------------------", file=log)
+        parprint(" Mode    Frequency        Intensity", file=log)
+        parprint("  #    meV     cm^-1   " + iu_string, file=log)
+        parprint("-------------------------------------", file=log)
         for n, e in enumerate(hnu):
             if e.imag != 0:
-                c = 'i'
+                c = "i"
                 e = e.imag
             else:
-                c = ' '
+                c = " "
                 e = e.real
-            parprint(('%3d %6.1f%s  %7.1f%s  ' + iu_format) %
-                     (n, 1000 * e, c, s * e, c, iu * self.intensities[n]),
-                     file=log)
-        parprint('-------------------------------------', file=log)
-        parprint('Zero-point energy: %.3f eV' % self.get_zero_point_energy(),
-                 file=log)
-        parprint('Static dipole moment: %.3f D' % self.dipole_zero, file=log)
-        parprint('Maximum force on atom in `equilibrium`: %.4f eV/Å' %
-                 self.force_zero, file=log)
+            parprint(
+                ("%3d %6.1f%s  %7.1f%s  " + iu_format)
+                % (n, 1000 * e, c, s * e, c, iu * self.intensities[n]),
+                file=log,
+            )
+        parprint("-------------------------------------", file=log)
+        parprint("Zero-point energy: %.3f eV" % self.get_zero_point_energy(), file=log)
+        parprint("Static dipole moment: %.3f D" % self.dipole_zero, file=log)
+        parprint(
+            "Maximum force on atom in `equilibrium`: %.4f eV/Å" % self.force_zero,
+            file=log,
+        )
         parprint(file=log)
 
-    def get_spectrum(self, start=800, end=4000, npts=None, width=4,
-                     type='Gaussian', method='standard', direction='central',
-                     intensity_unit='(D/A)2/amu', normalize=False):
+    def get_spectrum(
+        self,
+        start=800,
+        end=4000,
+        npts=None,
+        width=4,
+        type="Gaussian",
+        method="standard",
+        direction="central",
+        intensity_unit="(D/A)2/amu",
+        normalize=False,
+    ):
         """Get infrared spectrum.
 
         The method returns wavenumbers in cm^-1 with corresponding
@@ -291,13 +314,23 @@ class Infrared(Vibrations):
         """
         frequencies = self.get_frequencies(method, direction).real
         intensities = self.intensities
-        return self.fold(frequencies, intensities,
-                         start, end, npts, width, type, normalize)
+        return self.fold(
+            frequencies, intensities, start, end, npts, width, type, normalize
+        )
 
-    def write_spectra(self, out='ir-spectra.dat', start=800, end=4000,
-                      npts=None, width=10,
-                      type='Gaussian', method='standard', direction='central',
-                      intensity_unit='(D/A)2/amu', normalize=False):
+    def write_spectra(
+        self,
+        out="ir-spectra.dat",
+        start=800,
+        end=4000,
+        npts=None,
+        width=10,
+        type="Gaussian",
+        method="standard",
+        direction="central",
+        intensity_unit="(D/A)2/amu",
+        normalize=False,
+    ):
         """Write out infrared spectrum to file.
 
         First column is the wavenumber in cm^-1, the second column the
@@ -306,23 +339,22 @@ class Infrared(Vibrations):
         from 1 to 0. Start and end
         point, and width of the Gaussian/Lorentzian should be given
         in cm^-1."""
-        energies, spectrum = self.get_spectrum(start, end, npts, width,
-                                               type, method, direction,
-                                               normalize)
+        energies, spectrum = self.get_spectrum(
+            start, end, npts, width, type, method, direction, normalize
+        )
 
         # Write out spectrum in file. First column is absolute intensities.
         # Second column is absorbance scaled so that data runs from 1 to 0
-        spectrum2 = 1. - spectrum / spectrum.max()
+        spectrum2 = 1.0 - spectrum / spectrum.max()
         outdata = np.empty([len(energies), 3])
         outdata.T[0] = energies
         outdata.T[1] = spectrum
         outdata.T[2] = spectrum2
-        with open(out, 'w') as fd:
-            fd.write('# %s folded, width=%g cm^-1\n' % (type.title(), width))
+        with open(out, "w") as fd:
+            fd.write("# %s folded, width=%g cm^-1\n" % (type.title(), width))
             iu, iu_string = self.intensity_prefactor(intensity_unit)
             if normalize:
-                iu_string = 'cm ' + iu_string
-            fd.write('# [cm^-1] %14s\n' % ('[' + iu_string + ']'))
+                iu_string = "cm " + iu_string
+            fd.write("# [cm^-1] %14s\n" % ("[" + iu_string + "]"))
             for row in outdata:
-                fd.write('%.3f  %15.5e  %15.5e \n' %
-                         (row[0], iu * row[1], row[2]))
+                fd.write("%.3f  %15.5e  %15.5e \n" % (row[0], iu * row[1], row[2]))

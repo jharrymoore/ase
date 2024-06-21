@@ -20,9 +20,9 @@ def filenames2modules(filenames):
     modules = []
     for filename in filenames:
         filename = Path(filename).as_posix()
-        module = filename.rsplit('.', 1)[0]
-        module = module.replace('/', '.')
-        if module == 'ase.data.tmxr200x':
+        module = filename.rsplit(".", 1)[0]
+        module = module.replace("/", ".")
+        if module == "ase.data.tmxr200x":
             continue
         modules.append(module)
         print(module)
@@ -31,39 +31,41 @@ def filenames2modules(filenames):
 
 def glob_modules():
     topdir = Path(ase.__file__).parent
-    for path in topdir.rglob('*.py'):
-        path = 'ase' / path.relative_to(topdir)
-        if path.name.startswith('__'):
+    for path in topdir.rglob("*.py"):
+        path = "ase" / path.relative_to(topdir)
+        if path.name.startswith("__"):
             continue
-        if path.parts[1] == 'test':
+        if path.parts[1] == "test":
             continue
         yield path
 
 
 all_modules = filenames2modules(glob_modules())
 
-deprecated_modules = {'ase.dft.band_structure'}
+deprecated_modules = {"ase.dft.band_structure"}
 
 ignore_imports = {
-    'flask', 'psycopg2', 'kimpy', 'pymysql', 'IPython',
-    'docutils',
-    'gpaw',  # ase.vibrations.placzek
-    'gpaw.lrtddft',  # ase.vibrations.placzek
+    "flask",
+    "psycopg2",
+    "kimpy",
+    "pymysql",
+    "IPython",
+    "docutils",
+    "gpaw",  # ase.vibrations.placzek
+    "gpaw.lrtddft",  # ase.vibrations.placzek
 }
 
-newpy_only_modules = {
-    'ase.utils.build_web_page'
-}
+newpy_only_modules = {"ase.utils.build_web_page"}
 
 
-@pytest.mark.filterwarnings('ignore:Moved to')
+@pytest.mark.filterwarnings("ignore:Moved to")
 def test_imports():
     for module in all_modules:
         with contextlib.ExitStack() as ignored_warnings:
             if module in deprecated_modules:
                 ignored_warnings.enter_context(
-                    pytest.warns((DeprecationWarning,
-                                  VisibleDeprecationWarning)))
+                    pytest.warns((DeprecationWarning, VisibleDeprecationWarning))
+                )
 
             try:
                 import_module(module)
@@ -71,6 +73,6 @@ def test_imports():
                 if module not in newpy_only_modules:
                     raise
             except ImportError as err:
-                ok = err.name in ignore_imports or 'deprecated' in str(err)
+                ok = err.name in ignore_imports or "deprecated" in str(err)
                 if not ok:
                     raise

@@ -39,11 +39,19 @@ class CLICommand:
     @staticmethod
     def add_arguments(parser):
         add = parser.add_argument
-        add('filenames', nargs='+', help='input file(s) to analyze')
-        add('--display-all', dest='full', action='store_true',
-            help='display all dimensionality classifications')
-        add('--no-merge', dest='no_merge', action='store_true',
-            help='do not merge k-intervals with same dimensionality')
+        add("filenames", nargs="+", help="input file(s) to analyze")
+        add(
+            "--display-all",
+            dest="full",
+            action="store_true",
+            help="display all dimensionality classifications",
+        )
+        add(
+            "--no-merge",
+            dest="no_merge",
+            action="store_true",
+            help="do not merge k-intervals with same dimensionality",
+        )
 
     @staticmethod
     def run(args, parser):
@@ -55,15 +63,14 @@ class CLICommand:
         files = [os.path.split(path)[1] for path in args.filenames]
         lmax = max([len(f) for f in files]) + 2
 
-        print('file'.ljust(lmax) +
-              'type   score     a      b      component counts')
-        print('=' * lmax + '===============================================')
+        print("file".ljust(lmax) + "type   score     a      b      component counts")
+        print("=" * lmax + "===============================================")
 
         merge = not args.no_merge
 
         # reading CIF files can produce a ton of distracting warnings
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore')
+            warnings.filterwarnings("ignore")
             for path, f in zip(args.filenames, files):
                 for atoms in iread(path):
                     result = analyze_dimensionality(atoms, merge=merge)
@@ -72,17 +79,17 @@ class CLICommand:
 
                     for i, entry in enumerate(result):
                         dimtype = entry.dimtype.rjust(4)
-                        score = '{:.3f}'.format(entry.score).ljust(5)
-                        a = '{:.3f}'.format(entry.a).ljust(5)
-                        b = '{:.3f}'.format(entry.b).ljust(5)
+                        score = "{:.3f}".format(entry.score).ljust(5)
+                        a = "{:.3f}".format(entry.a).ljust(5)
+                        b = "{:.3f}".format(entry.b).ljust(5)
                         if i == 0:
                             name = f.ljust(lmax)
                         else:
-                            name = ' ' * lmax
+                            name = " " * lmax
 
-                        line = ('{}{}' + '   {}' * 4).format(name, dimtype,
-                                                             score, a, b,
-                                                             entry.h)
+                        line = ("{}{}" + "   {}" * 4).format(
+                            name, dimtype, score, a, b, entry.h
+                        )
                         print(line)
 
                     if args.full:

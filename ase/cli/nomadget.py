@@ -11,17 +11,17 @@ class CLICommand:
 
     @staticmethod
     def add_arguments(p):
-        p.add_argument('uri', nargs='+', metavar='nmd://<hash>',
-                       help='URIs to get')
+        p.add_argument("uri", nargs="+", metavar="nmd://<hash>", help="URIs to get")
 
     @staticmethod
     def run(args):
         import json
         from ase.nomad import download
+
         for uri in args.uri:
             calculation = download(uri)
-            identifier = calculation.hash.replace('/', '.')
-            fname = 'nmd.{}.nomad-json'.format(identifier)
-            with open(fname, 'w') as fd:
+            identifier = calculation.hash.replace("/", ".")
+            fname = "nmd.{}.nomad-json".format(identifier)
+            with open(fname, "w") as fd:
                 json.dump(calculation, fd)
             print(uri)

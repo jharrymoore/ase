@@ -6,7 +6,7 @@ from ase.cluster.icosahedron import Icosahedron
 from ase.cluster.octahedron import Octahedron
 from ase.neighborlist import neighbor_list
 
-sym = 'Au'
+sym = "Au"
 a0 = 4.05
 ico_cubocta_sizes = [0, 1, 13, 55, 147, 309, 561, 923, 1415]
 ico_corner_coordination = 6
@@ -15,10 +15,10 @@ fcc_maxcoordination = 12
 
 
 def coordination_numbers(atoms):
-    return np.bincount(neighbor_list('i', atoms, 0.80 * a0))
+    return np.bincount(neighbor_list("i", atoms, 0.80 * a0))
 
 
-@pytest.mark.parametrize('shells', range(1, 7))
+@pytest.mark.parametrize("shells", range(1, 7))
 def test_icosa(shells):
     atoms = Icosahedron(sym, shells)
     assert len(atoms) == ico_cubocta_sizes[shells]
@@ -35,7 +35,7 @@ def test_icosa(shells):
 octa_sizes = [0, 1, 6, 19, 44, 85, 146, 231, 344]
 
 
-@pytest.mark.parametrize('shells', range(1, 8))
+@pytest.mark.parametrize("shells", range(1, 8))
 def test_regular_octahedron(shells):
     octa = Octahedron(sym, length=shells, cutoff=0)
     coordination = coordination_numbers(octa)
@@ -51,7 +51,7 @@ def test_regular_octahedron(shells):
     assert sum(coordination == fcc_maxcoordination) == expected_internal_atoms
 
 
-@pytest.mark.parametrize('shells', range(1, 7))
+@pytest.mark.parametrize("shells", range(1, 7))
 def test_cuboctahedron(shells):
     cutoff = shells - 1
     length = 2 * cutoff + 1
@@ -90,7 +90,7 @@ def clusters():
     yield Decahedron(sym, 2, 3, 3)
 
 
-@pytest.mark.parametrize('cluster', clusters())
+@pytest.mark.parametrize("cluster", clusters())
 def test_centering(cluster):
     assert cluster.cell.rank == 0
     assert cluster.positions.sum(0) == pytest.approx(np.zeros(3), abs=1e-10)

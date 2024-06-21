@@ -40,7 +40,7 @@ class PackedCalculator(ABC):
         This method will be called inside the subprocess doing
         computations."""
 
-    def calculator(self, mpi_command=None) -> 'PythonSubProcessCalculator':
+    def calculator(self, mpi_command=None) -> "PythonSubProcessCalculator":
         """Return a PythonSubProcessCalculator for this calculator.
 
         The subprocess calculator wraps a subprocess containing
@@ -62,11 +62,12 @@ class NamedPackedCalculator(PackedCalculator):
 
     def unpack_calculator(self):
         from ase.calculators.calculator import get_calculator_class
+
         cls = get_calculator_class(self._name)
         return cls(**self._kwargs)
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self._name}, {self._kwargs})'
+        return f"{self.__class__.__name__}({self._name}, {self._kwargs})"
 
 
 class MPICommand:
@@ -75,34 +76,44 @@ class MPICommand:
 
     @classmethod
     def python_argv(cls):
-        return [sys.executable, '-m', 'ase.calculators.subprocesscalculator']
+        return [sys.executable, "-m", "ase.calculators.subprocesscalculator"]
 
     @classmethod
     def parallel(cls, nprocs, mpi_argv=tuple()):
-        return cls(['mpiexec', '-n', str(nprocs)]
-                   + list(mpi_argv)
-                   + cls.python_argv()
-                   + ['mpi4py'])
+        return cls(
+            ["mpiexec", "-n", str(nprocs)]
+            + list(mpi_argv)
+            + cls.python_argv()
+            + ["mpi4py"]
+        )
 
     @classmethod
     def serial(cls):
-        return MPICommand(cls.python_argv() + ['standard'])
+        return MPICommand(cls.python_argv() + ["standard"])
 
     def execute(self):
         # On this computer (Ubuntu 20.04 + OpenMPI) the subprocess crashes
         # without output during startup if os.environ is not passed along.
         # Hence we pass os.environ.  Not sure if this is a machine thing
         # or in general.  --askhl
-        return Popen(self.argv, stdout=PIPE,
-                     stdin=PIPE, env=os.environ)
+        return Popen(self.argv, stdout=PIPE, stdin=PIPE, env=os.environ)
 
 
 def gpaw_process(ncores=1, **kwargs):
-    packed = NamedPackedCalculator('gpaw', kwargs)
-    mpicommand = MPICommand([
-        sys.executable, '-m', 'gpaw', '-P', str(ncores), 'python', '-m',
-        'ase.calculators.subprocesscalculator', 'standard',
-    ])
+    packed = NamedPackedCalculator("gpaw", kwargs)
+    mpicommand = MPICommand(
+        [
+            sys.executable,
+            "-m",
+            "gpaw",
+            "-P",
+            str(ncores),
+            "python",
+            "-m",
+            "ase.calculators.subprocesscalculator",
+            "standard",
+        ]
+    )
     return PythonSubProcessCalculator(packed, mpicommand)
 
 
@@ -114,6 +125,7 @@ class PythonSubProcessCalculator(Calculator):
     This calculator runs a subprocess wherein it sets up an
     actual calculator.  Calculations are forwarded through pickle
     to that calculator, which returns results through pickle."""
+
     implemented_properties = list(all_properties)
 
     def __init__(self, calc_input, mpi_command=None):
@@ -128,12 +140,11 @@ class PythonSubProcessCalculator(Calculator):
         self.protocol = None
 
     def set(self, **kwargs):
-        if hasattr(self, 'client'):
-            raise RuntimeError('No setting things for now, thanks')
+        if hasattr(self, "client"):
+            raise RuntimeError("No setting things for now, thanks")
 
     def __repr__(self):
-        return '{}({})'.format(type(self).__name__,
-                               self.calc_input)
+        return "{}({})".format(type(self).__name__, self.calc_input)
 
     def __enter__(self):
         assert self.protocol is None
@@ -143,12 +154,12 @@ class PythonSubProcessCalculator(Calculator):
         return self
 
     def __exit__(self, *args):
-        self.protocol.send('stop')
+        self.protocol.send("stop")
         self.protocol.proc.communicate()
         self.protocol = None
 
     def _run_calculation(self, atoms, properties, system_changes):
-        self.protocol.send('calculate')
+        self.protocol.send("calculate")
         self.protocol.send((atoms, properties, system_changes))
 
     def calculate(self, atoms, properties, system_changes):
@@ -174,10 +185,10 @@ class Protocol:
     def recv(self):
         response_type, value = pickle.load(self.proc.stdout)
 
-        if response_type == 'raise':
+        if response_type == "raise":
             raise value
 
-        assert response_type == 'return'
+        assert response_type == "return"
         return value
 
 
@@ -188,7 +199,7 @@ class MockMethod:
 
     def __call__(self, *args, **kwargs):
         protocol = self.calc.protocol
-        protocol.send('callmethod')
+        protocol.send("callmethod")
         protocol.send([self.name, args, kwargs])
         return protocol.recv()
 
@@ -201,7 +212,7 @@ class ParallelBackendInterface:
         return MockMethod(name, self.calc)
 
 
-run_modes = {'standard', 'mpi4py'}
+run_modes = {"standard", "mpi4py"}
 
 
 def callmethod(calc, attrname, args, kwargs):
@@ -222,14 +233,13 @@ def calculate(calc, atoms, properties, system_changes):
     # If we don't clear(), the caching is broken!  For stress.
     # But not for forces.  What dark magic from the depths of the
     # underworld is at play here?
-    calc.calculate(atoms=atoms, properties=properties,
-                   system_changes=system_changes)
+    calc.calculate(atoms=atoms, properties=properties, system_changes=system_changes)
     results = calc.results
     return results
 
 
 def bad_mode():
-    return SystemExit(f'sys.argv[1] must be one of {run_modes}')
+    return SystemExit(f"sys.argv[1] must be one of {run_modes}")
 
 
 def parallel_startup():
@@ -241,7 +251,7 @@ def parallel_startup():
     if run_mode not in run_modes:
         raise bad_mode()
 
-    if run_mode == 'mpi4py':
+    if run_mode == "mpi4py":
         # We must import mpi4py before the rest of ASE, or world will not
         # be correctly initialized.
         import mpi4py  # noqa
@@ -250,19 +260,20 @@ def parallel_startup():
     binary_stdout = sys.stdout.buffer
     sys.stdout = sys.stderr
 
-    return Client(input_fd=sys.stdin.buffer,
-                  output_fd=binary_stdout)
+    return Client(input_fd=sys.stdin.buffer, output_fd=binary_stdout)
 
 
 class Client:
     def __init__(self, input_fd, output_fd):
         from ase.parallel import world
+
         self._world = world
         self.input_fd = input_fd
         self.output_fd = output_fd
 
     def recv(self):
         from ase.parallel import broadcast
+
         if self._world.rank == 0:
             obj = pickle.load(self.input_fd)
         else:
@@ -279,38 +290,40 @@ class Client:
     def mainloop(self, calc):
         while True:
             instruction = self.recv()
-            if instruction == 'stop':
+            if instruction == "stop":
                 return
 
             instruction_data = self.recv()
 
             response_type, value = self.process_instruction(
-                calc, instruction, instruction_data)
+                calc, instruction, instruction_data
+            )
             self.send((response_type, value))
 
     def process_instruction(self, calc, instruction, instruction_data):
-        if instruction == 'callmethod':
+        if instruction == "callmethod":
             function = callmethod
             args = (calc, *instruction_data)
-        elif instruction == 'calculate':
+        elif instruction == "calculate":
             function = calculate
             args = (calc, *instruction_data)
-        elif instruction == 'callfunction':
+        elif instruction == "callfunction":
             function = callfunction
             args = instruction_data
         else:
-            raise RuntimeError(f'Bad instruction: {instruction}')
+            raise RuntimeError(f"Bad instruction: {instruction}")
 
         try:
-            print('ARGS', args)
+            print("ARGS", args)
             value = function(*args)
         except Exception as ex:
             import traceback
+
             traceback.print_exc()
-            response_type = 'raise'
+            response_type = "raise"
             value = ex
         else:
-            response_type = 'return'
+            response_type = "return"
         return response_type, value
 
 
@@ -321,12 +334,13 @@ class ParallelDispatch:
         parallel.call(function, args, kwargs)
 
     """
+
     def __init__(self, mpicommand):
         self._mpicommand = mpicommand
         self._protocol = None
 
     def call(self, func, *args, **kwargs):
-        self._protocol.send('callfunction')
+        self._protocol.send("callfunction")
         self._protocol.send((func, args, kwargs))
         return self._protocol.recv()
 
@@ -335,14 +349,14 @@ class ParallelDispatch:
         self._protocol = Protocol(self._mpicommand.execute())
 
         # Even if we are not using a calculator, we have to send one:
-        pack = NamedPackedCalculator('emt', {})
+        pack = NamedPackedCalculator("emt", {})
         self._protocol.send(pack)
         # (We should get rid of that requirement.)
 
         return self
 
     def __exit__(self, *args):
-        self._protocol.send('stop')
+        self._protocol.send("stop")
         self._protocol.proc.communicate()
         self._protocol = None
 
@@ -354,5 +368,5 @@ def main():
     client.mainloop(calc)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

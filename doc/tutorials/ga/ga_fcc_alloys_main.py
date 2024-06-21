@@ -10,23 +10,21 @@ from ga_fcc_alloys_relax import relax
 # Specify the number of generations this script will run
 num_gens = 40
 
-db = DataConnection('fcc_alloys.db')
-ref_db = 'refs.db'
+db = DataConnection("fcc_alloys.db")
+ref_db = "refs.db"
 
 # Retrieve saved parameters
-population_size = db.get_param('population_size')
-metals = db.get_param('metals')
+population_size = db.get_param("population_size")
+metals = db.get_param("metals")
 
 # Specify the procreation operators for the algorithm
 # Try and play with the mutation operators that move to nearby
 # places in the periodic table
-oclist = ([1, 1], [RandomElementMutation(metals),
-                   OnePointElementCrossover(metals)])
+oclist = ([1, 1], [RandomElementMutation(metals), OnePointElementCrossover(metals)])
 operation_selector = OperationSelector(*oclist)
 
 # Pass parameters to the population instance
-pop = Population(data_connection=db,
-                 population_size=population_size)
+pop = Population(data_connection=db, population_size=population_size)
 
 # We form generations in this algorithm run and can therefore set
 # a convergence criteria based on generations
@@ -42,7 +40,7 @@ pop.update()
 # Run the algorithm
 for _ in range(num_gens):
     if cc.converged():
-        print('converged')
+        print("converged")
         break
     for i in range(population_size):
         a1, a2 = pop.get_two_candidates(with_history=False)
@@ -57,4 +55,4 @@ for _ in range(num_gens):
     pop.update()
 
     # Print the current population to monitor the evolution
-    print(['-'.join(p.get_chemical_symbols()) for p in pop.pop])
+    print(["-".join(p.get_chemical_symbols()) for p in pop.pop])

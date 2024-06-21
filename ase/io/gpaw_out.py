@@ -3,8 +3,7 @@ from typing import List, Tuple, Union
 
 import numpy as np
 from ase.atoms import Atoms
-from ase.calculators.singlepoint import (SinglePointDFTCalculator,
-                                         SinglePointKPoint)
+from ase.calculators.singlepoint import SinglePointDFTCalculator, SinglePointKPoint
 
 
 def index_startswith(lines: List[str], string: str) -> int:
@@ -22,28 +21,30 @@ def index_pattern(lines: List[str], pattern: str) -> int:
     raise ValueError
 
 
-def read_forces(lines: List[str],
-                ii: int,
-                atoms: Atoms) -> Tuple[List[Tuple[float, float, float]], int]:
+def read_forces(
+    lines: List[str], ii: int, atoms: Atoms
+) -> Tuple[List[Tuple[float, float, float]], int]:
     f = []
     for i in range(ii + 1, ii + 1 + len(atoms)):
         try:
             x, y, z = lines[i].split()[-3:]
             f.append((float(x), float(y), float(z)))
         except (ValueError, IndexError) as m:
-            raise IOError('Malformed GPAW log file: %s' % m)
+            raise IOError("Malformed GPAW log file: %s" % m)
     return f, i
 
 
-def read_stresses(lines: List[str],
-                  ii: int,) -> Tuple[List[Tuple[float, float, float]], int]:
+def read_stresses(
+    lines: List[str],
+    ii: int,
+) -> Tuple[List[Tuple[float, float, float]], int]:
     s = []
     for i in range(ii + 1, ii + 4):
         try:
             x, y, z = lines[i].split()[-3:]
             s.append((float(x), float(y), float(z)))
         except (ValueError, IndexError) as m:
-            raise IOError(f'Malformed GPAW log file: {m}')
+            raise IOError(f"Malformed GPAW log file: {m}")
     return s, i
 
 
@@ -54,7 +55,7 @@ def read_gpaw_out(fileobj, index):  # -> Union[Atoms, List[Atoms]]:
     blocks = []
     i1 = 0
     for i2, line in enumerate(lines):
-        if line == 'positions:\n':
+        if line == "positions:\n":
             if i1 > 0:
                 blocks.append(lines[i1:i2])
             i1 = i2
@@ -63,22 +64,22 @@ def read_gpaw_out(fileobj, index):  # -> Union[Atoms, List[Atoms]]:
     images: List[Atoms] = []
     for lines in blocks:
         try:
-            i = lines.index('unit cell:\n')
+            i = lines.index("unit cell:\n")
         except ValueError:
             pass
         else:
-            if lines[i + 2].startswith('  -'):
+            if lines[i + 2].startswith("  -"):
                 del lines[i + 2]  # old format
             cell: List[Union[float, List[float]]] = []
             pbc = []
-            for line in lines[i + 2:i + 5]:
+            for line in lines[i + 2 : i + 5]:
                 words = line.split()
                 if len(words) == 5:  # old format
                     cell.append(float(words[2]))
-                    pbc.append(words[1] == 'yes')
+                    pbc.append(words[1] == "yes")
                 else:  # new format with GUC
                     cell.append([float(word) for word in words[3:6]])
-                    pbc.append(words[2] == 'yes')
+                    pbc.append(words[2] == "yes")
 
         symbols = []
         positions = []
@@ -88,19 +89,18 @@ def read_gpaw_out(fileobj, index):  # -> Union[Atoms, List[Atoms]]:
             if len(words) < 5:
                 break
             n, symbol, x, y, z = words[:5]
-            symbols.append(symbol.split('.')[0].title())
+            symbols.append(symbol.split(".")[0].title())
             positions.append([float(x), float(y), float(z)])
             if len(words) > 5:
-                mom = float(words[-1].rstrip(')'))
+                mom = float(words[-1].rstrip(")"))
                 magmoms.append(mom)
         if len(symbols):
-            atoms = Atoms(symbols=symbols, positions=positions,
-                          cell=cell, pbc=pbc)
+            atoms = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=pbc)
         else:
             atoms = Atoms(cell=cell, pbc=pbc)
 
         try:
-            ii = index_pattern(lines, '\\d+ k-point')
+            ii = index_pattern(lines, "\\d+ k-point")
             word = lines[ii].split()
             kx = int(word[2])
             ky = int(word[4])
@@ -112,47 +112,48 @@ def read_gpaw_out(fileobj, index):  # -> Union[Atoms, List[Atoms]]:
             ibz_kpts = None
 
         try:
-            i = index_startswith(lines, 'energy contributions relative to')
+            i = index_startswith(lines, "energy contributions relative to")
         except ValueError:
             e = energy_contributions = None
         else:
             energy_contributions = {}
-            for line in lines[i + 2:i + 13]:
-                fields = line.split(':')
+            for line in lines[i + 2 : i + 13]:
+                fields = line.split(":")
                 if len(fields) == 2:
                     name = fields[0]
                     energy = float(fields[1])
                     energy_contributions[name] = energy
-                    if name in ['zero kelvin', 'extrapolated']:
+                    if name in ["zero kelvin", "extrapolated"]:
                         e = energy
                         break
             else:  # no break
                 raise ValueError
 
         try:
-            ii = index_pattern(lines, '(fixed )?fermi level(s)?:')
+            ii = index_pattern(lines, "(fixed )?fermi level(s)?:")
         except ValueError:
             eFermi = None
         else:
             fields = lines[ii].split()
             try:
+
                 def strip(string):
-                    for rubbish in '[],':
-                        string = string.replace(rubbish, '')
+                    for rubbish in "[],":
+                        string = string.replace(rubbish, "")
                     return string
-                eFermi = [float(strip(fields[-2])),
-                          float(strip(fields[-1]))]
+
+                eFermi = [float(strip(fields[-2])), float(strip(fields[-1]))]
             except ValueError:
                 eFermi = float(fields[-1])
 
         # read Eigenvalues and occupations
         ii1 = ii2 = 1e32
         try:
-            ii1 = index_startswith(lines, ' band   eigenvalues  occupancy')
+            ii1 = index_startswith(lines, " band   eigenvalues  occupancy")
         except ValueError:
             pass
         try:
-            ii2 = index_startswith(lines, ' band  eigenvalues  occupancy')
+            ii2 = index_startswith(lines, " band  eigenvalues  occupancy")
         except ValueError:
             pass
         ii = min(ii1, ii2)
@@ -176,41 +177,41 @@ def read_gpaw_out(fileobj, index):  # -> Union[Atoms, List[Atoms]]:
                 kpts[1].f_n = vals[4]
         # read charge
         try:
-            ii = index_startswith(lines, 'total charge:')
+            ii = index_startswith(lines, "total charge:")
         except ValueError:
             q = None
         else:
             q = float(lines[ii].split()[2])
         # read dipole moment
         try:
-            ii = index_startswith(lines, 'dipole moment:')
+            ii = index_startswith(lines, "dipole moment:")
         except ValueError:
             dipole = None
         else:
             line = lines[ii]
-            for x in '()[],':
-                line = line.replace(x, '')
+            for x in "()[],":
+                line = line.replace(x, "")
             dipole = np.array([float(c) for c in line.split()[2:5]])
 
         try:
-            ii = index_startswith(lines, 'local magnetic moments')
+            ii = index_startswith(lines, "local magnetic moments")
         except ValueError:
             pass
         else:
             magmoms = []
             for j in range(ii + 1, ii + 1 + len(atoms)):
-                magmom = lines[j].split()[-1].rstrip(')')
+                magmom = lines[j].split()[-1].rstrip(")")
                 magmoms.append(float(magmom))
 
         try:
-            ii = lines.index('forces in ev/ang:\n')
+            ii = lines.index("forces in ev/ang:\n")
         except ValueError:
             f = None
         else:
             f, i = read_forces(lines, ii, atoms)
 
         try:
-            ii = lines.index('stress tensor:\n')
+            ii = lines.index("stress tensor:\n")
         except ValueError:
             stress_tensor = None
         else:
@@ -218,18 +219,20 @@ def read_gpaw_out(fileobj, index):  # -> Union[Atoms, List[Atoms]]:
 
         try:
             parameters = {}
-            ii = index_startswith(lines, 'vdw correction:')
+            ii = index_startswith(lines, "vdw correction:")
         except ValueError:
-            name = 'gpaw'
+            name = "gpaw"
         else:
             name = lines[ii - 1].strip()
             # save uncorrected values
-            parameters.update({
-                'calculator': 'gpaw',
-                'uncorrected_energy': e,
-            })
+            parameters.update(
+                {
+                    "calculator": "gpaw",
+                    "uncorrected_energy": e,
+                }
+            )
             line = lines[ii + 1]
-            assert line.startswith('energy:')
+            assert line.startswith("energy:")
             e = float(line.split()[-1])
             f, i = read_forces(lines, ii + 3, atoms)
 
@@ -245,11 +248,17 @@ def read_gpaw_out(fileobj, index):  # -> Union[Atoms, List[Atoms]]:
         else:
             magmoms = None
         if e is not None or f is not None:
-            calc = SinglePointDFTCalculator(atoms, energy=e, forces=f,
-                                            dipole=dipole, magmoms=magmoms,
-                                            efermi=eFermi,
-                                            bzkpts=bz_kpts, ibzkpts=ibz_kpts,
-                                            stress=stress_tensor)
+            calc = SinglePointDFTCalculator(
+                atoms,
+                energy=e,
+                forces=f,
+                dipole=dipole,
+                magmoms=magmoms,
+                efermi=eFermi,
+                bzkpts=bz_kpts,
+                ibzkpts=ibz_kpts,
+                stress=stress_tensor,
+            )
             calc.name = name
             calc.parameters = parameters
             if energy_contributions is not None:
@@ -261,6 +270,6 @@ def read_gpaw_out(fileobj, index):  # -> Union[Atoms, List[Atoms]]:
         images.append(atoms)
 
     if len(images) == 0:
-        raise IOError('Corrupted GPAW-text file!')
+        raise IOError("Corrupted GPAW-text file!")
 
     return images[index]

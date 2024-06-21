@@ -7,14 +7,14 @@ import ase.gui.ui as ui
 from ase.data import atomic_numbers, chemical_symbols
 
 
-current_selection_string = _('(selection)')
+current_selection_string = _("(selection)")
 
 
 class AddAtoms:
     def __init__(self, gui):
         self.gui = gui
-        win = self.win = ui.Window(_('Add atoms'), wmtype='utility')
-        win.add(_('Specify chemical symbol, formula, or filename.'))
+        win = self.win = ui.Window(_("Add atoms"), wmtype="utility")
+        win.add(_("Specify chemical symbol, formula, or filename."))
 
         def choose_file():
             chooser = ui.ASEFileChooser(self.win.win)
@@ -30,34 +30,37 @@ class AddAtoms:
         if self.gui.images.selected.any():
             default = current_selection_string
         else:
-            default = 'H2'
+            default = "H2"
 
         self._filename = None
         self._atoms_from_file = None
 
         from ase.collections import g2
-        labels = list(sorted(name for name in g2.names
-                             if len(g2[name]) > 1))
+
+        labels = list(sorted(name for name in g2.names if len(g2[name]) > 1))
         values = labels
 
         combobox = ui.ComboBox(labels, values)
-        win.add([_('Add:'), combobox,
-                 ui.Button(_('File ...'), callback=choose_file)])
-        combobox.widget.bind('<Return>', lambda e: self.add())
+        win.add([_("Add:"), combobox, ui.Button(_("File ..."), callback=choose_file)])
+        combobox.widget.bind("<Return>", lambda e: self.add())
 
         combobox.value = default
         self.combobox = combobox
 
-        spinners = [ui.SpinBox(0.0, -1e3, 1e3, 0.1, rounding=2, width=3)
-                    for __ in range(3)]
+        spinners = [
+            ui.SpinBox(0.0, -1e3, 1e3, 0.1, rounding=2, width=3) for __ in range(3)
+        ]
 
-        win.add([_('Coordinates:')] + spinners)
+        win.add([_("Coordinates:")] + spinners)
         self.spinners = spinners
-        win.add(_('Coordinates are relative to the center of the selection, '
-                  'if any, else absolute.'))
-        self.picky = ui.CheckButton(_('Check positions'), True)
-        win.add([ui.Button(_('Add'), self.add),
-                 self.picky])
+        win.add(
+            _(
+                "Coordinates are relative to the center of the selection, "
+                "if any, else absolute."
+            )
+        )
+        self.picky = ui.CheckButton(_("Check positions"), True)
+        win.add([ui.Button(_("Add"), self.add), self.picky])
         self.focus()
 
     def readfile(self, filename, format=None):
@@ -66,6 +69,7 @@ class AddAtoms:
             return self._atoms_from_file
 
         from ase.io import read
+
         try:
             atoms = read(filename)
         except Exception as err:
@@ -86,7 +90,7 @@ class AddAtoms:
             selection = self.gui.images.selected.copy()
             if selection.any():
                 atoms = self.gui.atoms.copy()
-                return atoms[selection[:len(self.gui.atoms)]]
+                return atoms[selection[: len(self.gui.atoms)]]
 
         if val in atomic_numbers:  # Note: This means val is a symbol!
             return Atoms(val)
@@ -95,15 +99,17 @@ class AddAtoms:
             return Atoms(numbers=[int(val)])
 
         from ase.collections import g2
+
         if val in g2.names:
             return g2[val]
 
         if os.path.exists(val):
             return self.readfile(val)  # May show UI error
 
-        ui.showerror(_('Cannot add atoms'),
-                     _('{} is neither atom, molecule, nor file')
-                     .format(val))
+        ui.showerror(
+            _("Cannot add atoms"),
+            _("{} is neither atom, molecule, nor file").format(val),
+        )
 
         return None
 
@@ -111,8 +117,8 @@ class AddAtoms:
         addcoords = np.array([spinner.value for spinner in self.spinners])
 
         pos = self.gui.atoms.positions
-        if self.gui.images.selected[:len(pos)].any():
-            pos = pos[self.gui.images.selected[:len(pos)]]
+        if self.gui.images.selected[: len(pos)].any():
+            pos = pos[self.gui.images.selected[: len(pos)]]
             center = pos.mean(0)
             addcoords += center
 
@@ -136,14 +142,18 @@ class AddAtoms:
         atoms = self.gui.atoms
         if len(atoms) and self.picky.value:
             from ase.geometry import get_distances
-            disps, dists = get_distances(atoms.positions,
-                                         newatoms.positions)
+
+            disps, dists = get_distances(atoms.positions, newatoms.positions)
             mindist = dists.min()
             if mindist < 0.5:
-                ui.showerror(_('Bad positions'),
-                             _('Atom would be less than 0.5 Å from '
-                               'an existing atom.  To override, '
-                               'uncheck the check positions option.'))
+                ui.showerror(
+                    _("Bad positions"),
+                    _(
+                        "Atom would be less than 0.5 Å from "
+                        "an existing atom.  To override, "
+                        "uncheck the check positions option."
+                    ),
+                )
                 return
 
         self.gui.add_atoms_and_select(newatoms)

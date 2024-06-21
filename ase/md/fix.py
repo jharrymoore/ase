@@ -37,9 +37,7 @@ class FixRotation:
         I13 = np.sum(-m * x * z)
         I23 = np.sum(-m * y * z)
 
-        I = np.array([[I11, I12, I13],
-                      [I12, I22, I23],
-                      [I13, I23, I33]])
+        I = np.array([[I11, I12, I13], [I12, I22, I23], [I13, I23, I33]])
 
         w = np.dot(np.linalg.inv(I), np.sum(np.cross(r, p), axis=0))
 

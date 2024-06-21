@@ -15,8 +15,9 @@ class Session:
 
     where *s* is the session object.
     """
+
     next_id = 1
-    sessions: Dict[int, 'Session'] = {}
+    sessions: Dict[int, "Session"] = {}
 
     def __init__(self, project_name: str):
         self.id = Session.next_id
@@ -33,56 +34,52 @@ class Session:
         self.nrows_total: Optional[int] = None
         self.page = 0
         self.limit = 25
-        self.sort = ''
-        self.query = ''
+        self.sort = ""
+        self.query = ""
         self.project_name = project_name
 
     def __str__(self) -> str:
         return str(self.__dict__)
 
     @staticmethod
-    def get(id: int) -> 'Session':
+    def get(id: int) -> "Session":
         return Session.sessions[id]
 
-    def update(self,
-               what: str,
-               x: str,
-               args: Dict[str, str],
-               project) -> None:
+    def update(self, what: str, x: str, args: Dict[str, str], project) -> None:
 
         if self.columns is None:
             self.columns = list(project.default_columns)
 
-        if what == 'query':
+        if what == "query":
             self.query = project.handle_query(args)
             self.nrows = None
             self.page = 0
 
-        elif what == 'sort':
+        elif what == "sort":
             if x == self.sort:
-                self.sort = '-' + x
-            elif '-' + x == self.sort:
-                self.sort = 'id'
+                self.sort = "-" + x
+            elif "-" + x == self.sort:
+                self.sort = "id"
             else:
                 self.sort = x
             self.page = 0
 
-        elif what == 'limit':
+        elif what == "limit":
             self.limit = int(x)
             self.page = 0
 
-        elif what == 'page':
+        elif what == "page":
             self.page = int(x)
 
-        elif what == 'toggle':
+        elif what == "toggle":
             column = x
-            if column == 'reset':
+            if column == "reset":
                 self.columns = list(project.default_columns)
             else:
                 if column in self.columns:
                     self.columns.remove(column)
-                    if column == self.sort.lstrip('-'):
-                        self.sort = 'id'
+                    if column == self.sort.lstrip("-"):
+                        self.sort = "id"
                         self.page = 0
                 else:
                     self.columns.append(column)
@@ -111,10 +108,10 @@ class Session:
         if p3 < p4:
             pgs.append(-1)
         pgs += list(range(p4, npages))
-        pages = [(self.page - 1, 'previous')]
+        pages = [(self.page - 1, "previous")]
         for p in pgs:
             if p == -1:
-                pages.append((-1, '...'))
+                pages.append((-1, "..."))
             elif p == self.page:
                 pages.append((-1, str(p + 1)))
             else:
@@ -122,13 +119,10 @@ class Session:
         nxt = min(self.page + 1, npages - 1)
         if nxt == self.page:
             nxt = -1
-        pages.append((nxt, 'next'))
+        pages.append((nxt, "next"))
         return pages
 
-    def create_table(self,
-                     db: Database,
-                     uid_key: str,
-                     keys: List[str]) -> Table:
+    def create_table(self, db: Database, uid_key: str, keys: List[str]) -> Table:
         query = self.query
 
         if self.nrows_total is None:
@@ -138,19 +132,25 @@ class Session:
             try:
                 self.nrows = db.count(query)
             except (ValueError, KeyError) as e:
-                error = ', '.join(['Bad query'] + list(e.args))
+                error = ", ".join(["Bad query"] + list(e.args))
                 from flask import flash
+
                 flash(error)
-                query = 'id=0'  # this will return no rows
+                query = "id=0"  # this will return no rows
                 self.nrows = 0
 
         table = Table(db, uid_key)
-        table.select(query, self.columns, self.sort,
-                     self.limit, offset=self.page * self.limit,
-                     show_empty_columns=True)
+        table.select(
+            query,
+            self.columns,
+            self.sort,
+            self.limit,
+            offset=self.page * self.limit,
+            show_empty_columns=True,
+        )
         table.format()
         assert self.columns is not None
-        table.addcolumns = sorted(column for column in
-                                  [*all_columns, *keys]
-                                  if column not in self.columns)
+        table.addcolumns = sorted(
+            column for column in [*all_columns, *keys] if column not in self.columns
+        )
         return table

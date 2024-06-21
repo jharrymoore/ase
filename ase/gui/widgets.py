@@ -7,12 +7,16 @@ from ase import Atoms
 
 
 class Element(list):
-    def __init__(self, symbol='', callback=None):
-        list.__init__(self,
-                      [_('Element:'),
-                       ui.Entry(symbol, 3, self.enter),
-                       ui.Button(_('Help'), self.show_help),
-                       ui.Label('', 'red')])
+    def __init__(self, symbol="", callback=None):
+        list.__init__(
+            self,
+            [
+                _("Element:"),
+                ui.Entry(symbol, 3, self.enter),
+                ui.Button(_("Help"), self.show_help),
+                ui.Label("", "red"),
+            ],
+        )
         self.callback = callback
 
     @property
@@ -23,9 +27,9 @@ class Element(list):
         self.z_entry.entry.focus_set()
 
     def show_help(self):
-        msg = _('Enter a chemical symbol or the atomic number.')
+        msg = _("Enter a chemical symbol or the atomic number.")
         # Title of a popup window
-        ui.showinfo(_('Info'), msg)
+        ui.showinfo(_("Info"), msg)
 
     @property
     def Z(self):
@@ -48,14 +52,14 @@ class Element(list):
     def get_atoms(self):
         val = self._get()
         if val is not None:
-            self[2].text = ''
+            self[2].text = ""
         return val
 
     def _get(self):
         txt = self.z_entry.value
 
         if not txt:
-            self.error(_('No element specified!'))
+            self.error(_("No element specified!"))
             return None
 
         if txt.isdigit():
@@ -74,7 +78,7 @@ class Element(list):
     def enter(self):
         self.callback(self)
 
-    def error(self, text=_('ERROR: Invalid element!')):
+    def error(self, text=_("ERROR: Invalid element!")):
         self[2].text = text
 
 
@@ -84,15 +88,16 @@ def pybutton(title, callback):
     When pressed, it opens a window displaying some Python code, or an error
     message if no Python code is ready.
     """
-    return ui.Button('Python', pywindow, title, callback)
+    return ui.Button("Python", pywindow, title, callback)
 
 
 def pywindow(title, callback):
     code = callback()
     if code is None:
         ui.error(
-            _('No Python code'),
-            _('You have not (yet) specified a consistent set of parameters.'))
+            _("No Python code"),
+            _("You have not (yet) specified a consistent set of parameters."),
+        )
     else:
-        win = ui.Window(title, wmtype='utility')
+        win = ui.Window(title, wmtype="utility")
         win.add(ui.Text(code))

@@ -4,7 +4,7 @@ from ase import Atoms
 
 def test_properties():
     charges = np.array([-1, 1])
-    a = Atoms('H2', positions=[(0, 0, 0), (0, 0, 1.1)], charges=charges)
+    a = Atoms("H2", positions=[(0, 0, 0), (0, 0, 1.1)], charges=charges)
 
     a.pbc[0] = 1
     assert a.pbc.any()
@@ -18,6 +18,6 @@ def test_properties():
     assert not (a.cell.diagonal() - (3, 4, 6)).any()
 
     assert (charges == a.get_initial_charges()).all()
-    assert a.has('initial_charges')
+    assert a.has("initial_charges")
     # XXX extend has to calculator properties
-    assert not a.has('charges')
+    assert not a.has("charges")

@@ -13,30 +13,29 @@ from ase.io import read, write
 
 
 def check(name, xsf_text, check_data):
-    fname = '%s.xsf' % name
-    with open(fname, 'w') as fd:
+    fname = "%s.xsf" % name
+    with open(fname, "w") as fd:
         fd.write(xsf_text)
 
-    print('Read: %s' % fname)
-    images = read(fname, index=':', read_data=check_data)
+    print("Read: %s" % fname)
+    images = read(fname, index=":", read_data=check_data)
     if check_data:
         array, origin, span_vectors, images = images
 
     assert isinstance(images, list)
-    print('  Images: %s' % len(images))
+    print("  Images: %s" % len(images))
     for image in images:
-        print('    %s' % image)
+        print("    %s" % image)
 
     # Now write the same system back out:
-    outfname = 'out.%s' % fname
+    outfname = "out.%s" % fname
     if check_data:
-        write(outfname, images, data=array,
-              origin=origin, span_vectors=span_vectors)
+        write(outfname, images, data=array, origin=origin, span_vectors=span_vectors)
     else:
         write(outfname, images)
 
     # ...and read it back in:
-    images2 = read(outfname, index=':', read_data=check_data)
+    images2 = read(outfname, index=":", read_data=check_data)
     if check_data:
         array2, origin2, span_vectors2, images2 = images2
 
@@ -52,33 +51,34 @@ def check(name, xsf_text, check_data):
     # In fact, if we write it back out again, it should be
     # byte-wise identical to the other file that we just wrote.
     # So do that:
-    outfname2 = 'doubleout.%s' % fname
+    outfname2 = "doubleout.%s" % fname
     if check_data:
-        write(outfname2, images2, data=array2,
-              origin=origin2, span_vectors=span_vectors2)
+        write(
+            outfname2, images2, data=array2, origin=origin2, span_vectors=span_vectors2
+        )
     else:
         write(outfname2, images2)
     assert Path(outfname).read_text() == Path(outfname2).read_text()
 
 
 def test_xsf_spec():
-    files = {'01-comments': f1,
-             '02-atoms': f2,
-             '03-periodic': f3,
-             '04-forces-atoms': f4,
-             '05-forces-slab': f5,
-             '06-anim-atoms': f6,
-             '07-anim-crystal-fixcell': f7,
-             '08-anim-crystal-varcell': f8}
+    files = {
+        "01-comments": f1,
+        "02-atoms": f2,
+        "03-periodic": f3,
+        "04-forces-atoms": f4,
+        "05-forces-slab": f5,
+        "06-anim-atoms": f6,
+        "07-anim-crystal-fixcell": f7,
+        "08-anim-crystal-varcell": f8,
+    }
 
     names = list(sorted(files.keys()))
 
     for name in names:
         check(name, files[name], check_data=False)
-        check('%s-ignore-datagrid' % name, files[name] + datagrid,
-              check_data=False)
-        check('%s-read-datagrid' % name, files[name] + datagrid,
-              check_data=True)
+        check("%s-ignore-datagrid" % name, files[name] + datagrid, check_data=False)
+        check("%s-read-datagrid" % name, files[name] + datagrid, check_data=True)
 
 
 f1 = """

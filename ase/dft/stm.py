@@ -24,9 +24,8 @@ class STM:
         self.use_density = use_density
 
         if isinstance(atoms, str):
-            with open(atoms, 'r') as fd:
-                self.ldos, self.bias, self.cell = read_json(fd,
-                                                            always_array=False)
+            with open(atoms, "r") as fd:
+                self.ldos, self.bias, self.cell = read_json(fd, always_array=False)
             self.atoms = None
         else:
             self.atoms = atoms
@@ -61,9 +60,9 @@ class STM:
         weights = calc.get_k_point_weights()
         nkpts = len(weights)
         nspins = calc.get_number_of_spins()
-        eigs = np.array([[calc.get_eigenvalues(k, s)
-                          for k in range(nkpts)]
-                         for s in range(nspins)])
+        eigs = np.array(
+            [[calc.get_eigenvalues(k, s) for k in range(nkpts)] for s in range(nspins)]
+        )
         eigs -= calc.get_fermi_level()
         ldos = np.zeros(calc.get_pseudo_wave_function(0, 0, 0).shape)
 
@@ -110,8 +109,9 @@ class STM:
         n = int(n) % nz
 
         # Average and do linear interpolation:
-        return ((1 - dn) * self.ldos[:, :, n].mean() +
-                dn * self.ldos[:, :, (n + 1) % nz].mean())
+        return (1 - dn) * self.ldos[:, :, n].mean() + dn * self.ldos[
+            :, :, (n + 1) % nz
+        ].mean()
 
     def scan(self, bias, current, z0=None, repeat=(1, 1)):
         """Constant current 2-d scan.
@@ -199,7 +199,7 @@ class STM:
         p1 = np.asarray(p1, float)
         p2 = np.asarray(p2, float)
         d = p2 - p1
-        s = np.dot(d, d)**0.5
+        s = np.dot(d, d) ** 0.5
 
         cell = self.cell[:2, :2]
         shape = np.array(heights.shape, float)
@@ -234,10 +234,12 @@ class STM:
         zp = int(zp) % nz
 
         # 3D interpolation of the LDOS at point (x,y,z) at given bias.
-        xyzldos = (((1 - dx) + (1 - dy) + (1 - dz)) * self.ldos[xp, yp, zp] +
-                   dx * self.ldos[(xp + 1) % nx, yp, zp] +
-                   dy * self.ldos[xp, (yp + 1) % ny, zp] +
-                   dz * self.ldos[xp, yp, (zp + 1) % nz])
+        xyzldos = (
+            ((1 - dx) + (1 - dy) + (1 - dz)) * self.ldos[xp, yp, zp]
+            + dx * self.ldos[(xp + 1) % nx, yp, zp]
+            + dy * self.ldos[xp, (yp + 1) % ny, zp]
+            + dz * self.ldos[xp, yp, (zp + 1) % nz]
+        )
 
         return dos2current(bias, xyzldos)
 
@@ -257,7 +259,7 @@ class STM:
         return biases, current, dIdV
 
     def find_current(self, ldos, z):
-        """ Finds current for given LDOS at height z."""
+        """Finds current for given LDOS at height z."""
         nz = self.ldos.shape[2]
 
         zp = z / self.cell[2, 2] * nz
@@ -274,7 +276,7 @@ def dos2current(bias, dos):
     # The connection between density n and current I
     # n [e/Angstrom^3] = 0.0002 sqrt(I [nA])
     # as given in Hofer et al., RevModPhys 75 (2003) 1287
-    return 5000. * dos**2 * (1 if bias > 0 else -1)
+    return 5000.0 * dos**2 * (1 if bias > 0 else -1)
 
 
 def interpolate(q, heights):
@@ -284,10 +286,12 @@ def interpolate(q, heights):
     qi %= heights.shape
     n0, m0 = qi
     n1, m1 = (qi + 1) % heights.shape
-    z = (g[0] * g[1] * heights[n0, m0] +
-         f[0] * g[1] * heights[n1, m0] +
-         g[0] * f[1] * heights[n0, m1] +
-         f[0] * f[1] * heights[n1, m1])
+    z = (
+        g[0] * g[1] * heights[n0, m0]
+        + f[0] * g[1] * heights[n1, m0]
+        + g[0] * f[1] * heights[n0, m1]
+        + f[0] * f[1] * heights[n1, m1]
+    )
     return z
 
 
@@ -303,11 +307,11 @@ def find_height(ldos, current, h, z0=None):
     else:
         return 0.0
 
-    c2, c1 = ldos[n:n + 2]
+    c2, c1 = ldos[n : n + 2]
     return (n + 1 - (current - c1) / (c2 - c1)) * h
 
 
 def delta(biases, bias, width):
     """Return a delta-function centered at 'bias'"""
-    x = -((biases - bias) / width)**2
+    x = -(((biases - bias) / width) ** 2)
     return np.exp(x) / (np.sqrt(np.pi) * width)

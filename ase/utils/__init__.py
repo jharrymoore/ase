@@ -18,12 +18,32 @@ import numpy as np
 
 from ase.formula import formula_hill, formula_metal
 
-__all__ = ['basestring', 'import_module', 'seterr', 'plural',
-           'devnull', 'gcd', 'convert_string_to_fd', 'Lock',
-           'opencew', 'OpenLock', 'rotate', 'irotate', 'pbc2pbc', 'givens',
-           'hsv2rgb', 'hsv', 'pickleload', 'reader',
-           'formula_hill', 'formula_metal', 'PurePath', 'xwopen',
-           'tokenize_version', 'get_python_package_path_description']
+__all__ = [
+    "basestring",
+    "import_module",
+    "seterr",
+    "plural",
+    "devnull",
+    "gcd",
+    "convert_string_to_fd",
+    "Lock",
+    "opencew",
+    "OpenLock",
+    "rotate",
+    "irotate",
+    "pbc2pbc",
+    "givens",
+    "hsv2rgb",
+    "hsv",
+    "pickleload",
+    "reader",
+    "formula_hill",
+    "formula_metal",
+    "PurePath",
+    "xwopen",
+    "tokenize_version",
+    "get_python_package_path_description",
+]
 
 
 def tokenize_version(version_string: str):
@@ -32,9 +52,9 @@ def tokenize_version(version_string: str):
     Usage: tokenize_version('3.8') < tokenize_version('3.8.1').
     """
     tokens = []
-    for component in version_string.split('.'):
-        match = re.match(r'(\d*)(.*)', component)
-        assert match is not None, f'Cannot parse component {component}'
+    for component in version_string.split("."):
+        match = re.match(r"(\d*)(.*)", component)
+        assert match is not None, f"Cannot parse component {component}"
         number_str, tail = match.group(1, 2)
         try:
             number = int(number_str)
@@ -46,13 +66,14 @@ def tokenize_version(version_string: str):
 
 # Python 2+3 compatibility stuff (let's try to remove these things):
 basestring = str
-pickleload = functools.partial(pickle.load, encoding='bytes')
+pickleload = functools.partial(pickle.load, encoding="bytes")
 
 
 def deprecated(msg, category=FutureWarning):
     """Return a decorator deprecating a function.
 
     Use like @deprecated('warning message and explanation')."""
+
     def deprecated_decorator(func):
         @functools.wraps(func)
         def deprecated_function(*args, **kwargs):
@@ -61,7 +82,9 @@ def deprecated(msg, category=FutureWarning):
                 warning = category(warning)
             warnings.warn(warning)
             return func(*args, **kwargs)
+
         return deprecated_function
+
     return deprecated_decorator
 
 
@@ -85,16 +108,15 @@ def plural(n, word):
     ('0 eggs', '1 egg', '2 eggs')
     """
     if n == 1:
-        return '1 ' + word
-    return '%d %ss' % (n, word)
+        return "1 " + word
+    return "%d %ss" % (n, word)
 
 
 class DevNull:
-    encoding = 'UTF-8'
+    encoding = "UTF-8"
     closed = False
 
-    _use_os_devnull = deprecated('use open(os.devnull) instead',
-                                 DeprecationWarning)
+    _use_os_devnull = deprecated("use open(os.devnull) instead", DeprecationWarning)
     # Deprecated for ase-3.21.0.  Change to futurewarning later on.
 
     @_use_os_devnull
@@ -123,15 +145,17 @@ class DevNull:
 
     @_use_os_devnull
     def read(self, n=-1):
-        return ''
+        return ""
 
 
 devnull = DevNull()
 
 
-@deprecated('convert_string_to_fd does not facilitate proper resource '
-            'management.  '
-            'Please use e.g. ase.utils.IOContext class instead.')
+@deprecated(
+    "convert_string_to_fd does not facilitate proper resource "
+    "management.  "
+    "Please use e.g. ase.utils.IOContext class instead."
+)
 def convert_string_to_fd(name, world=None):
     """Create a file-descriptor for text output.
 
@@ -141,16 +165,16 @@ def convert_string_to_fd(name, world=None):
     if world is None:
         from ase.parallel import world
     if name is None or world.rank != 0:
-        return open(os.devnull, 'w')
-    if name == '-':
+        return open(os.devnull, "w")
+    if name == "-":
         return sys.stdout
     if isinstance(name, (str, PurePath)):
-        return open(str(name), 'w')  # str for py3.5 pathlib
+        return open(str(name), "w")  # str for py3.5 pathlib
     return name  # we assume name is already a file-descriptor
 
 
 # Only Windows has O_BINARY:
-CEW_FLAGS = os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, 'O_BINARY', 0)
+CEW_FLAGS = os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0)
 
 
 @contextmanager
@@ -188,13 +212,13 @@ def _opencew(filename, world=None):
         error = 0
         if world.rank == 0:
             try:
-                fd = open(filename, 'wb', opener=opener)
+                fd = open(filename, "wb", opener=opener)
             except OSError as ex:
                 error = ex.errno
             else:
                 closelater.append(fd)
         else:
-            fd = open(os.devnull, 'wb')
+            fd = open(os.devnull, "wb")
             closelater.append(fd)
 
         # Synchronize:
@@ -202,7 +226,7 @@ def _opencew(filename, world=None):
         if error == errno.EEXIST:
             return None
         if error:
-            raise OSError(error, 'Error', filename)
+            raise OSError(error, "Error", filename)
 
         return fd
     except BaseException:
@@ -219,7 +243,7 @@ def opencew_text(*args, **kwargs):
 
 
 class Lock:
-    def __init__(self, name='lock', world=None, timeout=float('inf')):
+    def __init__(self, name="lock", world=None, timeout=float("inf")):
         self.name = str(name)
         self.timeout = timeout
         if world is None:
@@ -295,17 +319,17 @@ def search_current_git_hash(arg, world=None):
     # in case this is just symlinked into $PYTHONPATH
     dpath = os.path.realpath(dpath)
     dpath = os.path.dirname(dpath)  # Go to the parent directory
-    git_dpath = os.path.join(dpath, '.git')
+    git_dpath = os.path.join(dpath, ".git")
     if not os.path.isdir(git_dpath):
         # Replace this 'if' with a loop if you want to check
         # further parent directories
         return None
-    HEAD_file = os.path.join(git_dpath, 'HEAD')
+    HEAD_file = os.path.join(git_dpath, "HEAD")
     if not os.path.isfile(HEAD_file):
         return None
-    with open(HEAD_file, 'r') as fd:
+    with open(HEAD_file, "r") as fd:
         line = fd.readline().strip()
-    if line.startswith('ref: '):
+    if line.startswith("ref: "):
         ref = line[5:]
         ref_file = os.path.join(git_dpath, ref)
     else:
@@ -313,7 +337,7 @@ def search_current_git_hash(arg, world=None):
         ref_file = HEAD_file
     if not os.path.isfile(ref_file):
         return None
-    with open(ref_file, 'r') as fd:
+    with open(ref_file, "r") as fd:
         line = fd.readline().strip()
     if all(c in string.hexdigits for c in line):
         return line
@@ -327,34 +351,29 @@ def rotate(rotations, rotation=np.identity(3)):
     from '40z,50x'.
     """
 
-    if rotations == '':
+    if rotations == "":
         return rotation.copy()
 
-    for i, a in [('xyz'.index(s[-1]), radians(float(s[:-1])))
-                 for s in rotations.split(',')]:
+    for i, a in [
+        ("xyz".index(s[-1]), radians(float(s[:-1]))) for s in rotations.split(",")
+    ]:
         s = sin(a)
         c = cos(a)
         if i == 0:
-            rotation = np.dot(rotation, [(1, 0, 0),
-                                         (0, c, s),
-                                         (0, -s, c)])
+            rotation = np.dot(rotation, [(1, 0, 0), (0, c, s), (0, -s, c)])
         elif i == 1:
-            rotation = np.dot(rotation, [(c, 0, -s),
-                                         (0, 1, 0),
-                                         (s, 0, c)])
+            rotation = np.dot(rotation, [(c, 0, -s), (0, 1, 0), (s, 0, c)])
         else:
-            rotation = np.dot(rotation, [(c, s, 0),
-                                         (-s, c, 0),
-                                         (0, 0, 1)])
+            rotation = np.dot(rotation, [(c, s, 0), (-s, c, 0), (0, 0, 1)])
     return rotation
 
 
 def givens(a, b):
     """Solve the equation system::
 
-      [ c s]   [a]   [r]
-      [    ] . [ ] = [ ]
-      [-s c]   [b]   [0]
+    [ c s]   [a]   [r]
+    [    ] . [ ] = [ ]
+    [-s c]   [b]   [0]
     """
     sgn = np.sign
     if b == 0:
@@ -363,14 +382,14 @@ def givens(a, b):
         r = abs(a)
     elif abs(b) >= abs(a):
         cot = a / b
-        u = sgn(b) * (1 + cot**2)**0.5
-        s = 1. / u
+        u = sgn(b) * (1 + cot**2) ** 0.5
+        s = 1.0 / u
         c = s * cot
         r = b * u
     else:
         tan = b / a
-        u = sgn(a) * (1 + tan**2)**0.5
-        c = 1. / u
+        u = sgn(a) * (1 + tan**2) ** 0.5
+        c = 1.0 / u
         s = c * tan
         r = a * u
     return c, s, r
@@ -381,8 +400,9 @@ def irotate(rotation, initial=np.identity(3)):
     a = np.dot(initial, rotation)
     cx, sx, rx = givens(a[2, 2], a[1, 2])
     cy, sy, ry = givens(rx, a[0, 2])
-    cz, sz, rz = givens(cx * a[1, 1] - sx * a[2, 1],
-                        cy * a[0, 1] - sy * (sx * a[1, 1] + cx * a[2, 1]))
+    cz, sz, rz = givens(
+        cx * a[1, 1] - sx * a[2, 1], cy * a[0, 1] - sy * (sx * a[1, 1] + cx * a[2, 1])
+    )
     x = degrees(atan2(sx, cx))
     y = degrees(atan2(-sy, cy))
     z = degrees(atan2(sz, cz))
@@ -409,7 +429,7 @@ def hsv2rgb(h, s, v):
     if s == 0:
         return v, v, v
 
-    i, f = divmod(h / 60., 1)
+    i, f = divmod(h / 60.0, 1)
     p = v * (1 - s)
     q = v * (1 - s * f)
     t = v * (1 - s * (1 - f))
@@ -427,11 +447,11 @@ def hsv2rgb(h, s, v):
     elif i == 5:
         return v, p, q
     else:
-        raise RuntimeError('h must be in [0, 360]')
+        raise RuntimeError("h must be in [0, 360]")
 
 
-def hsv(array, s=.9, v=.9):
-    array = (array + array.min()) * 359. / (array.max() - array.min())
+def hsv(array, s=0.9, v=0.9):
+    array = (array + array.min()) * 359.0 / (array.max() - array.min())
     result = np.empty((len(array.flat), 3))
     for rgb, h in zip(result, array.flat):
         rgb[:] = hsv2rgb(h, s, v)
@@ -490,15 +510,16 @@ class iofunction:
                 if openandclose and fd is not None:
                     # fd may be None if open() failed
                     fd.close()
+
         return iofunc
 
 
 def writer(func):
-    return iofunction('w')(func)
+    return iofunction("w")(func)
 
 
 def reader(func):
-    return iofunction('r')(func)
+    return iofunction("r")(func)
 
 
 # The next two functions are for hotplugging into a JSONable class
@@ -506,9 +527,11 @@ def reader(func):
 # in ase.io.jsonio, but we'd rather import them from a 'basic' module
 # like ase/utils than one which triggers a lot of extra (cyclic) imports.
 
+
 def write_json(self, fd):
     """Write to JSON file."""
     from ase.io.jsonio import write_json as _write_json
+
     _write_json(fd, self)
 
 
@@ -516,6 +539,7 @@ def write_json(self, fd):
 def read_json(cls, fd):
     """Read new instance from JSON file."""
     from ase.io.jsonio import read_json as _read_json
+
     obj = _read_json(fd)
     assert isinstance(obj, cls)
     return obj
@@ -530,10 +554,11 @@ def jsonable(name):
     (such as ndarray, float, ...) or implement todict().  If the class
     defines a string called ase_objtype, the decoder will want to convert
     the object back into its original type when reading."""
+
     def jsonableclass(cls):
         cls.ase_objtype = name
-        if not hasattr(cls, 'todict'):
-            raise TypeError('Class must implement todict()')
+        if not hasattr(cls, "todict"):
+            raise TypeError("Class must implement todict()")
 
         # We may want the write and read to be optional.
         # E.g. a calculator might want to be JSONable, but not
@@ -543,6 +568,7 @@ def jsonable(name):
         cls.write = write_json
         cls.read = read_json
         return cls
+
     return jsonableclass
 
 
@@ -552,12 +578,15 @@ class ExperimentalFeatureWarning(Warning):
 
 def experimental(func):
     """Decorator for functions not ready for production use."""
+
     @functools.wraps(func)
     def expfunc(*args, **kwargs):
-        warnings.warn('This function may change or misbehave: {}()'
-                      .format(func.__qualname__),
-                      ExperimentalFeatureWarning)
+        warnings.warn(
+            "This function may change or misbehave: {}()".format(func.__qualname__),
+            ExperimentalFeatureWarning,
+        )
         return func(*args, **kwargs)
+
     return expfunc
 
 
@@ -587,22 +616,22 @@ def lazymethod(meth):
         if name not in cache:
             cache[name] = meth(self)
         return cache[name]
+
     return getter
 
 
 def atoms_to_spglib_cell(atoms):
     """Convert atoms into data suitable for calling spglib."""
-    return (atoms.get_cell(),
-            atoms.get_scaled_positions(),
-            atoms.get_atomic_numbers())
+    return (atoms.get_cell(), atoms.get_scaled_positions(), atoms.get_atomic_numbers())
 
 
 def warn_legacy(feature_name):
     warnings.warn(
-        f'The {feature_name} feature is untested and ASE developers do not '
-        'know whether it works or how to use it.  Please rehabilitate it '
-        '(by writing unittests) or it may be removed.',
-        FutureWarning)
+        f"The {feature_name} feature is untested and ASE developers do not "
+        "know whether it works or how to use it.  Please rehabilitate it "
+        "(by writing unittests) or it may be removed.",
+        FutureWarning,
+    )
 
 
 def lazyproperty(meth):
@@ -627,28 +656,27 @@ class IOContext:
     def close(self):
         self._exitstack.close()
 
-    def openfile(self, file, comm=None, mode='w'):
+    def openfile(self, file, comm=None, mode="w"):
         from ase.parallel import world
+
         if comm is None:
             comm = world
 
-        if hasattr(file, 'close'):
+        if hasattr(file, "close"):
             return file  # File already opened, not for us to close.
 
-        encoding = None if mode.endswith('b') else 'utf-8'
+        encoding = None if mode.endswith("b") else "utf-8"
 
         if file is None or comm.rank != 0:
-            return self.closelater(open(os.devnull, mode=mode,
-                                        encoding=encoding))
+            return self.closelater(open(os.devnull, mode=mode, encoding=encoding))
 
-        if file == '-':
+        if file == "-":
             return sys.stdout
 
         return self.closelater(open(file, mode=mode, encoding=encoding))
 
 
-def get_python_package_path_description(
-        package, default='module has no path') -> str:
+def get_python_package_path_description(package, default="module has no path") -> str:
     """Helper to get path description of a python package/module
 
     If path has multiple elements, the first one is returned.

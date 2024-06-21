@@ -4,21 +4,21 @@ import ase.db
 from ase import Atoms
 
 
-@pytest.mark.parametrize('name', ['x.json', 'x.db'])
+@pytest.mark.parametrize("name", ["x.json", "x.db"])
 def test_db(name, testdir):
     print(name)
     db = ase.db.connect(name, append=False)
-    db.write(Atoms(), x=1, data={'a': 1})
-    db.update(1, y=2, data={'b': 2})
-    db.update(1, delete_keys=['x'])
+    db.write(Atoms(), x=1, data={"a": 1})
+    db.update(1, y=2, data={"b": 2})
+    db.update(1, delete_keys=["x"])
     row = db.get(1)
     print(row.y, row.data)
-    assert 'x' not in row
-    db.update(1, atoms=Atoms('H'))
+    assert "x" not in row
+    db.update(1, atoms=Atoms("H"))
     row = db.get(1)
     print(row.y, row.data, row.numbers)
     assert (row.numbers == [1]).all()
-    assert sorted(row.data) == ['a', 'b']
+    assert sorted(row.data) == ["a", "b"]
 
     db.write(Atoms(), id=1)
     row = db.get(1)
@@ -29,7 +29,7 @@ def test_db(name, testdir):
     # N = 100
     N = 5
     for i in range(N):
-        db.write(Atoms('H10'), i=i, data={'c': 3})
+        db.write(Atoms("H10"), i=i, data={"c": 3})
 
     t0 = time()
     for id in range(2, 2 + N):

@@ -7,14 +7,16 @@ import pytest
 
 @pytest.fixture
 def initial():
-    return Atoms('H', positions=[(1, 0.1, 0.1)], cell=[
-        [1, 0, 0], [0, 1, 0], [0, 0, 1]], pbc=True)
+    return Atoms(
+        "H", positions=[(1, 0.1, 0.1)], cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]], pbc=True
+    )
 
 
 @pytest.fixture
 def final():
-    return Atoms('H', positions=[(2, 0.2, 0.1)], cell=[
-        [2, 0, 0], [0, 2, 0], [0, 0, 2]], pbc=True)
+    return Atoms(
+        "H", positions=[(2, 0.2, 0.1)], cell=[[2, 0, 0], [0, 2, 0], [0, 0, 2]], pbc=True
+    )
 
 
 @pytest.fixture
@@ -32,7 +34,7 @@ def images(initial, final):
 
 def assert_interpolated(values):
     step = (values[-1] - values[0]) / (len(values) - 1)
-    for v1, v2 in zip(*[values[i:i + 1] for i in range(len(values) - 1)]):
+    for v1, v2 in zip(*[values[i : i + 1] for i in range(len(values) - 1)]):
         assert v2 - v1 == pytest.approx(step)
 
 
@@ -75,9 +77,7 @@ def test_interpolate_images_cell(images, initial, average_pos):
     assert_interpolated([image.cell for image in images])
 
 
-def test_interpolate_images_cell_default_interpolate_cell_scaled_coord(
-        images,
-        initial):
+def test_interpolate_images_cell_default_interpolate_cell_scaled_coord(images, initial):
     interpolate(images, interpolate_cell=True, use_scaled_coord=True)
     assert_interpolated([image.get_scaled_positions() for image in images])
     assert_interpolated([image.cell for image in images])

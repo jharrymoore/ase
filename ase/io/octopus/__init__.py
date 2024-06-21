@@ -37,4 +37,4 @@
 
 from ase.io.octopus.input import read_octopus_in
 
-__all__ = ['read_octopus_in']
+__all__ = ["read_octopus_in"]

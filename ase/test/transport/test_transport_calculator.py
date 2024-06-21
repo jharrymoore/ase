@@ -6,7 +6,7 @@ import numpy as np
 
 
 def write(fname, xs, ys):
-    with open(fname, 'w') as fd:
+    with open(fname, "w") as fd:
         for x, y in zip(xs, ys):
             print(x, y, file=fd)
 
@@ -46,10 +46,7 @@ def test_transport_calculator(testdir):
     H_scat[4, 3] = 0.2
 
     energies = np.arange(-3, 3, 0.02)
-    tcalc = TransportCalculator(h=H_scat,
-                                h1=H_lead,
-                                eta=0.02,
-                                energies=energies)
+    tcalc = TransportCalculator(h=H_scat, h1=H_lead, eta=0.02, energies=energies)
 
     T = tcalc.get_transmission()
     tcalc.set(pdos=[2, 3])
@@ -58,9 +55,9 @@ def test_transport_calculator(testdir):
     tcalc.set(dos=True)
     dos = tcalc.get_dos()
 
-    write('T.dat', tcalc.energies, T)
-    write('pdos0.dat', tcalc.energies, pdos[0])
-    write('pdos1.dat', tcalc.energies, pdos[1])
+    write("T.dat", tcalc.energies, T)
+    write("pdos0.dat", tcalc.energies, pdos[0])
+    write("pdos1.dat", tcalc.energies, pdos[1])
 
     # subdiagonalize
     h_rot, s_rot, eps, u = tcalc.subdiagonalize_bfs([2, 3], apply=True)
@@ -68,14 +65,14 @@ def test_transport_calculator(testdir):
     dos_rot = tcalc.get_dos()
     pdos_rot = tcalc.get_pdos()
 
-    write('T_rot.dat', tcalc.energies, T_rot)
-    write('pdos0_rot.dat', tcalc.energies, pdos_rot[0])
-    write('pdos1_rot.dat', tcalc.energies, pdos_rot[1])
+    write("T_rot.dat", tcalc.energies, T_rot)
+    write("pdos0_rot.dat", tcalc.energies, pdos_rot[0])
+    write("pdos1_rot.dat", tcalc.energies, pdos_rot[1])
 
-    print('Subspace eigenvalues:', eps)
-    assert sum(abs(eps - (-0.8, 0.8))) < 2.0e-15, 'Subdiagonalization. error'
-    print('Max deviation of T after the rotation:', np.abs(T - T_rot).max())
-    assert max(abs(T - T_rot)) < 2.0e-15, 'Subdiagonalization. error'
+    print("Subspace eigenvalues:", eps)
+    assert sum(abs(eps - (-0.8, 0.8))) < 2.0e-15, "Subdiagonalization. error"
+    print("Max deviation of T after the rotation:", np.abs(T - T_rot).max())
+    assert max(abs(T - T_rot)) < 2.0e-15, "Subdiagonalization. error"
 
     # remove coupling
     h_cut, s_cut = tcalc.cutcoupling_bfs([2], apply=True)
@@ -83,6 +80,6 @@ def test_transport_calculator(testdir):
     dos_cut = tcalc.get_dos()
     pdos_cut = tcalc.get_pdos()
 
-    write('T_cut.dat', tcalc.energies, T_cut)
-    write('pdos0_cut.dat', tcalc.energies, pdos_cut[0])
-    write('pdos1_cut.dat', tcalc.energies, pdos_cut[1])
+    write("T_cut.dat", tcalc.energies, T_cut)
+    write("pdos0_cut.dat", tcalc.energies, pdos_cut[0])
+    write("pdos1_cut.dat", tcalc.energies, pdos_cut[1])

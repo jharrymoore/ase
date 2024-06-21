@@ -16,16 +16,14 @@ def read_stdout(args, createfile=None):
     a version number."""
     import tempfile
     from subprocess import Popen, PIPE
+
     with tempfile.TemporaryDirectory() as directory:
         if createfile is not None:
             path = Path(directory) / createfile
             path.touch()
-        proc = Popen(args,
-                     stdout=PIPE,
-                     stderr=PIPE,
-                     stdin=PIPE,
-                     cwd=directory,
-                     encoding='ascii')
+        proc = Popen(
+            args, stdout=PIPE, stderr=PIPE, stdin=PIPE, cwd=directory, encoding="ascii"
+        )
         stdout, _ = proc.communicate()
         # Exit code will be != 0 because there isn't an input file
     return stdout
@@ -61,11 +59,12 @@ class GenericFileIOCalculator(BaseCalculator, GetOutputsMixin):
         super().__init__(parameters)
 
     def set(self, *args, **kwargs):
-        raise RuntimeError('No setting parameters for now, please.  '
-                           'Just create new calculators.')
+        raise RuntimeError(
+            "No setting parameters for now, please.  " "Just create new calculators."
+        )
 
     def __repr__(self):
-        return '{}({})'.format(type(self).__name__, self.template.name)
+        return "{}({})".format(type(self).__name__, self.template.name)
 
     @property
     def implemented_properties(self):
@@ -83,7 +82,8 @@ class GenericFileIOCalculator(BaseCalculator, GetOutputsMixin):
             atoms=atoms,
             parameters=self.parameters,
             properties=properties,
-            directory=self.directory)
+            directory=self.directory,
+        )
 
     def calculate(self, atoms, properties, system_changes):
         self.write_inputfiles(atoms, properties)

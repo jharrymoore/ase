@@ -1,8 +1,8 @@
 def test_combine_mm():
     """Test CombineMM forces by combining tip3p and tip4p with them selves, and
-       by combining tip3p with tip4p and testing against numerical forces.
+    by combining tip3p with tip4p and testing against numerical forces.
 
-       Also test LJInterationsGeneral with CombineMM """
+    Also test LJInterationsGeneral with CombineMM"""
 
     from math import cos, sin, pi
     import numpy as np
@@ -21,13 +21,17 @@ def test_combine_mm():
     def make_atoms():
         r = rOH
         a = angleHOH * pi / 180
-        dimer = Atoms('H2OH2O',
-                      [(r * cos(a), 0, r * sin(a)),
-                       (r, 0, 0),
-                       (0, 0, 0),
-                       (r * cos(a / 2), r * sin(a / 2), 0),
-                       (r * cos(a / 2), -r * sin(a / 2), 0),
-                       (0, 0, 0)])
+        dimer = Atoms(
+            "H2OH2O",
+            [
+                (r * cos(a), 0, r * sin(a)),
+                (r, 0, 0),
+                (0, 0, 0),
+                (r * cos(a / 2), r * sin(a / 2), 0),
+                (r * cos(a / 2), -r * sin(a / 2), 0),
+                (0, 0, 0),
+            ],
+        )
 
         dimer = dimer[[2, 0, 1, 5, 3, 4]]
         # put O-O distance in the cutoff range
@@ -37,20 +41,28 @@ def test_combine_mm():
 
     dimer = make_atoms()
     rc = 3.0
-    for (TIPnP, (eps, sig), nm) in zip([TIP3P, TIP4P],
-                                       ((eps3, sig3), (eps4, sig4)),
-                                       [3, 3]):
+    for (TIPnP, (eps, sig), nm) in zip(
+        [TIP3P, TIP4P], ((eps3, sig3), (eps4, sig4)), [3, 3]
+    ):
         dimer.calc = TIPnP(rc=rc, width=1.0)
         F1 = dimer.get_forces()
 
         sigma = np.array([sig, 0, 0])
         epsilon = np.array([eps, 0, 0])
 
-        dimer.calc = CombineMM([0, 1, 2], nm, nm,
-                               TIPnP(rc=rc, width=1.0),
-                               TIPnP(rc=rc, width=1.0),
-                               sigma, epsilon, sigma, epsilon,
-                               rc=rc, width=1.0)
+        dimer.calc = CombineMM(
+            [0, 1, 2],
+            nm,
+            nm,
+            TIPnP(rc=rc, width=1.0),
+            TIPnP(rc=rc, width=1.0),
+            sigma,
+            epsilon,
+            sigma,
+            epsilon,
+            rc=rc,
+            width=1.0,
+        )
 
         F2 = dimer.get_forces()
         dF = F1 - F2
@@ -63,13 +75,14 @@ def test_combine_mm():
     sig1 = np.array([sig3, 0, 0])
     eps2 = np.array([eps4, 0, 0])
     sig2 = np.array([sig4, 0, 0])
-    dimer.calc = CombineMM([0, 1, 2], 3, 3, TIP3P(rc, 1.0), TIP4P(rc, 1.0),
-                           sig1, eps1, sig2, eps2, rc, 1.0)
+    dimer.calc = CombineMM(
+        [0, 1, 2], 3, 3, TIP3P(rc, 1.0), TIP4P(rc, 1.0), sig1, eps1, sig2, eps2, rc, 1.0
+    )
 
     F2 = dimer.get_forces()
     Fn = dimer.calc.calculate_numerical_forces(dimer, 1e-7)
     dF = F2 - Fn
-    print('TIP3P/TIP4P')
+    print("TIP3P/TIP4P")
     print(dF)
     assert abs(dF).max() < 1e-8
 
@@ -81,22 +94,28 @@ def test_combine_mm():
     #    2 Water molecules
 
     dimer.calc = []
-    faux_qm = Atoms('2Na', positions=np.array([[1.4, -4, 0], [1.4, 4, 0]]))
-    ions = Atoms('2Na', positions=np.array([[1.4, 0, -4], [1.4, 0, 4]]))
+    faux_qm = Atoms("2Na", positions=np.array([[1.4, -4, 0], [1.4, 4, 0]]))
+    ions = Atoms("2Na", positions=np.array([[1.4, 0, -4], [1.4, 0, 4]]))
 
     mmatoms = ions + dimer
 
-    sigNa = 1.868 * (1.0 / 2.0)**(1.0 / 6.0) * 10
+    sigNa = 1.868 * (1.0 / 2.0) ** (1.0 / 6.0) * 10
     epsNa = 0.00277 * units.kcal / units.mol
 
     # ACI for atoms 0 and 1 of the MM subsystem (2 and 3 for the total system)
     # 1 atom 'per molecule'. The rest is TIP4P, 3 atoms per molecule:
-    calc = CombineMM([0, 1], 1, 3,
-                     ACI(1, epsNa, sigNa),  # calc 1
-                     TIP4P(),  # calc 2
-                     [sigNa], [epsNa],  # LJs for subsystem 1
-                     sig2, eps2,  # arrays for TIP4P from earlier
-                     rc=7.5)
+    calc = CombineMM(
+        [0, 1],
+        1,
+        3,
+        ACI(1, epsNa, sigNa),  # calc 1
+        TIP4P(),  # calc 2
+        [sigNa],
+        [epsNa],  # LJs for subsystem 1
+        sig2,
+        eps2,  # arrays for TIP4P from earlier
+        rc=7.5,
+    )
 
     mmatoms.calc = calc
     mmatoms.calc.initialize(mmatoms)
@@ -111,9 +130,7 @@ def test_combine_mm():
 
     lj = LJInteractionsGeneral(sig_qm, eps_qm, sig_mm, eps_mm, 2)
 
-    ecomb, fcomb1, fcomb2 = lj.calculate(faux_qm,
-                                         mmatoms,
-                                         np.array([0, 0, 0]))
+    ecomb, fcomb1, fcomb2 = lj.calculate(faux_qm, mmatoms, np.array([0, 0, 0]))
 
     # This should give the same result as if not using CombineMM, on a sum
     # of these systems:
@@ -132,16 +149,21 @@ def test_combine_mm():
     ea, fa1, fa2 = lj.calculate(faux_qm + ions, mmatoms, np.array([0, 0, 0]))
 
     # B:
-    lj = LJInteractionsGeneral(sig_qm[:2], eps_qm[:2],
-                               sig_qm[:2], eps_qm[:2], 2, 2)
+    lj = LJInteractionsGeneral(sig_qm[:2], eps_qm[:2], sig_qm[:2], eps_qm[:2], 2, 2)
 
-    eb, fb1, fb2, = lj.calculate(faux_qm, ions, np.array([0, 0, 0]))
+    (
+        eb,
+        fb1,
+        fb2,
+    ) = lj.calculate(faux_qm, ions, np.array([0, 0, 0]))
 
     # C:
-    lj = LJInteractionsGeneral(sig_qm[:2], eps_qm[:2],
-                               sig_mm, eps_mm,
-                               2, 3)
+    lj = LJInteractionsGeneral(sig_qm[:2], eps_qm[:2], sig_mm, eps_mm, 2, 3)
 
-    ec, fc1, fc2, = lj.calculate(ions, dimer, np.array([0, 0, 0]))
+    (
+        ec,
+        fc1,
+        fc2,
+    ) = lj.calculate(ions, dimer, np.array([0, 0, 0]))
 
     assert ecomb - (ea + eb) + ec == 0

@@ -26,10 +26,10 @@ YEAR = 31557600.0  # 365.25 days
 
 @functools.total_ordering
 class KeyDescription:
-    _subscript = re.compile(r'`(.)_(.)`')
-    _superscript = re.compile(r'`(.*)\^\{?(.*?)\}?`')
+    _subscript = re.compile(r"`(.)_(.)`")
+    _superscript = re.compile(r"`(.*)\^\{?(.*?)\}?`")
 
-    def __init__(self, key, shortdesc=None, longdesc=None, unit=''):
+    def __init__(self, key, shortdesc=None, longdesc=None, unit=""):
         self.key = key
 
         if shortdesc is None:
@@ -43,45 +43,49 @@ class KeyDescription:
 
         # Somewhat arbitrary that we do this conversion.  Can we avoid that?
         # Previously done in create_key_descriptions().
-        unit = self._subscript.sub(r'\1<sub>\2</sub>', unit)
-        unit = self._superscript.sub(r'\1<sup>\2</sup>', unit)
-        unit = unit.replace(r'\text{', '').replace('}', '')
+        unit = self._subscript.sub(r"\1<sub>\2</sub>", unit)
+        unit = self._superscript.sub(r"\1<sup>\2</sup>", unit)
+        unit = unit.replace(r"\text{", "").replace("}", "")
 
         self.unit = unit
 
     def __repr__(self):
         cls = type(self).__name__
-        return (f'{cls}({self.key!r}, {self.shortdesc!r}, {self.longdesc!r}, '
-                f'unit={self.unit!r})')
+        return (
+            f"{cls}({self.key!r}, {self.shortdesc!r}, {self.longdesc!r}, "
+            f"unit={self.unit!r})"
+        )
 
     # The templates like to sort key descriptions by shortdesc.
     def __eq__(self, other):
-        return self.shortdesc == getattr(other, 'shortdesc', None)
+        return self.shortdesc == getattr(other, "shortdesc", None)
 
     def __lt__(self, other):
-        return self.shortdesc < getattr(other, 'shortdesc', self.shortdesc)
+        return self.shortdesc < getattr(other, "shortdesc", self.shortdesc)
 
 
 def get_key_descriptions():
     KD = KeyDescription
-    return {keydesc.key: keydesc for keydesc in [
-        KD('id', 'ID', 'Uniqe row ID'),
-        KD('age', 'Age', 'Time since creation'),
-        KD('formula', 'Formula', 'Chemical formula'),
-        KD('pbc', 'PBC', 'Periodic boundary conditions'),
-        KD('user', 'Username'),
-        KD('calculator', 'Calculator', 'ASE-calculator name'),
-        KD('energy', 'Energy', 'Total energy', unit='eV'),
-        KD('natoms', 'Number of atoms'),
-        KD('fmax', 'Maximum force', unit='eV/Å'),
-        KD('smax', 'Maximum stress', 'Maximum stress on unit cell',
-           unit='eV/Å³'),
-        KD('charge', 'Charge', 'Net charge in unit cell', unit='|e|'),
-        KD('mass', 'Mass', 'Sum of atomic masses in unit cell', unit='au'),
-        KD('magmom', 'Magnetic moment', unit='μ_B'),
-        KD('unique_id', 'Unique ID', 'Random (unique) ID'),
-        KD('volume', 'Volume', 'Volume of unit cell', unit='Å³')
-    ]}
+    return {
+        keydesc.key: keydesc
+        for keydesc in [
+            KD("id", "ID", "Uniqe row ID"),
+            KD("age", "Age", "Time since creation"),
+            KD("formula", "Formula", "Chemical formula"),
+            KD("pbc", "PBC", "Periodic boundary conditions"),
+            KD("user", "Username"),
+            KD("calculator", "Calculator", "ASE-calculator name"),
+            KD("energy", "Energy", "Total energy", unit="eV"),
+            KD("natoms", "Number of atoms"),
+            KD("fmax", "Maximum force", unit="eV/Å"),
+            KD("smax", "Maximum stress", "Maximum stress on unit cell", unit="eV/Å³"),
+            KD("charge", "Charge", "Net charge in unit cell", unit="|e|"),
+            KD("mass", "Mass", "Sum of atomic masses in unit cell", unit="au"),
+            KD("magmom", "Magnetic moment", unit="μ_B"),
+            KD("unique_id", "Unique ID", "Random (unique) ID"),
+            KD("volume", "Volume", "Volume of unit cell", unit="Å³"),
+        ]
+    }
 
 
 def now():
@@ -89,43 +93,56 @@ def now():
     return (time() - T2000) / YEAR
 
 
-seconds = {'s': 1,
-           'm': 60,
-           'h': 3600,
-           'd': 86400,
-           'w': 604800,
-           'M': 2629800,
-           'y': YEAR}
+seconds = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800, "M": 2629800, "y": YEAR}
 
-longwords = {'s': 'second',
-             'm': 'minute',
-             'h': 'hour',
-             'd': 'day',
-             'w': 'week',
-             'M': 'month',
-             'y': 'year'}
+longwords = {
+    "s": "second",
+    "m": "minute",
+    "h": "hour",
+    "d": "day",
+    "w": "week",
+    "M": "month",
+    "y": "year",
+}
 
-ops = {'<': operator.lt,
-       '<=': operator.le,
-       '=': operator.eq,
-       '>=': operator.ge,
-       '>': operator.gt,
-       '!=': operator.ne}
+ops = {
+    "<": operator.lt,
+    "<=": operator.le,
+    "=": operator.eq,
+    ">=": operator.ge,
+    ">": operator.gt,
+    "!=": operator.ne,
+}
 
-invop = {'<': '>=', '<=': '>', '>=': '<', '>': '<=', '=': '!=', '!=': '='}
+invop = {"<": ">=", "<=": ">", ">=": "<", ">": "<=", "=": "!=", "!=": "="}
 
-word = re.compile('[_a-zA-Z][_0-9a-zA-Z]*$')
+word = re.compile("[_a-zA-Z][_0-9a-zA-Z]*$")
 
-reserved_keys = set(all_properties +
-                    all_changes +
-                    list(atomic_numbers) +
-                    ['id', 'unique_id', 'ctime', 'mtime', 'user',
-                     'fmax', 'smax',
-                     'momenta', 'constraints', 'natoms', 'formula', 'age',
-                     'calculator', 'calculator_parameters',
-                     'key_value_pairs', 'data'])
+reserved_keys = set(
+    all_properties
+    + all_changes
+    + list(atomic_numbers)
+    + [
+        "id",
+        "unique_id",
+        "ctime",
+        "mtime",
+        "user",
+        "fmax",
+        "smax",
+        "momenta",
+        "constraints",
+        "natoms",
+        "formula",
+        "age",
+        "calculator",
+        "calculator_parameters",
+        "key_value_pairs",
+        "data",
+    ]
+)
 
-numeric_keys = set(['id', 'energy', 'magmom', 'charge', 'natoms'])
+numeric_keys = set(["id", "energy", "magmom", "charge", "natoms"])
 
 
 def check(key_value_pairs):
@@ -136,30 +153,34 @@ def check(key_value_pairs):
             continue
 
         if not word.match(key) or key in reserved_keys:
-            raise ValueError('Bad key: {}'.format(key))
+            raise ValueError("Bad key: {}".format(key))
         try:
             Formula(key, strict=True)
         except ValueError:
             pass
         else:
             warnings.warn(
-                'It is best not to use keys ({0}) that are also a '
+                "It is best not to use keys ({0}) that are also a "
                 'chemical formula.  If you do a "db.select({0!r})",'
-                'you will not find rows with your key.  Instead, you wil get '
-                'rows containing the atoms in the formula!'.format(key))
+                "you will not find rows with your key.  Instead, you wil get "
+                "rows containing the atoms in the formula!".format(key)
+            )
         if not isinstance(value, (numbers.Real, str, np.bool_)):
-            raise ValueError('Bad value for {!r}: {}'.format(key, value))
+            raise ValueError("Bad value for {!r}: {}".format(key, value))
         if isinstance(value, str):
             for t in [int, float]:
                 if str_represents(value, t):
                     raise ValueError(
-                        'Value ' + value + ' is put in as string ' +
-                        'but can be interpreted as ' +
-                        '{}! Please convert '.format(t.__name__) +
-                        'to {} using '.format(t.__name__) +
-                        '{}(value) before '.format(t.__name__) +
-                        'writing to the database OR change ' +
-                        'to a different string.')
+                        "Value "
+                        + value
+                        + " is put in as string "
+                        + "but can be interpreted as "
+                        + "{}! Please convert ".format(t.__name__)
+                        + "to {} using ".format(t.__name__)
+                        + "{}(value) before ".format(t.__name__)
+                        + "writing to the database OR change "
+                        + "to a different string."
+                    )
 
 
 def str_represents(value, t=int):
@@ -170,8 +191,14 @@ def str_represents(value, t=int):
     return True
 
 
-def connect(name, type='extract_from_name', create_indices=True,
-            use_lock_file=True, append=True, serial=False):
+def connect(
+    name,
+    type="extract_from_name",
+    create_indices=True,
+    use_lock_file=True,
+    append=True,
+    serial=False,
+):
     """Create connection to database.
 
     name: str
@@ -190,20 +217,19 @@ def connect(name, type='extract_from_name', create_indices=True,
     if isinstance(name, PurePath):
         name = str(name)
 
-    if type == 'extract_from_name':
+    if type == "extract_from_name":
         if name is None:
             type = None
         elif not isinstance(name, str):
-            type = 'json'
-        elif (name.startswith('postgresql://') or
-              name.startswith('postgres://')):
-            type = 'postgresql'
-        elif name.startswith('mysql://') or name.startswith('mariadb://'):
-            type = 'mysql'
+            type = "json"
+        elif name.startswith("postgresql://") or name.startswith("postgres://"):
+            type = "postgresql"
+        elif name.startswith("mysql://") or name.startswith("mariadb://"):
+            type = "mysql"
         else:
             type = os.path.splitext(name)[1][1:]
-            if type == '':
-                raise ValueError('No file extension or database type given')
+            if type == "":
+                raise ValueError("No file extension or database type given")
 
     if type is None:
         return Database()
@@ -212,28 +238,32 @@ def connect(name, type='extract_from_name', create_indices=True,
         if isinstance(name, str) and os.path.isfile(name):
             os.remove(name)
 
-    if type not in ['postgresql', 'mysql'] and isinstance(name, str):
+    if type not in ["postgresql", "mysql"] and isinstance(name, str):
         name = os.path.abspath(name)
 
-    if type == 'json':
+    if type == "json":
         from ase.db.jsondb import JSONDatabase
+
         return JSONDatabase(name, use_lock_file=use_lock_file, serial=serial)
-    if type == 'db':
+    if type == "db":
         from ase.db.sqlite import SQLite3Database
-        return SQLite3Database(name, create_indices, use_lock_file,
-                               serial=serial)
-    if type == 'postgresql':
+
+        return SQLite3Database(name, create_indices, use_lock_file, serial=serial)
+    if type == "postgresql":
         from ase.db.postgresql import PostgreSQLDatabase
+
         return PostgreSQLDatabase(name)
 
-    if type == 'mysql':
+    if type == "mysql":
         from ase.db.mysql import MySQLDatabase
+
         return MySQLDatabase(name)
-    raise ValueError('Unknown database type: ' + type)
+    raise ValueError("Unknown database type: " + type)
 
 
 def lock(method):
     """Decorator for using a lock-file."""
+
     @functools.wraps(method)
     def new_method(self, *args, **kwargs):
         if self.lock is None:
@@ -241,6 +271,7 @@ def lock(method):
         else:
             with self.lock:
                 return method(self, *args, **kwargs)
+
     return new_method
 
 
@@ -252,69 +283,69 @@ def convert_str_to_int_float_or_str(value):
         try:
             value = float(value)
         except ValueError:
-            value = {'True': True, 'False': False}.get(value, value)
+            value = {"True": True, "False": False}.get(value, value)
         return value
 
 
 def parse_selection(selection, **kwargs):
-    if selection is None or selection == '':
+    if selection is None or selection == "":
         expressions = []
     elif isinstance(selection, int):
-        expressions = [('id', '=', selection)]
+        expressions = [("id", "=", selection)]
     elif isinstance(selection, list):
         expressions = selection
     else:
-        expressions = [w.strip() for w in selection.split(',')]
+        expressions = [w.strip() for w in selection.split(",")]
     keys = []
     comparisons = []
     for expression in expressions:
         if isinstance(expression, (list, tuple)):
             comparisons.append(expression)
             continue
-        if expression.count('<') == 2:
-            value, expression = expression.split('<', 1)
-            if expression[0] == '=':
-                op = '>='
+        if expression.count("<") == 2:
+            value, expression = expression.split("<", 1)
+            if expression[0] == "=":
+                op = ">="
                 expression = expression[1:]
             else:
-                op = '>'
-            key = expression.split('<', 1)[0]
+                op = ">"
+            key = expression.split("<", 1)[0]
             comparisons.append((key, op, value))
-        for op in ['!=', '<=', '>=', '<', '>', '=']:
+        for op in ["!=", "<=", ">=", "<", ">", "="]:
             if op in expression:
                 break
         else:  # no break
             if expression in atomic_numbers:
-                comparisons.append((expression, '>', 0))
+                comparisons.append((expression, ">", 0))
             else:
                 try:
                     count = Formula(expression).count()
                 except ValueError:
                     keys.append(expression)
                 else:
-                    comparisons.extend((symbol, '>', n - 1)
-                                       for symbol, n in count.items())
+                    comparisons.extend(
+                        (symbol, ">", n - 1) for symbol, n in count.items()
+                    )
             continue
         key, value = expression.split(op)
         comparisons.append((key, op, value))
 
     cmps = []
     for key, value in kwargs.items():
-        comparisons.append((key, '=', value))
+        comparisons.append((key, "=", value))
 
     for key, op, value in comparisons:
-        if key == 'age':
-            key = 'ctime'
+        if key == "age":
+            key = "ctime"
             op = invop[op]
             value = now() - time_string_to_float(value)
-        elif key == 'formula':
-            if op != '=':
-                raise ValueError('Use fomula=...')
+        elif key == "formula":
+            if op != "=":
+                raise ValueError("Use fomula=...")
             f = Formula(value)
             count = f.count()
-            cmps.extend((atomic_numbers[symbol], '=', n)
-                        for symbol, n in count.items())
-            key = 'natoms'
+            cmps.extend((atomic_numbers[symbol], "=", n) for symbol, n in count.items())
+            key = "natoms"
             value = len(f)
         elif key in atomic_numbers:
             key = atomic_numbers[key]
@@ -331,8 +362,10 @@ def parse_selection(selection, **kwargs):
 
 class Database:
     """Base class for all databases."""
-    def __init__(self, filename=None, create_indices=True,
-                 use_lock_file=False, serial=False):
+
+    def __init__(
+        self, filename=None, create_indices=True, use_lock_file=False, serial=False
+    ):
         """Database object.
 
         serial: bool
@@ -345,7 +378,7 @@ class Database:
         self.filename = filename
         self.create_indices = create_indices
         if use_lock_file and isinstance(filename, str):
-            self.lock = Lock(filename + '.lock', world=DummyMPI())
+            self.lock = Lock(filename + ".lock", world=DummyMPI())
         else:
             self.lock = None
         self.serial = serial
@@ -407,14 +440,14 @@ class Database:
         anything and return None.
         """
 
-        for dct in self._select([],
-                                [(key, '=', value)
-                                 for key, value in key_value_pairs.items()]):
+        for dct in self._select(
+            [], [(key, "=", value) for key, value in key_value_pairs.items()]
+        ):
             return None
 
         atoms = Atoms()
 
-        calc_name = key_value_pairs.pop('calculator', None)
+        calc_name = key_value_pairs.pop("calculator", None)
 
         if calc_name:
             # Allow use of calculator key
@@ -428,7 +461,7 @@ class Database:
                     return {}
 
                 def check_state(self, atoms):
-                    return ['positions']
+                    return ["positions"]
 
             atoms.calc = Fake()
 
@@ -439,8 +472,7 @@ class Database:
     def __delitem__(self, id):
         self.delete([id])
 
-    def get_atoms(self, selection=None,
-                  add_additional_information=False, **kwargs):
+    def get_atoms(self, selection=None, add_additional_information=False, **kwargs):
         """Get Atoms object.
 
         selection: int, str or list
@@ -466,14 +498,24 @@ class Database:
         """
         rows = list(self.select(selection, limit=2, **kwargs))
         if not rows:
-            raise KeyError('no match')
-        assert len(rows) == 1, 'more than one row matched'
+            raise KeyError("no match")
+        assert len(rows) == 1, "more than one row matched"
         return rows[0]
 
     @parallel_generator
-    def select(self, selection=None, filter=None, explain=False,
-               verbosity=1, limit=None, offset=0, sort=None,
-               include_data=True, columns='all', **kwargs):
+    def select(
+        self,
+        selection=None,
+        filter=None,
+        explain=False,
+        verbosity=1,
+        limit=None,
+        offset=0,
+        sort=None,
+        include_data=True,
+        columns="all",
+        **kwargs,
+    ):
         """Select rows.
 
         Return AtomsRow iterator with results.  Selection is done
@@ -512,19 +554,25 @@ class Database:
         """
 
         if sort:
-            if sort == 'age':
-                sort = '-ctime'
-            elif sort == '-age':
-                sort = 'ctime'
-            elif sort.lstrip('-') == 'user':
-                sort += 'name'
+            if sort == "age":
+                sort = "-ctime"
+            elif sort == "-age":
+                sort = "ctime"
+            elif sort.lstrip("-") == "user":
+                sort += "name"
 
         keys, cmps = parse_selection(selection, **kwargs)
-        for row in self._select(keys, cmps, explain=explain,
-                                verbosity=verbosity,
-                                limit=limit, offset=offset, sort=sort,
-                                include_data=include_data,
-                                columns=columns):
+        for row in self._select(
+            keys,
+            cmps,
+            explain=explain,
+            verbosity=verbosity,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+            include_data=include_data,
+            columns=columns,
+        ):
             if filter is None or filter(row):
                 yield row
 
@@ -544,8 +592,7 @@ class Database:
 
     @parallel_function
     @lock
-    def update(self, id, atoms=None, delete_keys=[], data=None,
-               **add_key_value_pairs):
+    def update(self, id, atoms=None, delete_keys=[], data=None, **add_key_value_pairs):
         """Update and/or delete key-value pairs of row(s).
 
         id: int
@@ -564,13 +611,15 @@ class Database:
 
         if not isinstance(id, numbers.Integral):
             if isinstance(id, list):
-                err = ('First argument must be an int and not a list.\n'
-                       'Do something like this instead:\n\n'
-                       'with db:\n'
-                       '    for id in ids:\n'
-                       '        db.update(id, ...)')
+                err = (
+                    "First argument must be an int and not a list.\n"
+                    "Do something like this instead:\n\n"
+                    "with db:\n"
+                    "    for id in ids:\n"
+                    "        db.update(id, ...)"
+                )
                 raise ValueError(err)
-            raise TypeError('id must be an int')
+            raise TypeError("id must be an int")
 
         check(add_key_value_pairs)
 
@@ -586,7 +635,7 @@ class Database:
         m += len(kvp)
 
         moredata = data
-        data = row.get('data', {})
+        data = row.get("data", {})
         if moredata:
             data.update(moredata)
         if not data:
@@ -603,7 +652,7 @@ class Database:
             row.user = oldrow.user
             row.id = id
 
-        if atoms or os.path.splitext(self.filename)[1] == '.json':
+        if atoms or os.path.splitext(self.filename)[1] == ".json":
             self._write(row, kvp, data, row.id)
         else:
             self._update(row.id, kvp, data)
@@ -617,10 +666,10 @@ class Database:
 def time_string_to_float(s):
     if isinstance(s, (float, int)):
         return s
-    s = s.replace(' ', '')
-    if '+' in s:
-        return sum(time_string_to_float(x) for x in s.split('+'))
-    if s[-2].isalpha() and s[-1] == 's':
+    s = s.replace(" ", "")
+    if "+" in s:
+        return sum(time_string_to_float(x) for x in s.split("+"))
+    if s[-2].isalpha() and s[-1] == "s":
         s = s[:-1]
     i = 1
     while s[i].isdigit():
@@ -630,27 +679,27 @@ def time_string_to_float(s):
 
 def float_to_time_string(t, long=False):
     t *= YEAR
-    for s in 'yMwdhms':
+    for s in "yMwdhms":
         x = t / seconds[s]
         if x > 5:
             break
     if long:
-        return '{:.3f} {}s'.format(x, longwords[s])
+        return "{:.3f} {}s".format(x, longwords[s])
     else:
-        return '{:.0f}{}'.format(round(x), s)
+        return "{:.0f}{}".format(round(x), s)
 
 
 def object_to_bytes(obj: Any) -> bytes:
     """Serialize Python object to bytes."""
-    parts = [b'12345678']
+    parts = [b"12345678"]
     obj = o2b(obj, parts)
     offset = sum(len(part) for part in parts)
     x = np.array(offset, np.int64)
     if not np.little_endian:
         x.byteswap(True)
     parts[0] = x.tobytes()
-    parts.append(json.dumps(obj, separators=(',', ':')).encode())
-    return b''.join(parts)
+    parts.append(json.dumps(obj, separators=(",", ":")).encode())
+    return b"".join(parts)
 
 
 def bytes_to_object(b: bytes) -> Any:
@@ -671,24 +720,20 @@ def o2b(obj: Any, parts: List[bytes]):
     if isinstance(obj, (list, tuple)):
         return [o2b(value, parts) for value in obj]
     if isinstance(obj, np.ndarray):
-        assert obj.dtype != object, \
-            'Cannot convert ndarray of type "object" to bytes.'
+        assert obj.dtype != object, 'Cannot convert ndarray of type "object" to bytes.'
         offset = sum(len(part) for part in parts)
         if not np.little_endian:
             obj = obj.byteswap()
         parts.append(obj.tobytes())
-        return {'__ndarray__': [obj.shape,
-                                obj.dtype.name,
-                                offset]}
+        return {"__ndarray__": [obj.shape, obj.dtype.name, offset]}
     if isinstance(obj, complex):
-        return {'__complex__': [obj.real, obj.imag]}
-    objtype = getattr(obj, 'ase_objtype')
+        return {"__complex__": [obj.real, obj.imag]}
+    objtype = getattr(obj, "ase_objtype")
     if objtype:
         dct = o2b(obj.todict(), parts)
-        dct['__ase_objtype__'] = objtype
+        dct["__ase_objtype__"] = objtype
         return dct
-    raise ValueError('Objects of type {type} not allowed'
-                     .format(type=type(obj)))
+    raise ValueError("Objects of type {type} not allowed".format(type=type(obj)))
 
 
 def b2o(obj: Any, b: bytes) -> Any:
@@ -700,23 +745,23 @@ def b2o(obj: Any, b: bytes) -> Any:
 
     assert isinstance(obj, dict)
 
-    x = obj.get('__complex__')
+    x = obj.get("__complex__")
     if x is not None:
         return complex(*x)
 
-    x = obj.get('__ndarray__')
+    x = obj.get("__ndarray__")
     if x is not None:
         shape, name, offset = x
         dtype = np.dtype(name)
         size = dtype.itemsize * np.prod(shape).astype(int)
-        a = np.frombuffer(b[offset:offset + size], dtype)
+        a = np.frombuffer(b[offset : offset + size], dtype)
         a.shape = shape
         if not np.little_endian:
             a = a.byteswap()
         return a
 
     dct = {key: b2o(value, b) for key, value in obj.items()}
-    objtype = dct.pop('__ase_objtype__', None)
+    objtype = dct.pop("__ase_objtype__", None)
     if objtype is None:
         return dct
     return create_ase_object(objtype, dct)

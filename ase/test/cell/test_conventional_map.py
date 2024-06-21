@@ -11,14 +11,13 @@ def emt_energy_per_atom(atoms):
     return atoms.get_potential_energy() / len(atoms)
 
 
-@pytest.mark.parametrize('lat', [var for var in all_variants()
-                                 if var.ndim == 3])
+@pytest.mark.parametrize("lat", [var for var in all_variants() if var.ndim == 3])
 def test_conventional_map(lat):
-    if not hasattr(lat, 'conventional_cellmap'):
+    if not hasattr(lat, "conventional_cellmap"):
         pytest.skip()
 
     conv_lat = lat.conventional()
-    prim_atoms = Atoms('Au', cell=lat.tocell(), pbc=1)
+    prim_atoms = Atoms("Au", cell=lat.tocell(), pbc=1)
     conv_atoms = make_supercell(prim_atoms, lat.conventional_cellmap)
 
     e1 = emt_energy_per_atom(prim_atoms)

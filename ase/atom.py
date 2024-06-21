@@ -5,13 +5,15 @@ import numpy as np
 from ase.data import atomic_numbers, chemical_symbols, atomic_masses
 
 # Singular, plural, default value:
-names = {'position': ('positions', np.zeros(3)),
-         'number': ('numbers', 0),
-         'tag': ('tags', 0),
-         'momentum': ('momenta', np.zeros(3)),
-         'mass': ('masses', None),
-         'magmom': ('initial_magmoms', 0.0),
-         'charge': ('initial_charges', 0.0)}
+names = {
+    "position": ("positions", np.zeros(3)),
+    "number": ("numbers", 0),
+    "tag": ("tags", 0),
+    "momentum": ("momenta", np.zeros(3)),
+    "mass": ("masses", None),
+    "magmom": ("initial_magmoms", 0.0),
+    "charge": ("initial_charges", 0.0),
+}
 
 
 def atomproperty(name, doc):
@@ -44,7 +46,7 @@ def abcproperty(index):
         spos[index] = value
         self.scaled_position = spos
 
-    return property(getter, setter, doc='ABC'[index] + '-coordinate')
+    return property(getter, setter, doc="ABC"[index] + "-coordinate")
 
 
 def xyzproperty(index):
@@ -56,7 +58,7 @@ def xyzproperty(index):
     def setter(self, value):
         self.position[index] = value
 
-    return property(getter, setter, doc='XYZ'[index] + '-coordinate')
+    return property(getter, setter, doc="XYZ"[index] + "-coordinate")
 
 
 class Atom:
@@ -79,31 +81,40 @@ class Atom:
     charge: float
         Atomic charge.
     """
-    __slots__ = ['data', 'atoms', 'index']
 
-    def __init__(self, symbol='X', position=(0, 0, 0),
-                 tag=None, momentum=None, mass=None,
-                 magmom=None, charge=None,
-                 atoms=None, index=None):
+    __slots__ = ["data", "atoms", "index"]
+
+    def __init__(
+        self,
+        symbol="X",
+        position=(0, 0, 0),
+        tag=None,
+        momentum=None,
+        mass=None,
+        magmom=None,
+        charge=None,
+        atoms=None,
+        index=None,
+    ):
 
         self.data = d = {}
 
         if atoms is None:
             # This atom is not part of any Atoms object:
             if isinstance(symbol, str):
-                d['number'] = atomic_numbers[symbol]
+                d["number"] = atomic_numbers[symbol]
             else:
-                d['number'] = symbol
-            d['position'] = np.array(position, float)
-            d['tag'] = tag
+                d["number"] = symbol
+            d["position"] = np.array(position, float)
+            d["tag"] = tag
             if momentum is not None:
                 momentum = np.array(momentum, float)
-            d['momentum'] = momentum
-            d['mass'] = mass
+            d["momentum"] = momentum
+            d["mass"] = mass
             if magmom is not None:
                 magmom = np.array(magmom, float)
-            d['magmom'] = magmom
-            d['charge'] = charge
+            d["magmom"] = magmom
+            d["charge"] = charge
 
         self.index = index
         self.atoms = atoms
@@ -121,16 +132,16 @@ class Atom:
 
     def __repr__(self):
         s = "Atom('%s', %s" % (self.symbol, list(self.position))
-        for name in ['tag', 'momentum', 'mass', 'magmom', 'charge']:
+        for name in ["tag", "momentum", "mass", "magmom", "charge"]:
             value = self.get_raw(name)
             if value is not None:
                 if isinstance(value, np.ndarray):
                     value = value.tolist()
-                s += ', %s=%s' % (name, value)
+                s += ", %s=%s" % (name, value)
         if self.atoms is None:
-            s += ')'
+            s += ")"
         else:
-            s += ', index=%d)' % self.index
+            s += ", index=%d)" % self.index
         return s
 
     def cut_reference_to_atoms(self):
@@ -142,8 +153,8 @@ class Atom:
 
     def get_raw(self, name):
         """Get name attribute, return None if not explicitly set."""
-        if name == 'symbol':
-            return chemical_symbols[self.get_raw('number')]
+        if name == "symbol":
+            return chemical_symbols[self.get_raw("number")]
 
         if self.atoms is None:
             return self.data[name]
@@ -158,7 +169,7 @@ class Atom:
         """Get name attribute, return default if not explicitly set."""
         value = self.get_raw(name)
         if value is None:
-            if name == 'mass':
+            if name == "mass":
                 value = atomic_masses[self.number]
             else:
                 value = names[name][1]
@@ -166,8 +177,8 @@ class Atom:
 
     def set(self, name, value):
         """Set name attribute to value."""
-        if name == 'symbol':
-            name = 'number'
+        if name == "symbol":
+            name = "number"
             value = atomic_numbers[value]
 
         if self.atoms is None:
@@ -177,35 +188,34 @@ class Atom:
             plural, default = names[name]
             if plural in self.atoms.arrays:
                 array = self.atoms.arrays[plural]
-                if name == 'magmom' and array.ndim == 2:
+                if name == "magmom" and array.ndim == 2:
                     assert len(value) == 3
                 array[self.index] = value
             else:
-                if name == 'magmom' and np.asarray(value).ndim == 1:
+                if name == "magmom" and np.asarray(value).ndim == 1:
                     array = np.zeros((len(self.atoms), 3))
-                elif name == 'mass':
+                elif name == "mass":
                     array = self.atoms.get_masses()
                 else:
                     default = np.asarray(default)
-                    array = np.zeros((len(self.atoms),) + default.shape,
-                                     default.dtype)
+                    array = np.zeros((len(self.atoms),) + default.shape, default.dtype)
                 array[self.index] = value
                 self.atoms.new_array(plural, array)
 
     def delete(self, name):
         """Delete name attribute."""
         assert self.atoms is None
-        assert name not in ['number', 'symbol', 'position']
+        assert name not in ["number", "symbol", "position"]
         self.data[name] = None
 
-    symbol = atomproperty('symbol', 'Chemical symbol')
-    number = atomproperty('number', 'Atomic number')
-    position = atomproperty('position', 'XYZ-coordinates')
-    tag = atomproperty('tag', 'Integer tag')
-    momentum = atomproperty('momentum', 'XYZ-momentum')
-    mass = atomproperty('mass', 'Atomic mass')
-    magmom = atomproperty('magmom', 'Initial magnetic moment')
-    charge = atomproperty('charge', 'Initial atomic charge')
+    symbol = atomproperty("symbol", "Chemical symbol")
+    number = atomproperty("number", "Atomic number")
+    position = atomproperty("position", "XYZ-coordinates")
+    tag = atomproperty("tag", "Integer tag")
+    momentum = atomproperty("momentum", "XYZ-momentum")
+    mass = atomproperty("mass", "Atomic mass")
+    magmom = atomproperty("magmom", "Initial magnetic moment")
+    charge = atomproperty("charge", "Initial atomic charge")
     x = xyzproperty(0)
     y = xyzproperty(1)
     z = xyzproperty(2)

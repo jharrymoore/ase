@@ -7,19 +7,24 @@ def test_read_gpaw_out(datadir):
 
     # read input
 
-    output_file_name = datadir / 'gpaw_expected_text_output'
+    output_file_name = datadir / "gpaw_expected_text_output"
     atoms = io.read(output_file_name)
 
     # test calculator
 
     calc = atoms.calc
     assert isinstance(calc, SinglePointDFTCalculator)
-    assert calc.name == 'vdwtkatchenko09prl'
-    assert calc.parameters['calculator'] == 'gpaw'
+    assert calc.name == "vdwtkatchenko09prl"
+    assert calc.parameters["calculator"] == "gpaw"
 
     for contribution in [
-            'kinetic', 'potential', 'external', 'xc',
-            'entropy (-st)', 'local']:
+        "kinetic",
+        "potential",
+        "external",
+        "xc",
+        "entropy (-st)",
+        "local",
+    ]:
         assert contribution in calc.energy_contributions
 
 

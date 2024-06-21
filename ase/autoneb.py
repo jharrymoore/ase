@@ -100,13 +100,26 @@ class AutoNEB:
         $ ase-gui -n -1 neb???.traj
     """
 
-    def __init__(self, attach_calculators, prefix, n_simul, n_max,
-                 iter_folder='AutoNEB_iter',
-                 fmax=0.025, maxsteps=10000, k=0.1, climb=True, method='eb',
-                 optimizer=FIRE,
-                 remove_rotation_and_translation=False, space_energy_ratio=0.5,
-                 world=None,
-                 parallel=True, smooth_curve=False, interpolate_method='idpp'):
+    def __init__(
+        self,
+        attach_calculators,
+        prefix,
+        n_simul,
+        n_max,
+        iter_folder="AutoNEB_iter",
+        fmax=0.025,
+        maxsteps=10000,
+        k=0.1,
+        climb=True,
+        method="eb",
+        optimizer=FIRE,
+        remove_rotation_and_translation=False,
+        space_energy_ratio=0.5,
+        world=None,
+        parallel=True,
+        smooth_curve=False,
+        interpolate_method="idpp",
+    ):
         self.attach_calculators = attach_calculators
         self.prefix = Path(prefix)
         self.n_simul = n_simul
@@ -121,10 +134,9 @@ class AutoNEB:
         self.method = method
         self.remove_rotation_and_translation = remove_rotation_and_translation
         self.space_energy_ratio = space_energy_ratio
-        if interpolate_method not in ['idpp', 'linear']:
-            self.interpolate_method = 'idpp'
-            print('Interpolation method not implementet.',
-                  'Using the IDPP method.')
+        if interpolate_method not in ["idpp", "linear"]:
+            self.interpolate_method = "idpp"
+            print("Interpolation method not implementet.", "Using the IDPP method.")
         else:
             self.interpolate_method = interpolate_method
         if world is None:
@@ -133,13 +145,11 @@ class AutoNEB:
         self.smooth_curve = smooth_curve
 
         if isinstance(optimizer, str):
-            warn('Please set optimizer as an object and not as string',
-                 FutureWarning)
+            warn("Please set optimizer as an object and not as string", FutureWarning)
             try:
-                self.optimizer = {
-                    'BFGS': BFGS, 'FIRE': FIRE}[optimizer]
+                self.optimizer = {"BFGS": BFGS, "FIRE": FIRE}[optimizer]
             except KeyError:
-                raise Exception('Optimizer needs to be BFGS or FIRE')
+                raise Exception("Optimizer needs to be BFGS or FIRE")
         else:
             self.optimizer = optimizer
 
@@ -148,19 +158,18 @@ class AutoNEB:
 
     def execute_one_neb(self, n_cur, to_run, climb=False, many_steps=False):
         with ExitStack() as exitstack:
-            self._execute_one_neb(exitstack, n_cur, to_run,
-                                  climb=climb, many_steps=many_steps)
+            self._execute_one_neb(
+                exitstack, n_cur, to_run, climb=climb, many_steps=many_steps
+            )
 
     def iter_trajpath(self, i, iiter):
         """When doing the i'th NEB optimization a set of files
         prefixXXXiter00i.traj exists with XXX ranging from 000 to the N images
         currently in the NEB."""
-        return (self.iter_folder /
-                (self.prefix.name + f'{i:03d}iter{iiter:03d}.traj'))
+        return self.iter_folder / (self.prefix.name + f"{i:03d}iter{iiter:03d}.traj")
 
-    def _execute_one_neb(self, exitstack, n_cur, to_run,
-                         climb=False, many_steps=False):
-        '''Internal method which executes one NEB optimization.'''
+    def _execute_one_neb(self, exitstack, n_cur, to_run, climb=False, many_steps=False):
+        """Internal method which executes one NEB optimization."""
 
         closelater = exitstack.enter_context
 
@@ -169,64 +178,72 @@ class AutoNEB:
         # neb (for reproducability purposes)
         if self.world.rank == 0:
             for i in range(n_cur):
-                if i not in to_run[1: -1]:
-                    filename = '%s%03d.traj' % (self.prefix, i)
-                    with Trajectory(filename, mode='w',
-                                    atoms=self.all_images[i]) as traj:
+                if i not in to_run[1:-1]:
+                    filename = "%s%03d.traj" % (self.prefix, i)
+                    with Trajectory(
+                        filename, mode="w", atoms=self.all_images[i]
+                    ) as traj:
                         traj.write()
                     filename_ref = self.iter_trajpath(i, self.iteration)
                     if os.path.isfile(filename):
                         shutil.copy2(filename, filename_ref)
         if self.world.rank == 0:
-            print('Now starting iteration %d on ' % self.iteration, to_run)
+            print("Now starting iteration %d on " % self.iteration, to_run)
         # Attach calculators to all the images we will include in the NEB
-        self.attach_calculators([self.all_images[i] for i in to_run[1: -1]])
-        neb = NEB([self.all_images[i] for i in to_run],
-                  k=[self.k[i] for i in to_run[0:-1]],
-                  method=self.method,
-                  parallel=self.parallel,
-                  remove_rotation_and_translation=self
-                  .remove_rotation_and_translation,
-                  climb=climb)
+        self.attach_calculators([self.all_images[i] for i in to_run[1:-1]])
+        neb = NEB(
+            [self.all_images[i] for i in to_run],
+            k=[self.k[i] for i in to_run[0:-1]],
+            method=self.method,
+            parallel=self.parallel,
+            remove_rotation_and_translation=self.remove_rotation_and_translation,
+            climb=climb,
+        )
 
         # Do the actual NEB calculation
-        logpath = (self.iter_folder
-                   / f'{self.prefix.name}_log_iter{self.iteration:03d}.log')
+        logpath = (
+            self.iter_folder / f"{self.prefix.name}_log_iter{self.iteration:03d}.log"
+        )
         qn = closelater(self.optimizer(neb, logfile=logpath))
 
         # Find the ranks which are masters for each their calculation
         if self.parallel:
             nneb = to_run[0]
             nim = len(to_run) - 2
-            n = self.world.size // nim      # number of cpu's per image
-            j = 1 + self.world.rank // n    # my image number
+            n = self.world.size // nim  # number of cpu's per image
+            j = 1 + self.world.rank // n  # my image number
             assert nim * n == self.world.size
-            traj = closelater(Trajectory(
-                '%s%03d.traj' % (self.prefix, j + nneb), 'w',
-                self.all_images[j + nneb],
-                master=(self.world.rank % n == 0)
-            ))
+            traj = closelater(
+                Trajectory(
+                    "%s%03d.traj" % (self.prefix, j + nneb),
+                    "w",
+                    self.all_images[j + nneb],
+                    master=(self.world.rank % n == 0),
+                )
+            )
             filename_ref = self.iter_trajpath(j + nneb, self.iteration)
-            trajhist = closelater(Trajectory(
-                filename_ref, 'w',
-                self.all_images[j + nneb],
-                master=(self.world.rank % n == 0)
-            ))
+            trajhist = closelater(
+                Trajectory(
+                    filename_ref,
+                    "w",
+                    self.all_images[j + nneb],
+                    master=(self.world.rank % n == 0),
+                )
+            )
             qn.attach(traj)
             qn.attach(trajhist)
         else:
             num = 1
-            for i, j in enumerate(to_run[1: -1]):
+            for i, j in enumerate(to_run[1:-1]):
                 filename_ref = self.iter_trajpath(j, self.iteration)
-                trajhist = closelater(Trajectory(
-                    filename_ref, 'w', self.all_images[j]
-                ))
+                trajhist = closelater(Trajectory(filename_ref, "w", self.all_images[j]))
                 qn.attach(seriel_writer(trajhist, i, num).write)
 
-                traj = closelater(Trajectory(
-                    '%s%03d.traj' % (self.prefix, j), 'w',
-                    self.all_images[j]
-                ))
+                traj = closelater(
+                    Trajectory(
+                        "%s%03d.traj" % (self.prefix, j), "w", self.all_images[j]
+                    )
+                )
                 qn.attach(seriel_writer(traj, i, num).write)
                 num += 1
 
@@ -252,24 +269,26 @@ class AutoNEB:
         neb.distribute()
 
     def run(self):
-        '''Run the AutoNEB optimization algorithm.'''
+        """Run the AutoNEB optimization algorithm."""
         n_cur = self.__initialize__()
         while len(self.all_images) < self.n_simul + 2:
             if isinstance(self.k, (float, int)):
                 self.k = [self.k] * (len(self.all_images) - 1)
             if self.world.rank == 0:
-                print('Now adding images for initial run')
+                print("Now adding images for initial run")
             # Insert a new image where the distance between two images is
             # the largest
             spring_lengths = []
             for j in range(n_cur - 1):
-                spring_vec = self.all_images[j + 1].get_positions() - \
-                    self.all_images[j].get_positions()
+                spring_vec = (
+                    self.all_images[j + 1].get_positions()
+                    - self.all_images[j].get_positions()
+                )
                 spring_lengths.append(np.linalg.norm(spring_vec))
             jmax = np.argmax(spring_lengths)
 
             if self.world.rank == 0:
-                print('Max length between images is at ', jmax)
+                print("Max length between images is at ", jmax)
 
             # The interpolation used to make initial guesses
             # If only start and end images supplied make all img at ones
@@ -286,16 +305,16 @@ class AutoNEB:
             neb = NEB(toInterpolate)
             neb.interpolate(method=self.interpolate_method)
 
-            tmp = self.all_images[:jmax + 1]
+            tmp = self.all_images[: jmax + 1]
             tmp += toInterpolate[1:-1]
-            tmp.extend(self.all_images[jmax + 1:])
+            tmp.extend(self.all_images[jmax + 1 :])
 
             self.all_images = tmp
 
             # Expect springs to be in equilibrium
             k_tmp = self.k[:jmax]
             k_tmp += [self.k[jmax] * (n_between + 1)] * (n_between + 1)
-            k_tmp.extend(self.k[jmax + 1:])
+            k_tmp.extend(self.k[jmax + 1 :])
             self.k = k_tmp
 
             # Run the NEB calculation with the new image included
@@ -307,7 +326,7 @@ class AutoNEB:
         n_non_valid_energies = len([e for e in energies if e != e])
 
         if self.world.rank == 0:
-            print('Start of evaluation of the initial images')
+            print("Start of evaluation of the initial images")
 
         while n_non_valid_energies != 0:
             if isinstance(self.k, (float, int)):
@@ -321,7 +340,7 @@ class AutoNEB:
             n_non_valid_energies = len([e for e in energies if e != e])
 
         if self.world.rank == 0:
-            print('Finished initialisation phase.')
+            print("Finished initialisation phase.")
 
         # Then add one image at a time until we have n_max images
         while n_cur < self.n_max:
@@ -330,16 +349,21 @@ class AutoNEB:
             # Insert a new image where the distance between two images
             # is the largest OR where a higher energy reselution is needed
             if self.world.rank == 0:
-                print('****Now adding another image until n_max is reached',
-                      '({0}/{1})****'.format(n_cur, self.n_max))
+                print(
+                    "****Now adding another image until n_max is reached",
+                    "({0}/{1})****".format(n_cur, self.n_max),
+                )
             spring_lengths = []
             for j in range(n_cur - 1):
-                spring_vec = self.all_images[j + 1].get_positions() - \
-                    self.all_images[j].get_positions()
+                spring_vec = (
+                    self.all_images[j + 1].get_positions()
+                    - self.all_images[j].get_positions()
+                )
                 spring_lengths.append(np.linalg.norm(spring_vec))
 
-            total_vec = self.all_images[0].get_positions() - \
-                self.all_images[-1].get_positions()
+            total_vec = (
+                self.all_images[0].get_positions() - self.all_images[-1].get_positions()
+            )
             tl = np.linalg.norm(total_vec)
 
             fR = max(spring_lengths) / tl
@@ -349,23 +373,24 @@ class AutoNEB:
             emin = min(e)
             enorm = max(e) - emin
             for j in range(n_cur - 1):
-                delta_E = (e[j + 1] - e[j]) * (e[j + 1] + e[j] - 2 *
-                                               emin) / 2 / enorm
+                delta_E = (e[j + 1] - e[j]) * (e[j + 1] + e[j] - 2 * emin) / 2 / enorm
                 ed.append(abs(delta_E))
 
             gR = max(ed) / enorm
 
             if fR / gR > self.space_energy_ratio:
                 jmax = np.argmax(spring_lengths)
-                t = 'spring length!'
+                t = "spring length!"
             else:
                 jmax = np.argmax(ed)
-                t = 'energy difference between neighbours!'
+                t = "energy difference between neighbours!"
 
             if self.world.rank == 0:
-                print('Adding image between {0} and'.format(jmax),
-                      '{0}. New image point is selected'.format(jmax + 1),
-                      'on the basis of the biggest ' + t)
+                print(
+                    "Adding image between {0} and".format(jmax),
+                    "{0}. New image point is selected".format(jmax + 1),
+                    "on the basis of the biggest " + t,
+                )
 
             toInterpolate = [self.all_images[jmax]]
             toInterpolate += [toInterpolate[0].copy()]
@@ -374,16 +399,16 @@ class AutoNEB:
             neb = NEB(toInterpolate)
             neb.interpolate(method=self.interpolate_method)
 
-            tmp = self.all_images[:jmax + 1]
+            tmp = self.all_images[: jmax + 1]
             tmp += toInterpolate[1:-1]
-            tmp.extend(self.all_images[jmax + 1:])
+            tmp.extend(self.all_images[jmax + 1 :])
 
             self.all_images = tmp
 
             # Expect springs to be in equilibrium
             k_tmp = self.k[:jmax]
             k_tmp += [self.k[jmax] * 2] * 2
-            k_tmp.extend(self.k[jmax + 1:])
+            k_tmp.extend(self.k[jmax + 1 :])
             self.k = k_tmp
 
             # Run the NEB calculation with the new image included
@@ -393,17 +418,17 @@ class AutoNEB:
             self.execute_one_neb(n_cur, to_run, climb=False)
 
         if self.world.rank == 0:
-            print('n_max images has been reached')
+            print("n_max images has been reached")
 
         # Do a single climb around the top-point if requested
         if self.climb:
             if isinstance(self.k, (float, int)):
                 self.k = [self.k] * (len(self.all_images) - 1)
             if self.world.rank == 0:
-                print('****Now doing the CI-NEB calculation****')
+                print("****Now doing the CI-NEB calculation****")
             to_run, climb_safe = self.which_images_to_run_on()
 
-            assert climb_safe, 'climb_safe should be true at this point!'
+            assert climb_safe, "climb_safe should be true at this point!"
             self.execute_one_neb(n_cur, to_run, climb=True, many_steps=True)
 
         if not self.smooth_curve:
@@ -415,25 +440,29 @@ class AutoNEB:
         peak = self.get_highest_energy_index()
         k_max = 10
 
-        d1 = np.linalg.norm(self.all_images[peak].get_positions() -
-                            self.all_images[0].get_positions())
-        d2 = np.linalg.norm(self.all_images[peak].get_positions() -
-                            self.all_images[-1].get_positions())
-        l1 = -d1 ** 2 / log(0.2)
-        l2 = -d2 ** 2 / log(0.2)
+        d1 = np.linalg.norm(
+            self.all_images[peak].get_positions() - self.all_images[0].get_positions()
+        )
+        d2 = np.linalg.norm(
+            self.all_images[peak].get_positions() - self.all_images[-1].get_positions()
+        )
+        l1 = -(d1**2) / log(0.2)
+        l2 = -(d2**2) / log(0.2)
 
         x1 = []
         x2 = []
         for i in range(peak):
-            v = (self.all_images[i].get_positions() +
-                 self.all_images[i + 1].get_positions()) / 2 - \
-                self.all_images[0].get_positions()
+            v = (
+                self.all_images[i].get_positions()
+                + self.all_images[i + 1].get_positions()
+            ) / 2 - self.all_images[0].get_positions()
             x1.append(np.linalg.norm(v))
 
         for i in range(peak, len(self.all_images) - 1):
-            v = (self.all_images[i].get_positions() +
-                 self.all_images[i + 1].get_positions()) / 2 - \
-                self.all_images[0].get_positions()
+            v = (
+                self.all_images[i].get_positions()
+                + self.all_images[i + 1].get_positions()
+            ) / 2 - self.all_images[0].get_positions()
             x2.append(np.linalg.norm(v))
         k_tmp = []
         for x in x1:
@@ -444,56 +473,64 @@ class AutoNEB:
         self.k = k_tmp
         # Roll back to start from the top-point
         if self.world.rank == 0:
-            print('Now moving from top to start')
+            print("Now moving from top to start")
         highest_energy_index = self.get_highest_energy_index()
         nneb = highest_energy_index - self.n_simul - 1
         while nneb >= 0:
-            self.execute_one_neb(n_cur, range(nneb, nneb + self.n_simul + 2),
-                                 climb=False)
+            self.execute_one_neb(
+                n_cur, range(nneb, nneb + self.n_simul + 2), climb=False
+            )
             nneb -= 1
 
         # Roll forward from the top-point until the end
         nneb = self.get_highest_energy_index()
 
         if self.world.rank == 0:
-            print('Now moving from top to end')
+            print("Now moving from top to end")
         while nneb <= self.n_max - self.n_simul - 2:
-            self.execute_one_neb(n_cur, range(nneb, nneb + self.n_simul + 2),
-                                 climb=False)
+            self.execute_one_neb(
+                n_cur, range(nneb, nneb + self.n_simul + 2), climb=False
+            )
             nneb += 1
         return self.all_images
 
     def __initialize__(self):
-        '''Load files from the filesystem.'''
-        if not os.path.isfile('%s000.traj' % self.prefix):
-            raise IOError('No file with name %s000.traj' % self.prefix,
-                          'was found. Should contain initial image')
+        """Load files from the filesystem."""
+        if not os.path.isfile("%s000.traj" % self.prefix):
+            raise IOError(
+                "No file with name %s000.traj" % self.prefix,
+                "was found. Should contain initial image",
+            )
 
         # Find the images that exist
-        index_exists = [i for i in range(self.n_max) if
-                        os.path.isfile('%s%03d.traj' % (self.prefix, i))]
+        index_exists = [
+            i
+            for i in range(self.n_max)
+            if os.path.isfile("%s%03d.traj" % (self.prefix, i))
+        ]
 
         n_cur = index_exists[-1] + 1
 
         if self.world.rank == 0:
-            print('The NEB initially has %d images ' % len(index_exists),
-                  '(including the end-points)')
+            print(
+                "The NEB initially has %d images " % len(index_exists),
+                "(including the end-points)",
+            )
         if len(index_exists) == 1:
-            raise Exception('Only a start point exists')
+            raise Exception("Only a start point exists")
 
         for i in range(len(index_exists)):
             if i != index_exists[i]:
-                raise Exception('Files must be ordered sequentially',
-                                'without gaps.')
+                raise Exception("Files must be ordered sequentially", "without gaps.")
         if self.world.rank == 0:
             for i in index_exists:
                 filename_ref = self.iter_trajpath(i, 0)
                 if os.path.isfile(filename_ref):
                     try:
-                        os.rename(filename_ref, str(filename_ref) + '.bak')
+                        os.rename(filename_ref, str(filename_ref) + ".bak")
                     except IOError:
                         pass
-                filename = '%s%03d.traj' % (self.prefix, i)
+                filename = "%s%03d.traj" % (self.prefix, i)
                 try:
                     shutil.copy2(filename, filename_ref)
                 except IOError:
@@ -503,7 +540,7 @@ class AutoNEB:
         # And now lets read in the configurations
         for i in range(n_cur):
             if i in index_exists:
-                filename = '%s%03d.traj' % (self.prefix, i)
+                filename = "%s%03d.traj" % (self.prefix, i)
                 newim = read(filename)
                 self.all_images.append(newim)
             else:
@@ -565,14 +602,16 @@ class AutoNEB:
         nneb = max(nneb + self.n_simul, last_missing) - self.n_simul
         to_use = list(range(nneb, nneb + self.n_simul + 2))
 
-        while self.get_energies_one_image(self.all_images[to_use[0]]) != \
-                self.get_energies_one_image(self.all_images[to_use[0]]):
+        while self.get_energies_one_image(
+            self.all_images[to_use[0]]
+        ) != self.get_energies_one_image(self.all_images[to_use[0]]):
             to_use[0] -= 1
-        while self.get_energies_one_image(self.all_images[to_use[-1]]) != \
-                self.get_energies_one_image(self.all_images[to_use[-1]]):
+        while self.get_energies_one_image(
+            self.all_images[to_use[-1]]
+        ) != self.get_energies_one_image(self.all_images[to_use[-1]]):
             to_use[-1] += 1
 
-        return to_use, (highest_energy_index in to_use[1: -1])
+        return to_use, (highest_energy_index in to_use[1:-1])
 
 
 class seriel_writer:
@@ -609,6 +648,5 @@ def store_E_and_F_in_spc(self):
             # On all nodes, remove the calculator, keep only energy
             # and force in single point calculator
             self.images[i].calc = SinglePointCalculator(
-                self.images[i],
-                energy=energy[0],
-                forces=forces)
+                self.images[i], energy=energy[0], forces=forces
+            )

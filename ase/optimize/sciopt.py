@@ -17,9 +17,16 @@ class SciPyOptimizer(Optimizer):
     Only the call to the optimizer is still needed
     """
 
-    def __init__(self, atoms, logfile='-', trajectory=None,
-                 callback_always=False, alpha=70.0, master=None,
-                 force_consistent=None):
+    def __init__(
+        self,
+        atoms,
+        logfile="-",
+        trajectory=None,
+        callback_always=False,
+        alpha=70.0,
+        master=None,
+        force_consistent=None,
+    ):
         """Initialize object
 
         Parameters:
@@ -55,8 +62,15 @@ class SciPyOptimizer(Optimizer):
             falls back to force_consistent=False if not.
         """
         restart = None
-        Optimizer.__init__(self, atoms, restart, logfile, trajectory,
-                           master, force_consistent=force_consistent)
+        Optimizer.__init__(
+            self,
+            atoms,
+            restart,
+            logfile,
+            trajectory,
+            master,
+            force_consistent=force_consistent,
+        )
         self.force_calls = 0
         self.callback_always = callback_always
         self.H0 = alpha
@@ -72,8 +86,10 @@ class SciPyOptimizer(Optimizer):
         """Objective function for use of the optimizers"""
         self.atoms.set_positions(x.reshape(-1, 3))
         # Scale the problem as SciPy uses I as initial Hessian.
-        return (self.atoms.get_potential_energy(
-                force_consistent=self.force_consistent) / self.H0)
+        return (
+            self.atoms.get_potential_energy(force_consistent=self.force_consistent)
+            / self.H0
+        )
 
     def fprime(self, x):
         """Gradient of the objective function for use of the optimizers"""
@@ -85,7 +101,7 @@ class SciPyOptimizer(Optimizer):
 
         # Remember that forces are minus the gradient!
         # Scale the problem as SciPy uses I as initial Hessian.
-        return - self.atoms.get_forces().reshape(-1) / self.H0
+        return -self.atoms.get_forces().reshape(-1) / self.H0
 
     def callback(self, x):
         """Callback function to be run after each iteration by SciPy
@@ -131,46 +147,52 @@ class SciPyFminCG(SciPyOptimizer):
     """Non-linear (Polak-Ribiere) conjugate gradient algorithm"""
 
     def call_fmin(self, fmax, steps):
-        output = opt.fmin_cg(self.f,
-                             self.x0(),
-                             fprime=self.fprime,
-                             # args=(),
-                             gtol=fmax * 0.1,  # Should never be reached
-                             norm=np.inf,
-                             # epsilon=
-                             maxiter=steps,
-                             full_output=1,
-                             disp=0,
-                             # retall=0,
-                             callback=self.callback)
+        output = opt.fmin_cg(
+            self.f,
+            self.x0(),
+            fprime=self.fprime,
+            # args=(),
+            gtol=fmax * 0.1,  # Should never be reached
+            norm=np.inf,
+            # epsilon=
+            maxiter=steps,
+            full_output=1,
+            disp=0,
+            # retall=0,
+            callback=self.callback,
+        )
         warnflag = output[-1]
         if warnflag == 2:
             raise OptimizerConvergenceError(
-                'Warning: Desired error not necessarily achieved '
-                'due to precision loss')
+                "Warning: Desired error not necessarily achieved "
+                "due to precision loss"
+            )
 
 
 class SciPyFminBFGS(SciPyOptimizer):
     """Quasi-Newton method (Broydon-Fletcher-Goldfarb-Shanno)"""
 
     def call_fmin(self, fmax, steps):
-        output = opt.fmin_bfgs(self.f,
-                               self.x0(),
-                               fprime=self.fprime,
-                               # args=(),
-                               gtol=fmax * 0.1,  # Should never be reached
-                               norm=np.inf,
-                               # epsilon=1.4901161193847656e-08,
-                               maxiter=steps,
-                               full_output=1,
-                               disp=0,
-                               # retall=0,
-                               callback=self.callback)
+        output = opt.fmin_bfgs(
+            self.f,
+            self.x0(),
+            fprime=self.fprime,
+            # args=(),
+            gtol=fmax * 0.1,  # Should never be reached
+            norm=np.inf,
+            # epsilon=1.4901161193847656e-08,
+            maxiter=steps,
+            full_output=1,
+            disp=0,
+            # retall=0,
+            callback=self.callback,
+        )
         warnflag = output[-1]
         if warnflag == 2:
             raise OptimizerConvergenceError(
-                'Warning: Desired error not necessarily achieved '
-                'due to precision loss')
+                "Warning: Desired error not necessarily achieved "
+                "due to precision loss"
+            )
 
 
 class SciPyGradientlessOptimizer(Optimizer):
@@ -185,9 +207,15 @@ class SciPyGradientlessOptimizer(Optimizer):
     XXX: This is still a work in progress
     """
 
-    def __init__(self, atoms, logfile='-', trajectory=None,
-                 callback_always=False, master=None,
-                 force_consistent=None):
+    def __init__(
+        self,
+        atoms,
+        logfile="-",
+        trajectory=None,
+        callback_always=False,
+        master=None,
+        force_consistent=None,
+    ):
         """Initialize object
 
         Parameters:
@@ -223,8 +251,15 @@ class SciPyGradientlessOptimizer(Optimizer):
             falls back to force_consistent=False if not.
         """
         restart = None
-        Optimizer.__init__(self, atoms, restart, logfile, trajectory,
-                           master, force_consistent=force_consistent)
+        Optimizer.__init__(
+            self,
+            atoms,
+            restart,
+            logfile,
+            trajectory,
+            master,
+            force_consistent=force_consistent,
+        )
         self.function_calls = 0
         self.callback_always = callback_always
 
@@ -240,8 +275,7 @@ class SciPyGradientlessOptimizer(Optimizer):
         self.atoms.set_positions(x.reshape(-1, 3))
         self.function_calls += 1
         # Scale the problem as SciPy uses I as initial Hessian.
-        return self.atoms.get_potential_energy(
-            force_consistent=self.force_consistent)
+        return self.atoms.get_potential_energy(force_consistent=self.force_consistent)
 
     def callback(self, x):
         """Callback function to be run after each iteration by SciPy
@@ -290,17 +324,19 @@ class SciPyFmin(SciPyGradientlessOptimizer):
     """
 
     def call_fmin(self, xtol, ftol, steps):
-        opt.fmin(self.f,
-                 self.x0(),
-                 # args=(),
-                 xtol=xtol,
-                 ftol=ftol,
-                 maxiter=steps,
-                 # maxfun=None,
-                 # full_output=1,
-                 disp=0,
-                 # retall=0,
-                 callback=self.callback)
+        opt.fmin(
+            self.f,
+            self.x0(),
+            # args=(),
+            xtol=xtol,
+            ftol=ftol,
+            maxiter=steps,
+            # maxfun=None,
+            # full_output=1,
+            disp=0,
+            # retall=0,
+            callback=self.callback,
+        )
 
 
 class SciPyFminPowell(SciPyGradientlessOptimizer):
@@ -317,7 +353,7 @@ class SciPyFminPowell(SciPyGradientlessOptimizer):
         direc: float
             How much to change x to initially. Defaults to 0.04.
         """
-        direc = kwargs.pop('direc', None)
+        direc = kwargs.pop("direc", None)
         SciPyGradientlessOptimizer.__init__(self, *args, **kwargs)
 
         if direc is None:
@@ -326,15 +362,17 @@ class SciPyFminPowell(SciPyGradientlessOptimizer):
             self.direc = np.eye(len(self.x0()), dtype=float) * direc
 
     def call_fmin(self, xtol, ftol, steps):
-        opt.fmin_powell(self.f,
-                        self.x0(),
-                        # args=(),
-                        xtol=xtol,
-                        ftol=ftol,
-                        maxiter=steps,
-                        # maxfun=None,
-                        # full_output=1,
-                        disp=0,
-                        # retall=0,
-                        callback=self.callback,
-                        direc=self.direc)
+        opt.fmin_powell(
+            self.f,
+            self.x0(),
+            # args=(),
+            xtol=xtol,
+            ftol=ftol,
+            maxiter=steps,
+            # maxfun=None,
+            # full_output=1,
+            disp=0,
+            # retall=0,
+            callback=self.callback,
+            direc=self.direc,
+        )

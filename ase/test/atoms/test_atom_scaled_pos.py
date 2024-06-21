@@ -10,7 +10,7 @@ def get_spos(atoms):
 @pytest.fixture
 def atoms():
     rng = np.random.RandomState(0)
-    atoms = bulk('Ti') * (2, 2, 1)
+    atoms = bulk("Ti") * (2, 2, 1)
     atoms.cell *= 0.9 + 0.2 * rng.random((3, 3))
     atoms.rattle(stdev=0.05, rng=rng)
     return atoms

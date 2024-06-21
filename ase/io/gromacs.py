@@ -12,7 +12,7 @@ from ase.utils import reader, writer
 
 @reader
 def read_gromacs(fd):
-    """ From:
+    """From:
     http://manual.gromacs.org/current/online/gro.html
     C format
     "%5d%-5s%5s%5d%8.3f%8.3f%8.3f%8.4f%8.4f%8.4f"
@@ -36,16 +36,18 @@ def read_gromacs(fd):
     gromacs_atomtypes = []
     sym2tag = {}
     tag = 0
-    for line in (lines[2:-1]):
+    for line in lines[2:-1]:
         # print(line[0:5]+':'+line[5:11]+':'+line[11:15]+':'+line[15:20])
         # it is not a good idea to use the split method with gromacs input
         # since the fields are defined by a fixed column number. Therefore,
         # they may not be space between the fields
         # inp = line.split()
 
-        floatvect = float(line[20:28]) * 10.0, \
-            float(line[28:36]) * 10.0, \
-            float(line[36:44]) * 10.0
+        floatvect = (
+            float(line[20:28]) * 10.0,
+            float(line[28:36]) * 10.0,
+            float(line[36:44]) * 10.0,
+        )
         positions.append(floatvect)
 
         # read velocities
@@ -99,15 +101,15 @@ def read_gromacs(fd):
     elif len(gromacs_velocities) != 0:
         raise ValueError("Some atoms velocities were not specified!")
 
-    if not atoms.has('residuenumbers'):
-        atoms.new_array('residuenumbers', gromacs_residuenumbers, int)
-        atoms.set_array('residuenumbers', gromacs_residuenumbers, int)
-    if not atoms.has('residuenames'):
-        atoms.new_array('residuenames', gromacs_residuenames, str)
-        atoms.set_array('residuenames', gromacs_residuenames, str)
-    if not atoms.has('atomtypes'):
-        atoms.new_array('atomtypes', gromacs_atomtypes, str)
-        atoms.set_array('atomtypes', gromacs_atomtypes, str)
+    if not atoms.has("residuenumbers"):
+        atoms.new_array("residuenumbers", gromacs_residuenumbers, int)
+        atoms.set_array("residuenumbers", gromacs_residuenumbers, int)
+    if not atoms.has("residuenames"):
+        atoms.new_array("residuenames", gromacs_residuenames, str)
+        atoms.set_array("residuenames", gromacs_residuenames, str)
+    if not atoms.has("atomtypes"):
+        atoms.new_array("atomtypes", gromacs_atomtypes, str)
+        atoms.set_array("atomtypes", gromacs_atomtypes, str)
 
     # determine PBC and unit cell
     atoms.pbc = False
@@ -125,7 +127,7 @@ def read_gromacs(fd):
     if len(grocell) >= 9:
         cell.flat[[1, 2, 3, 5, 6, 7]] = grocell[3:9]
 
-    atoms.cell = cell * 10.
+    atoms.cell = cell * 10.0
     atoms.pbc = True
     return atoms
 
@@ -143,18 +145,18 @@ def write_gromacs(fileobj, atoms):
 
     natoms = len(atoms)
     try:
-        gromacs_residuenames = atoms.get_array('residuenames')
+        gromacs_residuenames = atoms.get_array("residuenames")
     except KeyError:
         gromacs_residuenames = []
         for idum in range(natoms):
-            gromacs_residuenames.append('1DUM')
+            gromacs_residuenames.append("1DUM")
     try:
-        gromacs_atomtypes = atoms.get_array('atomtypes')
+        gromacs_atomtypes = atoms.get_array("atomtypes")
     except KeyError:
         gromacs_atomtypes = atoms.get_chemical_symbols()
 
     try:
-        residuenumbers = atoms.get_array('residuenumbers')
+        residuenumbers = atoms.get_array("residuenumbers")
     except KeyError:
         residuenumbers = np.ones(natoms, int)
 
@@ -168,25 +170,36 @@ def write_gromacs(fileobj, atoms):
         vel *= 1000.0 * units.fs / units.nm
 
     # No "#" in the first line to prevent read error in VMD
-    fileobj.write('A Gromacs structure file written by ASE \n')
-    fileobj.write('%5d\n' % len(atoms))
+    fileobj.write("A Gromacs structure file written by ASE \n")
+    fileobj.write("%5d\n" % len(atoms))
     count = 1
 
     # gromacs line see
     # manual.gromacs.org/documentation/current/user-guide/file-formats.html#gro
     # (EDH: link seems broken as of 2020-02-21)
     #    1WATER  OW1    1   0.126   1.624   1.679  0.1227 -0.0580  0.0434
-    for (resnb, resname, atomtype, xyz,
-         vxyz) in zip(residuenumbers, gromacs_residuenames,
-                      gromacs_atomtypes, pos, vel):
+    for (resnb, resname, atomtype, xyz, vxyz) in zip(
+        residuenumbers, gromacs_residuenames, gromacs_atomtypes, pos, vel
+    ):
 
         # THIS SHOULD BE THE CORRECT, PYTHON FORMATTING, EQUIVALENT TO THE
         # C FORMATTING GIVEN IN THE GROMACS DOCUMENTATION:
         # >>> %5d%-5s%5s%5d%8.3f%8.3f%8.3f%8.4f%8.4f%8.4f <<<
-        line = ("{0:>5d}{1:<5s}{2:>5s}{3:>5d}{4:>8.3f}{5:>8.3f}{6:>8.3f}"
-                "{7:>8.4f}{8:>8.4f}{9:>8.4f}\n"
-                .format(resnb, resname, atomtype, count,
-                        xyz[0], xyz[1], xyz[2], vxyz[0], vxyz[1], vxyz[2]))
+        line = (
+            "{0:>5d}{1:<5s}{2:>5s}{3:>5d}{4:>8.3f}{5:>8.3f}{6:>8.3f}"
+            "{7:>8.4f}{8:>8.4f}{9:>8.4f}\n".format(
+                resnb,
+                resname,
+                atomtype,
+                count,
+                xyz[0],
+                xyz[1],
+                xyz[2],
+                vxyz[0],
+                vxyz[1],
+                vxyz[2],
+            )
+        )
 
         fileobj.write(line)
         count += 1
@@ -201,7 +214,7 @@ def write_gromacs(fileobj, atoms):
         # cell[0,1] cell[0,2] cell[1,0] v1(y) v1(z) v2(x) fv1[0 1 2]
         # cell[1,2] cell[2,0] cell[2,1] v2(z) v3(x) v3(y) fv2[0 1 2]
         grocell = atoms.cell.flat[[0, 4, 8, 1, 2, 3, 5, 6, 7]] * 0.1
-        fileobj.write(''.join(['{:10.5f}'.format(x) for x in grocell]))
+        fileobj.write("".join(["{:10.5f}".format(x) for x in grocell]))
     else:
         # When we do not have a cell, the cell is specified as an empty line
         fileobj.write("\n")

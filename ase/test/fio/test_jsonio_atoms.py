@@ -9,19 +9,17 @@ from ase.constraints import FixAtoms, FixCartesian
 
 @pytest.fixture
 def silver_bulk() -> Atoms:
-    return bulk('Ag', cubic=True)
+    return bulk("Ag", cubic=True)
 
 
 def test_jsonio_atoms():
-
     def assert_equal(atoms1, atoms2):
         assert atoms1 == atoms2
         assert set(atoms1.arrays) == set(atoms2.arrays)
         for name in atoms1.arrays:
-            assert np.array_equal(
-                atoms1.arrays[name], atoms2.arrays[name]), name
+            assert np.array_equal(atoms1.arrays[name], atoms2.arrays[name]), name
 
-    atoms = bulk('Ti')
+    atoms = bulk("Ti")
     txt = encode(atoms)
 
     atoms1 = decode(txt)
@@ -29,13 +27,13 @@ def test_jsonio_atoms():
     assert txt == txt1
     assert_equal(atoms, atoms1)
 
-    BeH = molecule('BeH')
-    assert BeH.has('initial_magmoms')
+    BeH = molecule("BeH")
+    assert BeH.has("initial_magmoms")
     new_BeH = decode(encode(BeH))
     assert_equal(BeH, new_BeH)
-    assert new_BeH.has('initial_magmoms')
+    assert new_BeH.has("initial_magmoms")
 
-    atoms = bulk('Ti')
+    atoms = bulk("Ti")
     atoms.constraints = FixAtoms(indices=[0])
     new_atoms = decode(encode(atoms))
     c1 = atoms.constraints

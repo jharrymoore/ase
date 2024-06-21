@@ -50,7 +50,7 @@ def get_mic_distance(p1, p2, cell, pbc):
     p0r = np.tile(np.reshape(P[0, :], (3, 1)), (1, translations.shape[1]))
     p1r = np.tile(np.reshape(P[1, :], (3, 1)), (1, translations.shape[1]))
     dp_vec = p0r + np.dot(ct, translations)
-    d = np.min(np.power(p1r - dp_vec, 2).sum(axis=0))**0.5
+    d = np.min(np.power(p1r - dp_vec, 2).sum(axis=0)) ** 0.5
     return d
 
 
@@ -61,6 +61,7 @@ def db_call_with_error_tol(db_cursor, expression, args=[]):
     employed.
     """
     import sqlite3
+
     i = 0
     while i < 10:
         try:
@@ -68,10 +69,9 @@ def db_call_with_error_tol(db_cursor, expression, args=[]):
             return
         except sqlite3.OperationalError as e:
             print(e)
-            time.sleep(2.)
+            time.sleep(2.0)
         i += 1
-    raise sqlite3.OperationalError(
-        'Database still locked after 10 attempts (20 s)')
+    raise sqlite3.OperationalError("Database still locked after 10 attempts (20 s)")
 
 
 def save_trajectory(confid, trajectory, folder):
@@ -79,7 +79,7 @@ def save_trajectory(confid, trajectory, folder):
     This method should never be used directly,
     but only through the DataConnection object.
     """
-    fname = os.path.join(folder, 'traj%05d.traj' % confid)
+    fname = os.path.join(folder, "traj%05d.traj" % confid)
     write(fname, trajectory)
     return fname
 
@@ -90,7 +90,7 @@ def get_trajectory(fname):
     try:
         t = read(fname)
     except IOError as e:
-        print('get_trajectory error ' + e)
+        print("get_trajectory error " + e)
     return t
 
 
@@ -103,8 +103,7 @@ def gather_atoms_by_tag(atoms):
         indices = np.where(tags == tag)[0]
         if len(indices) == 1:
             continue
-        vectors = atoms.get_distances(indices[0], indices[1:],
-                                      mic=True, vector=True)
+        vectors = atoms.get_distances(indices[0], indices[1:], mic=True, vector=True)
         pos[indices[1:]] = pos[indices[0]] + vectors
     atoms.set_positions(pos)
 
@@ -243,7 +242,7 @@ def get_nndist(atoms, distance_matrix):
     The estimate comes from the first peak in the radial distribution
     function.
     """
-    rmax = 10.  # No bonds longer than 10 angstrom expected
+    rmax = 10.0  # No bonds longer than 10 angstrom expected
     nbins = 200
     rdf, dists = get_rdf(atoms, rmax, nbins, distance_matrix)
     return dists[np.argmax(rdf)]
@@ -266,36 +265,34 @@ def get_nnmat(atoms, mic=False):
     it makes sense to calculate nnmat along with e.g. the
     potential energy and save it in atoms.info['data']['nnmat'].
     """
-    if 'data' in atoms.info and 'nnmat' in atoms.info['data']:
-        return atoms.info['data']['nnmat']
+    if "data" in atoms.info and "nnmat" in atoms.info["data"]:
+        return atoms.info["data"]["nnmat"]
     elements = sorted(set(atoms.get_chemical_symbols()))
     nnmat = np.zeros((len(elements), len(elements)))
     # dm = get_distance_matrix(atoms)
     dm = atoms.get_all_distances(mic=mic)
     nndist = get_nndist(atoms, dm) + 0.2
     for i in range(len(atoms)):
-        row = [j for j in range(len(elements))
-               if atoms[i].symbol == elements[j]][0]
+        row = [j for j in range(len(elements)) if atoms[i].symbol == elements[j]][0]
         neighbors = [j for j in range(len(dm[i])) if dm[i][j] < nndist]
         for n in neighbors:
-            column = [j for j in range(len(elements))
-                      if atoms[n].symbol == elements[j]][0]
+            column = [
+                j for j in range(len(elements)) if atoms[n].symbol == elements[j]
+            ][0]
             nnmat[row][column] += 1
     # divide by the number of that type of atoms in the structure
     for i, el in enumerate(elements):
-        nnmat[i] /= len([j for j in range(len(atoms))
-                         if atoms[int(j)].symbol == el])
+        nnmat[i] /= len([j for j in range(len(atoms)) if atoms[int(j)].symbol == el])
     # makes a single list out of a list of lists
-    nnlist = np.reshape(nnmat, (len(nnmat)**2))
+    nnlist = np.reshape(nnmat, (len(nnmat) ** 2))
     return nnlist
 
 
 def get_nnmat_string(atoms, decimals=2, mic=False):
     nnmat = get_nnmat(atoms, mic=mic)
-    s = '-'.join(['{1:2.{0}f}'.format(decimals, i)
-                  for i in nnmat])
+    s = "-".join(["{1:2.{0}f}".format(decimals, i) for i in nnmat])
     if len(nnmat) == 1:
-        return s + '-'
+        return s + "-"
     return s
 
 
@@ -348,8 +345,9 @@ def get_atoms_connections(atoms, max_conn=5, no_count_types=None):
     neighbors. Option added to remove connections between
     defined atom types.
     """
-    conn_index = get_connections_index(atoms, max_conn=max_conn,
-                                       no_count_types=no_count_types)
+    conn_index = get_connections_index(
+        atoms, max_conn=max_conn, no_count_types=no_count_types
+    )
 
     no_of_conn = [0] * max_conn
     for i in conn_index:
@@ -376,11 +374,11 @@ def get_angles_distribution(atoms, ang_grid=9):
                 if j != i:
                     a = atoms.get_angle(i, atom.index, j)
                     for k in range(ang_grid):
-                        if (k + 1) * 180. / ang_grid > a > k * 180. / ang_grid:
+                        if (k + 1) * 180.0 / ang_grid > a > k * 180.0 / ang_grid:
                             bins[k] += 1
     # Removing dobbelt counting
     for i in range(ang_grid):
-        bins[i] /= 2.
+        bins[i] /= 2.0
     return bins
 
 
@@ -402,10 +400,7 @@ def get_neighborlist(atoms, dx=0.2, no_count_types=None):
             if atomi.index != atomj.index:
                 if atomi.number not in no_count_types:
                     if atomj.number not in no_count_types:
-                        d = get_mic_distance(atomi.position,
-                                             atomj.position,
-                                             cell,
-                                             pbc)
+                        d = get_mic_distance(atomi.position, atomj.position, cell, pbc)
                         cri = covalent_radii[atomi.number]
                         crj = covalent_radii[atomj.number]
                         d_max = crj + cri + dx
@@ -415,8 +410,9 @@ def get_neighborlist(atoms, dx=0.2, no_count_types=None):
     return conn
 
 
-def get_atoms_distribution(atoms, number_of_bins=5, max_distance=8,
-                           center=None, no_count_types=None):
+def get_atoms_distribution(
+    atoms, number_of_bins=5, max_distance=8, center=None, no_count_types=None
+):
     """Method to get the distribution of atoms in the
     structure in bins of distances from a defined
     center. Option added to remove counting of
@@ -426,9 +422,9 @@ def get_atoms_distribution(atoms, number_of_bins=5, max_distance=8,
     cell = atoms.get_cell()
     if center is None:
         # Center used for the atom distribution if None is supplied!
-        cx = sum(cell[:, 0]) / 2.
-        cy = sum(cell[:, 1]) / 2.
-        cz = sum(cell[:, 2]) / 2.
+        cx = sum(cell[:, 0]) / 2.0
+        cy = sum(cell[:, 1]) / 2.0
+        cz = sum(cell[:, 2]) / 2.0
         center = (cx, cy, cz)
     bins = [0] * number_of_bins
 
@@ -439,9 +435,8 @@ def get_atoms_distribution(atoms, number_of_bins=5, max_distance=8,
         if atom.number not in no_count_types:
             d = get_mic_distance(atom.position, center, cell, pbc)
             for k in range(number_of_bins - 1):
-                min_dis_cur_bin = k * max_distance / (number_of_bins - 1.)
-                max_dis_cur_bin = ((k + 1) * max_distance /
-                                   (number_of_bins - 1.))
+                min_dis_cur_bin = k * max_distance / (number_of_bins - 1.0)
+                max_dis_cur_bin = (k + 1) * max_distance / (number_of_bins - 1.0)
                 if min_dis_cur_bin < d < max_dis_cur_bin:
                     bins[k] += 1
             if d > max_distance:
@@ -497,17 +492,16 @@ def get_cell_angles_lengths(cell):
     """
     cellpar = cell_to_cellpar(cell)
     cellpar[3:] *= np.pi / 180  # convert angles to radians
-    parnames = ['a', 'b', 'c', 'alpha', 'beta', 'gamma']
+    parnames = ["a", "b", "c", "alpha", "beta", "gamma"]
     values = {n: p for n, p in zip(parnames, cellpar)}
 
     volume = abs(np.linalg.det(cell))
-    for i, param in enumerate(['phi', 'chi', 'psi']):
-        ab = np.linalg.norm(
-            np.cross(cell[(i + 1) % 3, :], cell[(i + 2) % 3, :]))
+    for i, param in enumerate(["phi", "chi", "psi"]):
+        ab = np.linalg.norm(np.cross(cell[(i + 1) % 3, :], cell[(i + 2) % 3, :]))
         c = np.linalg.norm(cell[i, :])
         s = np.abs(volume / (ab * c))
         if 1 + 1e-6 > s > 1:
-            s = 1.
+            s = 1.0
         values[param] = np.arcsin(s)
 
     return values
@@ -547,15 +541,22 @@ class CellBounds:
     """
 
     def __init__(self, bounds={}):
-        self.bounds = {'alpha': [0, np.pi], 'beta': [0, np.pi],
-                       'gamma': [0, np.pi], 'phi': [0, np.pi],
-                       'chi': [0, np.pi], 'psi': [0, np.pi],
-                       'a': [0, 1e6], 'b': [0, 1e6], 'c': [0, 1e6]}
+        self.bounds = {
+            "alpha": [0, np.pi],
+            "beta": [0, np.pi],
+            "gamma": [0, np.pi],
+            "phi": [0, np.pi],
+            "chi": [0, np.pi],
+            "psi": [0, np.pi],
+            "a": [0, 1e6],
+            "b": [0, 1e6],
+            "c": [0, 1e6],
+        }
 
         for param, bound in bounds.items():
-            if param not in ['a', 'b', 'c']:
+            if param not in ["a", "b", "c"]:
                 # Convert angle from degree to radians
-                bound = [b * np.pi / 180. for b in bound]
+                bound = [b * np.pi / 180.0 for b in bound]
             self.bounds[param] = bound
 
     def is_within_bounds(self, cell):
@@ -573,13 +574,23 @@ def get_rotation_matrix(u, t):
     """
     ux, uy, uz = u
     cost, sint = np.cos(t), np.sin(t)
-    rotmat = np.array([[(ux**2) * (1 - cost) + cost,
-                        ux * uy * (1 - cost) - uz * sint,
-                        ux * uz * (1 - cost) + uy * sint],
-                       [ux * uy * (1 - cost) + uz * sint,
-                        (uy**2) * (1 - cost) + cost,
-                        uy * uz * (1 - cost) - ux * sint],
-                       [ux * uz * (1 - cost) - uy * sint,
-                        uy * uz * (1 - cost) + ux * sint,
-                        (uz**2) * (1 - cost) + cost]])
+    rotmat = np.array(
+        [
+            [
+                (ux**2) * (1 - cost) + cost,
+                ux * uy * (1 - cost) - uz * sint,
+                ux * uz * (1 - cost) + uy * sint,
+            ],
+            [
+                ux * uy * (1 - cost) + uz * sint,
+                (uy**2) * (1 - cost) + cost,
+                uy * uz * (1 - cost) - ux * sint,
+            ],
+            [
+                ux * uz * (1 - cost) - uy * sint,
+                uy * uz * (1 - cost) + ux * sint,
+                (uz**2) * (1 - cost) + cost,
+            ],
+        ]
+    )
     return rotmat

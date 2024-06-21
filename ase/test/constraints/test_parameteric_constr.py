@@ -19,9 +19,15 @@ def test_parameteric_constr():
     # Generate lattice constraint
     param_lat = ["a"]
     expr_lat = [
-        "a", "0", "0",
-        "0", "a", "0",
-        "0", "0", "a",
+        "a",
+        "0",
+        "0",
+        "0",
+        "a",
+        "0",
+        "0",
+        "0",
+        "a",
     ]
     constr_lat = FixCartesianParametricRelations.from_expressions(
         indices=[0, 1, 2],
@@ -31,8 +37,7 @@ def test_parameteric_constr():
     )
 
     # Check expression generator
-    for const_expr, passed_expr in zip(
-            constr_lat.expressions.flatten(), expr_lat):
+    for const_expr, passed_expr in zip(constr_lat.expressions.flatten(), expr_lat):
         assert const_expr == passed_expr
 
     # Check adjust_cell
@@ -43,8 +48,7 @@ def test_parameteric_constr():
     dict2constraint(constr_lat_dict)
 
     cell_diff = (cell - a.cell).flatten()
-    expected_cell_diff = np.array(
-        [0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01])
+    expected_cell_diff = np.array([0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01])
     assert np.max(np.abs(cell_diff - expected_cell_diff)) < 1e-12
 
     # Check adjust_stress
@@ -53,8 +57,7 @@ def test_parameteric_constr():
     constr_lat.adjust_stress(a, stress)
     stress_rat = stress / a.get_stress()
 
-    assert np.max(
-        np.abs(stress_rat - np.array([1., 1., 1., 0., 0., 0.]))) < 1e-12
+    assert np.max(np.abs(stress_rat - np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0]))) < 1e-12
 
     # Reset cell
     a.cell -= 0.01
@@ -83,10 +86,18 @@ def test_parameteric_constr():
     # Check non-empty constraint
     param_atom = ["dis"]
     expr_atom = [
-        "dis", "dis", "dis",
-        "dis", "-0.5", "0.5",
-        "0.5", "dis", "0.5",
-        "0.5", "0.5", "dis",
+        "dis",
+        "dis",
+        "dis",
+        "dis",
+        "-0.5",
+        "0.5",
+        "0.5",
+        "dis",
+        "0.5",
+        "0.5",
+        "0.5",
+        "dis",
     ]
 
     constr_atom = FixScaledParametricRelations.from_expressions(
@@ -113,8 +124,7 @@ def test_parameteric_constr():
     constr_atom.adjust_forces(a, forces)
     forces_rat = forces / a.get_forces()
 
-    assert np.max(np.abs(forces_rat.flatten() /
-                  100.0 - expected_pos_diff)) < 1e-12
+    assert np.max(np.abs(forces_rat.flatten() / 100.0 - expected_pos_diff)) < 1e-12
 
     # Check auto-remapping/expression generation, the -0.5 should now be 0.5
     expr_atom[4] = "0.5"
@@ -124,10 +134,18 @@ def test_parameteric_constr():
 
     # Check with Cartesian parametric constraints now
     expr_atom = [
-        "dis", "dis", "dis",
-        "dis", "1.76", "1.76",
-        "1.76", "dis", "1.76",
-        "1.76", "1.76", "dis",
+        "dis",
+        "dis",
+        "dis",
+        "dis",
+        "1.76",
+        "1.76",
+        "1.76",
+        "dis",
+        "1.76",
+        "1.76",
+        "1.76",
+        "dis",
     ]
     constr_atom = FixCartesianParametricRelations.from_expressions(
         indices=[0, 1, 2, 3],
@@ -152,5 +170,4 @@ def test_parameteric_constr():
     constr_atom.adjust_forces(a, forces)
     forces_rat = forces / a.get_forces()
 
-    assert np.max(np.abs(forces_rat.flatten() /
-                  100.0 - expected_pos_diff)) < 1e-12
+    assert np.max(np.abs(forces_rat.flatten() / 100.0 - expected_pos_diff)) < 1e-12

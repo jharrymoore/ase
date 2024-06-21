@@ -5,10 +5,10 @@ from ase.optimize import BFGS, RestartError
 
 
 def test_bad_restart(testdir):
-    fname = 'tmp.dat'
+    fname = "tmp.dat"
 
-    with open(fname, 'w') as fd:
-        fd.write('hello world\n')
+    with open(fname, "w") as fd:
+        fd.write("hello world\n")
 
-    with pytest.raises(RestartError, match='Could not decode'):
+    with pytest.raises(RestartError, match="Could not decode"):
         BFGS(Atoms(), restart=fname)

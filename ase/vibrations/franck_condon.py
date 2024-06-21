@@ -12,7 +12,7 @@ from ase.vibrations import Vibrations
 class Factorial:
     def __init__(self):
         self._fac = [1]
-        self._inv = [1.]
+        self._inv = [1.0]
 
     def __call__(self, n):
         try:
@@ -21,9 +21,9 @@ class Factorial:
             for i in range(len(self._fac), n + 1):
                 self._fac.append(i * self._fac[i - 1])
                 try:
-                    self._inv.append(float(1. / self._fac[-1]))
+                    self._inv.append(float(1.0 / self._fac[-1]))
                 except OverflowError:
-                    self._inv.append(0.)
+                    self._inv.append(0.0)
             return self._fac[n]
 
     def inv(self, n):
@@ -58,11 +58,14 @@ class FranckCondonOverlap:
         S[mask] = 1  # hide zeros
         s = 0
         for k in range(n + 1):
-            s += (-1)**(n - k) * S**float(-k) / (
-                self.factorial(k) *
-                self.factorial(n - k) * self.factorial(m - k))
-        res = np.exp(-S) * S**(n + m) * s**2 * (
-            self.factorial(n) * self.factorial(m))
+            s += (
+                (-1) ** (n - k)
+                * S ** float(-k)
+                / (self.factorial(k) * self.factorial(n - k) * self.factorial(m - k))
+            )
+        res = (
+            np.exp(-S) * S ** (n + m) * s**2 * (self.factorial(n) * self.factorial(m))
+        )
         # use othogonality
         res[mask] = int(n == m)
         return res[0]
@@ -71,16 +74,16 @@ class FranckCondonOverlap:
         """<0|m><m|1>"""
         sum = S**m
         if m:
-            sum -= m * S**(m - 1)
+            sum -= m * S ** (m - 1)
         return np.exp(-S) * np.sqrt(S) * sum * self.factorial.inv(m)
 
     def direct0mm2(self, m, S):
         """<0|m><m|2>"""
-        sum = S**(m + 1)
+        sum = S ** (m + 1)
         if m >= 1:
             sum -= 2 * m * S**m
         if m >= 2:
-            sum += m * (m - 1) * S**(m - 1)
+            sum += m * (m - 1) * S ** (m - 1)
         return np.exp(-S) / np.sqrt(2) * sum * self.factorial.inv(m)
 
 
@@ -105,10 +108,10 @@ class FranckCondonRecursive:
             return np.exp(-0.25 * delta**2)
         else:
             assert m > 0
-            return - delta / np.sqrt(2 * m) * self.ov0m(m - 1, delta)
+            return -delta / np.sqrt(2 * m) * self.ov0m(m - 1, delta)
 
     def ov1m(self, m, delta):
-        sum = delta * self.ov0m(m, delta) / np.sqrt(2.)
+        sum = delta * self.ov0m(m, delta) / np.sqrt(2.0)
         if m == 0:
             return sum
         else:
@@ -121,89 +124,121 @@ class FranckCondonRecursive:
             return sum
         else:
             assert m > 0
-            return sum + np.sqrt(m / 2.) * self.ov1m(m - 1, delta)
+            return sum + np.sqrt(m / 2.0) * self.ov1m(m - 1, delta)
 
     def ov3m(self, m, delta):
-        sum = delta * self.ov2m(m, delta) / np.sqrt(6.)
+        sum = delta * self.ov2m(m, delta) / np.sqrt(6.0)
         if m == 0:
             return sum
         else:
             assert m > 0
-            return sum + np.sqrt(m / 3.) * self.ov2m(m - 1, delta)
+            return sum + np.sqrt(m / 3.0) * self.ov2m(m - 1, delta)
 
     def ov0mm1(self, m, delta):
         if m == 0:
-            return delta / np.sqrt(2) * self.ov0m(m, delta)**2
+            return delta / np.sqrt(2) * self.ov0m(m, delta) ** 2
         else:
-            return delta / np.sqrt(2) * (
-                self.ov0m(m, delta)**2 - self.ov0m(m - 1, delta)**2)
+            return (
+                delta
+                / np.sqrt(2)
+                * (self.ov0m(m, delta) ** 2 - self.ov0m(m - 1, delta) ** 2)
+            )
 
     def direct0mm1(self, m, delta):
         """direct and fast <0|m><m|1>"""
-        S = delta**2 / 2.
+        S = delta**2 / 2.0
         sum = S**m
         if m:
-            sum -= m * S**(m - 1)
-        return np.where(S == 0, 0,
-                        (np.exp(-S) * delta / np.sqrt(2) * sum *
-                         self.factorial.inv(m)))
+            sum -= m * S ** (m - 1)
+        return np.where(
+            S == 0, 0, (np.exp(-S) * delta / np.sqrt(2) * sum * self.factorial.inv(m))
+        )
 
     def ov0mm2(self, m, delta):
         if m == 0:
-            return delta**2 / np.sqrt(8) * self.ov0m(m, delta)**2
+            return delta**2 / np.sqrt(8) * self.ov0m(m, delta) ** 2
         elif m == 1:
-            return delta**2 / np.sqrt(8) * (
-                self.ov0m(m, delta)**2 - 2 * self.ov0m(m - 1, delta)**2)
+            return (
+                delta**2
+                / np.sqrt(8)
+                * (self.ov0m(m, delta) ** 2 - 2 * self.ov0m(m - 1, delta) ** 2)
+            )
         else:
-            return delta**2 / np.sqrt(8) * (
-                self.ov0m(m, delta)**2 - 2 * self.ov0m(m - 1, delta)**2 +
-                self.ov0m(m - 2, delta)**2)
+            return (
+                delta**2
+                / np.sqrt(8)
+                * (
+                    self.ov0m(m, delta) ** 2
+                    - 2 * self.ov0m(m - 1, delta) ** 2
+                    + self.ov0m(m - 2, delta) ** 2
+                )
+            )
 
     def direct0mm2(self, m, delta):
         """direct and fast <0|m><m|2>"""
-        S = delta**2 / 2.
-        sum = S**(m + 1)
+        S = delta**2 / 2.0
+        sum = S ** (m + 1)
         if m >= 1:
             sum -= 2 * m * S**m
         if m >= 2:
-            sum += m * (m - 1) * S**(m - 1)
+            sum += m * (m - 1) * S ** (m - 1)
         return np.exp(-S) / np.sqrt(2) * sum * self.factorial.inv(m)
 
     def ov1mm2(self, m, delta):
-        p1 = delta**3 / 4.
-        sum = p1 * self.ov0m(m, delta)**2
+        p1 = delta**3 / 4.0
+        sum = p1 * self.ov0m(m, delta) ** 2
         if m == 0:
             return sum
-        p2 = delta - 3. * delta**3 / 4
-        sum += p2 * self.ov0m(m - 1, delta)**2
+        p2 = delta - 3.0 * delta**3 / 4
+        sum += p2 * self.ov0m(m - 1, delta) ** 2
         if m == 1:
             return sum
-        sum -= p2 * self.ov0m(m - 2, delta)**2
+        sum -= p2 * self.ov0m(m - 2, delta) ** 2
         if m == 2:
             return sum
-        return sum - p1 * self.ov0m(m - 3, delta)**2
+        return sum - p1 * self.ov0m(m - 3, delta) ** 2
 
     def direct1mm2(self, m, delta):
-        S = delta**2 / 2.
+        S = delta**2 / 2.0
         sum = S**2
         if m > 0:
             sum -= 2 * m * S
         if m > 1:
             sum += m * (m - 1)
-        with np.errstate(divide='ignore', invalid='ignore'):
-            return np.where(S == 0, 0,
-                            (np.exp(-S) * S**(m - 1) / delta
-                             * (S - m) * sum * self.factorial.inv(m)))
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return np.where(
+                S == 0,
+                0,
+                (
+                    np.exp(-S)
+                    * S ** (m - 1)
+                    / delta
+                    * (S - m)
+                    * sum
+                    * self.factorial.inv(m)
+                ),
+            )
 
     def direct0mm3(self, m, delta):
-        S = delta**2 / 2.
-        with np.errstate(divide='ignore', invalid='ignore'):
+        S = delta**2 / 2.0
+        with np.errstate(divide="ignore", invalid="ignore"):
             return np.where(
-                S == 0, 0,
-                (np.exp(-S) * S**(m - 1) / delta * np.sqrt(12.) *
-                 (S**3 / 6. - m * S**2 / 2
-                  + m * (m - 1) * S / 2. - m * (m - 1) * (m - 2) / 6)
-                 * self.factorial.inv(m)))
+                S == 0,
+                0,
+                (
+                    np.exp(-S)
+                    * S ** (m - 1)
+                    / delta
+                    * np.sqrt(12.0)
+                    * (
+                        S**3 / 6.0
+                        - m * S**2 / 2
+                        + m * (m - 1) * S / 2.0
+                        - m * (m - 1) * (m - 2) / 6
+                    )
+                    * self.factorial.inv(m)
+                ),
+            )
 
 
 class FranckCondon:
@@ -214,15 +249,14 @@ class FranckCondon:
 
         self.atoms = atoms
         # V = a * v is the combined atom and xyz-index
-        self.mm05_V = np.repeat(1. / np.sqrt(atoms.get_masses()), 3)
+        self.mm05_V = np.repeat(1.0 / np.sqrt(atoms.get_masses()), 3)
         self.minfreq = minfreq
         self.maxfreq = maxfreq
         self.shape = (len(self.atoms), 3)
 
         vib = Vibrations(atoms, name=vibname)
-        self.energies = np.real(vib.get_energies(method='frederiksen'))  # [eV]
-        self.frequencies = np.real(
-            vib.get_frequencies(method='frederiksen'))  # [cm^-1]
+        self.energies = np.real(vib.get_energies(method="frederiksen"))  # [eV]
+        self.frequencies = np.real(vib.get_frequencies(method="frederiksen"))  # [cm^-1]
         self.modes = vib.modes
         self.H = vib.H
 
@@ -248,7 +282,7 @@ class FranckCondon:
         modes_VV = self.modes
         d_V = np.dot(modes_VV, X_V)
         # Huang-Rhys factors S
-        s = 1.e-20 / kg / C / _hbar**2  # SI units
+        s = 1.0e-20 / kg / C / _hbar**2  # SI units
         S_V = s * d_V**2 * self.energies / 2
 
         # reshape for minfreq
@@ -348,28 +382,36 @@ class FranckCondon:
                 a = np.minimum(o, q)
                 summe = []
                 for k in range(a + 1):
-                    s = ((-1)**(q - k) * np.sqrt(S)**(o + q - 2 * k) *
-                         factorial(o) * factorial(q) /
-                         (factorial(k) * factorial(o - k) * factorial(q - k)))
+                    s = (
+                        (-1) ** (q - k)
+                        * np.sqrt(S) ** (o + q - 2 * k)
+                        * factorial(o)
+                        * factorial(q)
+                        / (factorial(k) * factorial(o - k) * factorial(q - k))
+                    )
                     summe.append(s)
                 summe = np.sum(summe, 0)
-                O_n[o][q - o] = (np.exp(-S / 2) /
-                                 (factorial(o) * factorial(q))**(0.5) *
-                                 summe)**2 * w_n[o]
+                O_n[o][q - o] = (
+                    np.exp(-S / 2) / (factorial(o) * factorial(q)) ** (0.5) * summe
+                ) ** 2 * w_n[o]
             for q in range(n - 1):
                 O_neg[o][q] = [0 * b for b in range(len(S))]
             for q in range(o - 1, -1, -1):
                 a = np.minimum(o, q)
                 summe = []
                 for k in range(a + 1):
-                    s = ((-1)**(q - k) * np.sqrt(S)**(o + q - 2 * k) *
-                         factorial(o) * factorial(q) /
-                         (factorial(k) * factorial(o - k) * factorial(q - k)))
+                    s = (
+                        (-1) ** (q - k)
+                        * np.sqrt(S) ** (o + q - 2 * k)
+                        * factorial(o)
+                        * factorial(q)
+                        / (factorial(k) * factorial(o - k) * factorial(q - k))
+                    )
                     summe.append(s)
                 summe = np.sum(summe, 0)
-                O_neg[o][q] = (np.exp(-S / 2) /
-                               (factorial(o) * factorial(q))**(0.5) *
-                               summe)**2 * w_n[o]
+                O_neg[o][q] = (
+                    np.exp(-S / 2) / (factorial(o) * factorial(q)) ** (0.5) * summe
+                ) ** 2 * w_n[o]
         O_neg = np.delete(O_neg, 0, 0)
 
         # Franck-Condon factors

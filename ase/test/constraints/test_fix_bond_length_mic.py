@@ -6,14 +6,14 @@ from ase.constraints import FixBondLength
 from ase.optimize import FIRE
 
 
-@pytest.mark.parametrize('wrap', [False, True])
+@pytest.mark.parametrize("wrap", [False, True])
 def test_fix_bond_length_mic(wrap):
-    a = ase.Atoms('CCC',
-                  positions=[[1, 0, 5],
-                             [0, 1, 5],
-                             [-1, 0.5, 5]],
-                  cell=[10, 10, 10],
-                  pbc=True)
+    a = ase.Atoms(
+        "CCC",
+        positions=[[1, 0, 5], [0, 1, 5], [-1, 0.5, 5]],
+        cell=[10, 10, 10],
+        pbc=True,
+    )
 
     if wrap:
         a.set_scaled_positions(a.get_scaled_positions() % 1.0)

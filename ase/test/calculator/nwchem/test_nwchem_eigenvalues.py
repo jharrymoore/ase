@@ -6,12 +6,13 @@ from ase.build import molecule
 
 @pytest.fixture
 def atoms():
-    return molecule('H2')
+    return molecule("H2")
 
 
-@pytest.mark.calculator('nwchem')
-@pytest.mark.parametrize('charge, eref', ((-1, -24.036791014064605),
-                                          (1, -14.365500960943171)))
+@pytest.mark.calculator("nwchem")
+@pytest.mark.parametrize(
+    "charge, eref", ((-1, -24.036791014064605), (1, -14.365500960943171))
+)
 def test_nwchem_eigenvalues(factory, atoms, charge, eref):
     atoms.calc = factory.calc(charge=charge, dft=dict(mult=2))
     energy = atoms.get_potential_energy()

@@ -26,8 +26,7 @@ class SiestaLRTDDFT:
         try:
             from pynao import tddft_iter
         except ModuleNotFoundError as err:
-            msg = ("running lrtddft with Siesta calculator "
-                   "requires pynao package")
+            msg = "running lrtddft with Siesta calculator " "requires pynao package"
             raise ModuleNotFoundError(msg) from err
 
         self.initialize = initialize
@@ -54,9 +53,11 @@ class SiestaLRTDDFT:
         from ase.calculators.siesta import Siesta
 
         if "fdf_arguments" not in kw.keys():
-            kw["fdf_arguments"] = {"COOP.Write": True,
-                                   "WriteDenchar": True,
-                                   "XML.Write": True}
+            kw["fdf_arguments"] = {
+                "COOP.Write": True,
+                "WriteDenchar": True,
+                "XML.Write": True,
+            }
         else:
             for param in ["COOP.Write", "WriteDenchar", "XML.Write"]:
                 kw["fdf_arguments"][param] = True
@@ -65,8 +66,7 @@ class SiestaLRTDDFT:
         atoms.calc = siesta
         atoms.get_potential_energy()
 
-    def get_polarizability(self, omega, Eext=np.array(
-            [1.0, 1.0, 1.0]), inter=True):
+    def get_polarizability(self, omega, Eext=np.array([1.0, 1.0, 1.0]), inter=True):
         """
         Calculate the polarizability of a molecule via linear response TDDFT
         calculation.
@@ -164,8 +164,7 @@ class RamanCalculatorInterface(SiestaLRTDDFT, StaticPolarizabilityCalculator):
             The atoms definition of the system. Not used but required by Raman
             calculator
         """
-        pmat = self.get_polarizability(
-            self.omega, Eext=np.array([1.0, 1.0, 1.0]))
+        pmat = self.get_polarizability(self.omega, Eext=np.array([1.0, 1.0, 1.0]))
 
         # Specific for raman calls, it expects just the tensor for a single
         # frequency and need only the real part
@@ -193,7 +192,7 @@ def pol2cross_sec(p, omg):
     sigma (np array): cross section in nm**2
     """
 
-    c = 1 / un.alpha                      # speed of the light in au
-    omg /= un.Ha                          # to convert from eV to Hartree
-    sigma = 4 * np.pi * omg * p / (c)     # bohr**2
-    return sigma * (0.1 * un.Bohr)**2     # nm**2
+    c = 1 / un.alpha  # speed of the light in au
+    omg /= un.Ha  # to convert from eV to Hartree
+    sigma = 4 * np.pi * omg * p / (c)  # bohr**2
+    return sigma * (0.1 * un.Bohr) ** 2  # nm**2

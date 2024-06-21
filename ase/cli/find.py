@@ -15,23 +15,36 @@ class CLICommand:
 
     @staticmethod
     def add_arguments(parser):
-        parser.add_argument('folder', help='Folder to look in.')
+        parser.add_argument("folder", help="Folder to look in.")
         parser.add_argument(
-            'query', nargs='?',
+            "query",
+            nargs="?",
             help='Examples: More than 2 hydrogens and no silver: "H>2,Ag=0". '
             'More than 1000 atoms: "natoms>1000". '
-            'Slab geometry containing Cu and Ni: "pbc=TTF,Cu,Ni".')
-        parser.add_argument('-v', '--verbose', action='store_true',
-                            help='More output.')
-        parser.add_argument('-l', '--long', action='store_true',
-                            help='Show also periodic boundary conditions, '
-                            'chemical formula and filetype.')
-        parser.add_argument('-i', '--include', help='Include only filenames '
-                            'ending with given strings.  Example: '
-                            '"-i .xyz,.traj".')
-        parser.add_argument('-x', '--exclude', help='Exclude filenames '
-                            'ending with given strings.  Example: '
-                            '"-x .cif".')
+            'Slab geometry containing Cu and Ni: "pbc=TTF,Cu,Ni".',
+        )
+        parser.add_argument("-v", "--verbose", action="store_true", help="More output.")
+        parser.add_argument(
+            "-l",
+            "--long",
+            action="store_true",
+            help="Show also periodic boundary conditions, "
+            "chemical formula and filetype.",
+        )
+        parser.add_argument(
+            "-i",
+            "--include",
+            help="Include only filenames "
+            "ending with given strings.  Example: "
+            '"-i .xyz,.traj".',
+        )
+        parser.add_argument(
+            "-x",
+            "--exclude",
+            help="Exclude filenames "
+            "ending with given strings.  Example: "
+            '"-x .cif".',
+        )
 
     @staticmethod
     def run(args):
@@ -42,21 +55,24 @@ def main(args):
     from ase.db.core import parse_selection
 
     query = parse_selection(args.query)
-    include = args.include.split(',') if args.include else []
-    exclude = args.exclude.split(',') if args.exclude else []
+    include = args.include.split(",") if args.include else []
+    exclude = args.exclude.split(",") if args.exclude else []
 
     if args.long:
-        print('pbc {:10} {:15} path'.format('formula', 'filetype'))
+        print("pbc {:10} {:15} path".format("formula", "filetype"))
 
     for path in allpaths(args.folder, include, exclude):
         format, row = check(path, query, args.verbose)
         if format:
             if args.long:
-                print('{} {:10} {:15} {}'
-                      .format(''.join(str(p) for p in row.pbc.astype(int)),
-                              row.formula,
-                              format,
-                              path))
+                print(
+                    "{} {:10} {:15} {}".format(
+                        "".join(str(p) for p in row.pbc.astype(int)),
+                        row.formula,
+                        format,
+                        path,
+                    )
+                )
             else:
                 print(path)
 
@@ -66,7 +82,7 @@ def allpaths(folder, include, exclude):
     import os
     import os.path as op
 
-    exclude += ['.py', '.pyc']
+    exclude += [".py", ".pyc"]
     for dirpath, dirnames, filenames in os.walk(folder):
         for name in filenames:
             if any(name.endswith(ext) for ext in exclude):
@@ -81,7 +97,7 @@ def allpaths(folder, include, exclude):
             yield path
 
         # Skip .git, __pycache__ and friends:
-        dirnames[:] = (name for name in dirnames if name[0] not in '._')
+        dirnames[:] = (name for name in dirnames if name[0] not in "._")
 
 
 def check(path, query, verbose):
@@ -105,17 +121,17 @@ def check(path, query, verbose):
     try:
         format = filetype(path, guess=False)
     except (OSError, UnknownFileTypeError):
-        return '', None
+        return "", None
 
-    if format in ['db', 'json']:
+    if format in ["db", "json"]:
         db = connect(path)
     else:
         try:
             atoms = read(path, format=format)
         except Exception as x:
             if verbose:
-                print(path + ':', x, file=sys.stderr)
-            return '', None
+                print(path + ":", x, file=sys.stderr)
+            return "", None
         db = FakeDB(atoms)
 
     try:
@@ -123,6 +139,6 @@ def check(path, query, verbose):
             return format, row
     except Exception as x:
         if verbose:
-            print(path + ':', x, file=sys.stderr)
+            print(path + ":", x, file=sys.stderr)
 
-    return '', None
+    return "", None

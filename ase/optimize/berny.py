@@ -3,8 +3,15 @@ from ase.units import Ha, Bohr
 
 
 class Berny(Optimizer):
-    def __init__(self, atoms, restart=None, logfile='-', trajectory=None,
-                 master=None, dihedral=True):
+    def __init__(
+        self,
+        atoms,
+        restart=None,
+        logfile="-",
+        trajectory=None,
+        master=None,
+        dihedral=True,
+    ):
         """Berny optimizer.
 
         This is a light ASE wrapper around the ``Berny`` optimizer from
@@ -55,10 +62,10 @@ class Berny(Optimizer):
             debug=True,
             restart=self._restart_data,
             maxsteps=10000000000,  # TODO copied from ase.optimize.Optimizer
-            gradientmax=0.,
-            gradientrms=0.,
-            stepmax=0.,
-            steprms=0.,
+            gradientmax=0.0,
+            gradientrms=0.0,
+            stepmax=0.0,
+            steprms=0.0,
             dihedral=dihedral,
         )
 

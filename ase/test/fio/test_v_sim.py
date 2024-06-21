@@ -197,13 +197,13 @@ Fichier Ni3Au
 
 
 def test_v_sim():
-    fname = 'demo.ascii'
-    copy = 'demo2.ascii'
+    fname = "demo.ascii"
+    copy = "demo2.ascii"
 
-    with open(fname, 'w') as fd:
+    with open(fname, "w") as fd:
         fd.write(datafile)
 
-    atoms = read(fname, format='v-sim')
+    atoms = read(fname, format="v-sim")
 
     atoms.write(copy)
     atoms2 = read(copy)

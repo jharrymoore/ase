@@ -17,19 +17,22 @@ from ase import Atoms
 
 def pa(array):
     """Povray array syntax"""
-    return '<' + ', '.join(f"{x:>6.2f}" for x in tuple(array)) + '>'
+    return "<" + ", ".join(f"{x:>6.2f}" for x in tuple(array)) + ">"
 
 
 def pc(array):
     """Povray color syntax"""
     if isinstance(array, str):
-        return 'color ' + array
+        return "color " + array
     if isinstance(array, float):
-        return f'rgb <{array:.2f}>*3'.format(array)
+        return f"rgb <{array:.2f}>*3".format(array)
     L = len(array)
     if L > 2 and L < 6:
-        return f"rgb{'' if L == 3 else 't' if L == 4 else 'ft'} <" +\
-            ', '.join(f"{x:.2f}" for x in tuple(array)) + '>'
+        return (
+            f"rgb{'' if L == 3 else 't' if L == 4 else 'ft'} <"
+            + ", ".join(f"{x:.2f}" for x in tuple(array))
+            + ">"
+        )
 
 
 def get_bondpairs(atoms, radius=1.1):
@@ -52,14 +55,14 @@ def get_bondpairs(atoms, radius=1.1):
 
     from ase.data import covalent_radii
     from ase.neighborlist import NeighborList
+
     cutoffs = radius * covalent_radii[atoms.numbers]
     nl = NeighborList(cutoffs=cutoffs, self_interaction=False)
     nl.update(atoms)
     bondpairs = []
     for a in range(len(atoms)):
         indices, offsets = nl.get_neighbors(a)
-        bondpairs.extend([(a, a2, offset)
-                          for a2, offset in zip(indices, offsets)])
+        bondpairs.extend([(a, a2, offset) for a2, offset in zip(indices, offsets)])
     return bondpairs
 
 
@@ -81,7 +84,7 @@ def set_high_bondorder_pairs(bondpairs, high_bondorder_pairs=None):
                           offset, bond_order, bond_offset are optional.
                           However, if they are provided, the 1st value is
                           offset, 2nd value is bond_order,
-                          3rd value is bond_offset """
+                          3rd value is bond_offset"""
 
     if high_bondorder_pairs is None:
         high_bondorder_pairs = dict()
@@ -104,60 +107,96 @@ class POVRAY:
     # gamma, many had or still have unphysical light properties inorder to
     # acheive a certain look.
     material_styles_dict = dict(
-        simple='finish {phong 0.7 ambient 0.4 diffuse 0.55}',
+        simple="finish {phong 0.7 ambient 0.4 diffuse 0.55}",
         # In general, 'pale' doesn't conserve energy and can look
         # strange in many cases.
-        pale=('finish {ambient 0.9 diffuse 0.30 roughness 0.001 '
-              'specular 0.2 }'),
-        intermediate=('finish {ambient 0.4 diffuse 0.6 specular 0.1 '
-                      'roughness 0.04}'),
+        pale=("finish {ambient 0.9 diffuse 0.30 roughness 0.001 " "specular 0.2 }"),
+        intermediate=(
+            "finish {ambient 0.4 diffuse 0.6 specular 0.1 " "roughness 0.04}"
+        ),
         vmd=(
-            'finish {ambient 0.2 diffuse 0.80 phong 0.25 phong_size 10.0 '
-            'specular 0.2 roughness 0.1}'),
-        jmol=('finish {ambient 0.4 diffuse 0.6 specular 1 roughness 0.001 '
-              'metallic}'),
-        ase2=('finish {ambient 0.2 brilliance 3 diffuse 0.6 metallic '
-              'specular 0.7 roughness 0.04 reflection 0.15}'),
-        ase3=('finish {ambient 0.4 brilliance 2 diffuse 0.6 metallic '
-              'specular 1.0 roughness 0.001 reflection 0.0}'),
-        glass=('finish {ambient 0.4 diffuse 0.35 specular 1.0 '
-               'roughness 0.001}'),
-        glass2=('finish {ambient 0.3 diffuse 0.3 specular 1.0 '
-                'reflection 0.25 roughness 0.001}'),
+            "finish {ambient 0.2 diffuse 0.80 phong 0.25 phong_size 10.0 "
+            "specular 0.2 roughness 0.1}"
+        ),
+        jmol=(
+            "finish {ambient 0.4 diffuse 0.6 specular 1 roughness 0.001 " "metallic}"
+        ),
+        ase2=(
+            "finish {ambient 0.2 brilliance 3 diffuse 0.6 metallic "
+            "specular 0.7 roughness 0.04 reflection 0.15}"
+        ),
+        ase3=(
+            "finish {ambient 0.4 brilliance 2 diffuse 0.6 metallic "
+            "specular 1.0 roughness 0.001 reflection 0.0}"
+        ),
+        glass=("finish {ambient 0.4 diffuse 0.35 specular 1.0 " "roughness 0.001}"),
+        glass2=(
+            "finish {ambient 0.3 diffuse 0.3 specular 1.0 "
+            "reflection 0.25 roughness 0.001}"
+        ),
     )
 
     # These styles were made when assumed_gamma was 1.0 which gives poor color
     # reproduction, the correct gamma is 2.2 for the sRGB standard.
     material_styles_dict_old = dict(
-        simple='finish {phong 0.7}',
-        pale=('finish {ambient 0.5 diffuse 0.85 roughness 0.001 '
-              'specular 0.200 }'),
-        intermediate=('finish {ambient 0.3 diffuse 0.6 specular 0.1 '
-                      'roughness 0.04}'),
-        vmd=('finish {ambient 0.0 diffuse 0.65 phong 0.1 phong_size 40.0 '
-             'specular 0.5 }'),
-        jmol=('finish {ambient 0.2 diffuse 0.6 specular 1 roughness 0.001 '
-              'metallic}'),
-        ase2=('finish {ambient 0.05 brilliance 3 diffuse 0.6 metallic '
-              'specular 0.7 roughness 0.04 reflection 0.15}'),
-        ase3=('finish {ambient 0.15 brilliance 2 diffuse 0.6 metallic '
-              'specular 1.0 roughness 0.001 reflection 0.0}'),
-        glass=('finish {ambient 0.05 diffuse 0.3 specular 1.0 '
-               'roughness 0.001}'),
-        glass2=('finish {ambient 0.01 diffuse 0.3 specular 1.0 '
-                'reflection 0.25 roughness 0.001}'),
+        simple="finish {phong 0.7}",
+        pale=("finish {ambient 0.5 diffuse 0.85 roughness 0.001 " "specular 0.200 }"),
+        intermediate=(
+            "finish {ambient 0.3 diffuse 0.6 specular 0.1 " "roughness 0.04}"
+        ),
+        vmd=(
+            "finish {ambient 0.0 diffuse 0.65 phong 0.1 phong_size 40.0 "
+            "specular 0.5 }"
+        ),
+        jmol=(
+            "finish {ambient 0.2 diffuse 0.6 specular 1 roughness 0.001 " "metallic}"
+        ),
+        ase2=(
+            "finish {ambient 0.05 brilliance 3 diffuse 0.6 metallic "
+            "specular 0.7 roughness 0.04 reflection 0.15}"
+        ),
+        ase3=(
+            "finish {ambient 0.15 brilliance 2 diffuse 0.6 metallic "
+            "specular 1.0 roughness 0.001 reflection 0.0}"
+        ),
+        glass=("finish {ambient 0.05 diffuse 0.3 specular 1.0 " "roughness 0.001}"),
+        glass2=(
+            "finish {ambient 0.01 diffuse 0.3 specular 1.0 "
+            "reflection 0.25 roughness 0.001}"
+        ),
     )
 
-    def __init__(self, cell, cell_vertices, positions, diameters, colors,
-                 image_width, image_height, constraints=tuple(), isosurfaces=[],
-                 display=False, pause=True, transparent=True, canvas_width=None,
-                 canvas_height=None, camera_dist=50., image_plane=None,
-                 camera_type='orthographic', point_lights=[],
-                 area_light=[(2., 3., 40.), 'White', .7, .7, 3, 3],
-                 background='White', textures=None, transmittances=None,
-                 depth_cueing=False, cue_density=5e-3,
-                 celllinewidth=0.05, bondlinewidth=0.10, bondatoms=[],
-                 exportconstraints=False):
+    def __init__(
+        self,
+        cell,
+        cell_vertices,
+        positions,
+        diameters,
+        colors,
+        image_width,
+        image_height,
+        constraints=tuple(),
+        isosurfaces=[],
+        display=False,
+        pause=True,
+        transparent=True,
+        canvas_width=None,
+        canvas_height=None,
+        camera_dist=50.0,
+        image_plane=None,
+        camera_type="orthographic",
+        point_lights=[],
+        area_light=[(2.0, 3.0, 40.0), "White", 0.7, 0.7, 3, 3],
+        background="White",
+        textures=None,
+        transmittances=None,
+        depth_cueing=False,
+        cue_density=5e-3,
+        celllinewidth=0.05,
+        bondlinewidth=0.10,
+        bondatoms=[],
+        exportconstraints=False,
+    ):
         """
         # x, y is the image plane, z is *out* of the screen
         cell: ase.cell
@@ -281,7 +320,7 @@ class POVRAY:
 
         # Distance to image plane from camera
         if image_plane is None:
-            if self.camera_type == 'orthographic':
+            if self.camera_type == "orthographic":
                 self.image_plane = 1 - self.camera_dist
             else:
                 self.image_plane = 0
@@ -298,8 +337,8 @@ class POVRAY:
     def from_PlottingVariables(cls, pvars, **kwargs):
         cell = pvars.cell
         cell_vertices = pvars.cell_vertices
-        if 'colors' in kwargs.keys():
-            colors = kwargs.pop('colors')
+        if "colors" in kwargs.keys():
+            colors = kwargs.pop("colors")
         else:
             colors = pvars.colors
         diameters = pvars.d
@@ -307,15 +346,23 @@ class POVRAY:
         image_width = pvars.w
         positions = pvars.positions
         constraints = pvars.constraints
-        return cls(cell=cell, cell_vertices=cell_vertices, colors=colors,
-                   constraints=constraints, diameters=diameters,
-                   image_height=image_height, image_width=image_width,
-                   positions=positions, **kwargs)
+        return cls(
+            cell=cell,
+            cell_vertices=cell_vertices,
+            colors=colors,
+            constraints=constraints,
+            diameters=diameters,
+            image_height=image_height,
+            image_width=image_width,
+            positions=positions,
+            **kwargs,
+        )
 
     @classmethod
     def from_atoms(cls, atoms, **kwargs):
         return cls.from_plotting_variables(
-            PlottingVariables(atoms, scale=1.0), **kwargs)
+            PlottingVariables(atoms, scale=1.0), **kwargs
+        )
 
     def write_ini(self, path):
         """Write ini file."""
@@ -336,40 +383,44 @@ Display_Gamma=2.2
 Pause_When_Done={self.pause}
 Verbose=False
 """
-        with open(path, 'w') as fd:
+        with open(path, "w") as fd:
             fd.write(ini_str)
         return path
 
     def write_pov(self, path):
         """Write pov file."""
 
-        point_lights = '\n'.join(f"light_source {{{pa(loc)} {pc(rgb)}}}"
-                                 for loc, rgb in self.point_lights)
+        point_lights = "\n".join(
+            f"light_source {{{pa(loc)} {pc(rgb)}}}" for loc, rgb in self.point_lights
+        )
 
-        area_light = ''
+        area_light = ""
         if self.area_light is not None:
             loc, color, width, height, nx, ny = self.area_light
             area_light += f"""\nlight_source {{{pa(loc)} {pc(color)}
   area_light <{width:.2f}, 0, 0>, <0, {height:.2f}, 0>, {nx:n}, {ny:n}
   adaptive 1 jitter}}"""
 
-        fog = ''
+        fog = ""
         if self.depth_cueing and (self.cue_density >= 1e-4):
             # same way vmd does it
             if self.cue_density > 1e4:
                 # larger does not make any sense
                 dist = 1e-4
             else:
-                dist = 1. / self.cue_density
-            fog += f'fog {{fog_type 1 distance {dist:.4f} '\
-                   f'color {pc(self.background)}}}'
+                dist = 1.0 / self.cue_density
+            fog += (
+                f"fog {{fog_type 1 distance {dist:.4f} "
+                f"color {pc(self.background)}}}"
+            )
 
-        mat_style_keys = (f'#declare {k} = {v}'
-                          for k, v in self.material_styles_dict.items())
-        mat_style_keys = '\n'.join(mat_style_keys)
+        mat_style_keys = (
+            f"#declare {k} = {v}" for k, v in self.material_styles_dict.items()
+        )
+        mat_style_keys = "\n".join(mat_style_keys)
 
         # Draw unit cell
-        cell_vertices = ''
+        cell_vertices = ""
         if self.cell_vertices is not None:
             for c in range(3):
                 for j in ([0, 0], [1, 0], [1, 1], [0, 1]):
@@ -380,28 +431,32 @@ Verbose=False
                     if distance < 1e-12:
                         continue
 
-                    cell_vertices += f'cylinder {{{pa(p1)}, {pa(p2)}, '\
-                                     f'Rcell pigment {{Black}}}}\n'
+                    cell_vertices += (
+                        f"cylinder {{{pa(p1)}, {pa(p2)}, "
+                        f"Rcell pigment {{Black}}}}\n"
+                    )
                     # all strings are f-strings for consistency
-            cell_vertices = cell_vertices.strip('\n')
+            cell_vertices = cell_vertices.strip("\n")
 
         # Draw atoms
         a = 0
-        atoms = ''
+        atoms = ""
         for loc, dia, col in zip(self.positions, self.diameters, self.colors):
-            tex = 'ase3'
-            trans = 0.
+            tex = "ase3"
+            trans = 0.0
             if self.textures is not None:
                 tex = self.textures[a]
             if self.transmittances is not None:
                 trans = self.transmittances[a]
-            atoms += f'atom({pa(loc)}, {dia/2.:.2f}, {pc(col)}, '\
-                     f'{trans}, {tex}) // #{a:n}\n'
+            atoms += (
+                f"atom({pa(loc)}, {dia/2.:.2f}, {pc(col)}, "
+                f"{trans}, {tex}) // #{a:n}\n"
+            )
             a += 1
-        atoms = atoms.strip('\n')
+        atoms = atoms.strip("\n")
 
         # Draw atom bonds
-        bondatoms = ''
+        bondatoms = ""
         for pair in self.bondatoms:
             # Make sure that each pair has 4 componets: a, b, offset,
             #                                           bond_order, bond_offset
@@ -428,32 +483,37 @@ Verbose=False
             elif len(pair) > 4:
                 a, b, offset, bond_order, bond_offset = pair
             else:
-                raise RuntimeError('Each list in bondatom must have at least '
-                                   '2 entries. Error at %s' % pair)
+                raise RuntimeError(
+                    "Each list in bondatom must have at least "
+                    "2 entries. Error at %s" % pair
+                )
 
             if len(offset) != 3:
-                raise ValueError('offset must have 3 elements. '
-                                 'Error at %s' % pair)
+                raise ValueError("offset must have 3 elements. " "Error at %s" % pair)
             if len(bond_offset) != 3:
-                raise ValueError('bond_offset must have 3 elements. '
-                                 'Error at %s' % pair)
+                raise ValueError(
+                    "bond_offset must have 3 elements. " "Error at %s" % pair
+                )
             if bond_order not in [0, 1, 2, 3]:
-                raise ValueError('bond_order must be either 0, 1, 2, or 3. '
-                                 'Error at %s' % pair)
+                raise ValueError(
+                    "bond_order must be either 0, 1, 2, or 3. " "Error at %s" % pair
+                )
 
             # Up to here, we should have all a, b, offset, bond_order,
             # bond_offset for all bonds.
 
             # Rotate bond_offset so that its direction is 90 deg. off the bond
             # Utilize Atoms object to rotate
-            if bond_order > 1 and np.linalg.norm(bond_offset) > 1.e-9:
-                tmp_atoms = Atoms('H3')
+            if bond_order > 1 and np.linalg.norm(bond_offset) > 1.0e-9:
+                tmp_atoms = Atoms("H3")
                 tmp_atoms.set_cell(self.cell)
-                tmp_atoms.set_positions([
-                    self.positions[a],
-                    self.positions[b],
-                    self.positions[b] + np.array(bond_offset),
-                ])
+                tmp_atoms.set_positions(
+                    [
+                        self.positions[a],
+                        self.positions[b],
+                        self.positions[b] + np.array(bond_offset),
+                    ]
+                )
                 tmp_atoms.center()
                 tmp_atoms.set_angle(0, 1, 2, 90)
                 bond_offset = tmp_atoms[2].position - tmp_atoms[1].position
@@ -465,13 +525,13 @@ Verbose=False
                 texa = self.textures[a]
                 texb = self.textures[b]
             else:
-                texa = texb = 'ase3'
+                texa = texb = "ase3"
 
             if self.transmittances is not None:
                 transa = self.transmittances[a]
                 transb = self.transmittances[b]
             else:
-                transa = transb = 0.
+                transa = transb = 0.0
 
             # draw bond, according to its bond_order.
             # bond_order == 0: No bond is plotted
@@ -490,36 +550,46 @@ Verbose=False
             colb = self.colors[b]
 
             if bond_order == 1:
-                draw_tuples = (posa, mida, cola, transa, texa),\
-                              (posb, midb, colb, transb, texb)
+                draw_tuples = (posa, mida, cola, transa, texa), (
+                    posb,
+                    midb,
+                    colb,
+                    transb,
+                    texb,
+                )
 
             elif bond_order == 2:
                 bs = [x / 2 for x in bond_offset]
-                draw_tuples = (posa - bs, mida - bs, cola, transa, texa),\
-                              (posb - bs, midb - bs, colb, transb, texb),\
-                              (posa + bs, mida + bs, cola, transa, texa),\
-                              (posb + bs, midb + bs, colb, transb, texb)
+                draw_tuples = (
+                    (posa - bs, mida - bs, cola, transa, texa),
+                    (posb - bs, midb - bs, colb, transb, texb),
+                    (posa + bs, mida + bs, cola, transa, texa),
+                    (posb + bs, midb + bs, colb, transb, texb),
+                )
 
             elif bond_order == 3:
                 bs = bond_offset
-                draw_tuples = (posa, mida, cola, transa, texa),\
-                              (posb, midb, colb, transb, texb),\
-                              (posa + bs, mida + bs, cola, transa, texa),\
-                              (posb + bs, midb + bs, colb, transb, texb),\
-                              (posa - bs, mida - bs, cola, transa, texa),\
-                              (posb - bs, midb - bs, colb, transb, texb)
+                draw_tuples = (
+                    (posa, mida, cola, transa, texa),
+                    (posb, midb, colb, transb, texb),
+                    (posa + bs, mida + bs, cola, transa, texa),
+                    (posb + bs, midb + bs, colb, transb, texb),
+                    (posa - bs, mida - bs, cola, transa, texa),
+                    (posb - bs, midb - bs, colb, transb, texb),
+                )
 
-            bondatoms += ''.join(f'cylinder {{{pa(p)}, '
-                                 f'{pa(m)}, Rbond texture{{pigment '
-                                 f'{{color {pc(c)} '
-                                 f'transmit {tr}}} finish{{{tx}}}}}}}\n'
-                                 for p, m, c, tr, tx in
-                                 draw_tuples)
+            bondatoms += "".join(
+                f"cylinder {{{pa(p)}, "
+                f"{pa(m)}, Rbond texture{{pigment "
+                f"{{color {pc(c)} "
+                f"transmit {tr}}} finish{{{tx}}}}}}}\n"
+                for p, m, c, tr, tx in draw_tuples
+            )
 
-        bondatoms = bondatoms.strip('\n')
+        bondatoms = bondatoms.strip("\n")
 
         # Draw constraints if requested
-        constraints = ''
+        constraints = ""
         if self.exportconstraints:
             for a in self.constrainatoms:
                 dia = self.diameters[a]
@@ -527,9 +597,11 @@ Verbose=False
                 trans = 0.0
                 if self.transmittances is not None:
                     trans = self.transmittances[a]
-                constraints += f'constrain({pa(loc)}, {dia/2.:.2f}, Black, '\
-                    f'{trans}, {tex}) // #{a:n} \n'
-        constraints = constraints.strip('\n')
+                constraints += (
+                    f"constrain({pa(loc)}, {dia/2.:.2f}, Black, "
+                    f"{trans}, {tex}) // #{a:n} \n"
+                )
+        constraints = constraints.strip("\n")
 
         pov = f"""#version 3.6;
 #include "colors.inc"
@@ -563,18 +635,18 @@ union{{torus{{R, Rcell rotate 45*z texture{{pigment{{color COL transmit TRANS}} 
 {constraints if constraints != '' else '// no constraints'}
 """  # noqa: E501
 
-        with open(path, 'w') as fd:
+        with open(path, "w") as fd:
             fd.write(pov)
 
         return path
 
     def write(self, pov_path):
         pov_path = require_pov(pov_path)
-        ini_path = pov_path.with_suffix('.ini')
+        ini_path = pov_path.with_suffix(".ini")
         self.write_ini(ini_path)
         self.write_pov(pov_path)
         if self.isosurfaces is not None:
-            with open(pov_path, 'a') as fd:
+            with open(pov_path, "a") as fd:
                 for iso in self.isosurfaces:
                     fd.write(iso.format_mesh())
         return POVRAYInputs(ini_path)
@@ -582,8 +654,8 @@ union{{torus{{R, Rcell rotate 45*z texture{{pigment{{color COL transmit TRANS}} 
 
 def require_pov(path):
     path = Path(path)
-    if path.suffix != '.pov':
-        raise ValueError(f'Expected .pov path, got {path}')
+    if path.suffix != ".pov":
+        raise ValueError(f"Expected .pov path, got {path}")
     return path
 
 
@@ -591,26 +663,33 @@ class POVRAYInputs:
     def __init__(self, path):
         self.path = path
 
-    def render(self, povray_executable='povray', stderr=DEVNULL,
-               clean_up=False):
+    def render(self, povray_executable="povray", stderr=DEVNULL, clean_up=False):
         cmd = [povray_executable, str(self.path)]
 
         check_call(cmd, stderr=stderr)
-        png_path = self.path.with_suffix('.png').absolute()
+        png_path = self.path.with_suffix(".png").absolute()
         if not png_path.is_file():
             raise RuntimeError(f'Povray left no output PNG file "{png_path}"')
 
         if clean_up:
             unlink(self.path)
-            unlink(self.path.with_suffix('.pov'))
+            unlink(self.path.with_suffix(".pov"))
 
         return png_path
 
 
 class POVRAYIsosurface:
-    def __init__(self, density_grid, cut_off, cell, cell_origin,
-                 closed_edges=False, gradient_ascending=False,
-                 color=(0.85, 0.80, 0.25, 0.2), material='ase3'):
+    def __init__(
+        self,
+        density_grid,
+        cut_off,
+        cell,
+        cell_origin,
+        closed_edges=False,
+        gradient_ascending=False,
+        color=(0.85, 0.80, 0.25, 0.2),
+        material="ase3",
+    ):
         """
         density_grid: 3D float ndarray
             A regular grid on that spans the cell. The first dimension
@@ -640,13 +719,13 @@ class POVRAYIsosurface:
             full material specification willoverride the color parameter.
         """
 
-        self.gradient_direction = 'ascent' if gradient_ascending else 'descent'
+        self.gradient_direction = "ascent" if gradient_ascending else "descent"
         self.color = color
         self.material = material
         self.closed_edges = closed_edges
         self._cut_off = cut_off
 
-        if self.gradient_direction == 'ascent':
+        if self.gradient_direction == "ascent":
             cv = 2 * cut_off
         else:
             cv = 0
@@ -656,8 +735,8 @@ class POVRAYIsosurface:
             # since well be padding, we need to keep the data at origin
             cell_origin += -(1.0 / np.array(shape_old)) @ cell
             density_grid = np.pad(
-                density_grid, pad_width=(
-                    1,), mode='constant', constant_values=cv)
+                density_grid, pad_width=(1,), mode="constant", constant_values=cv
+            )
             shape_new = density_grid.shape
             s = np.array(shape_new) / np.array(shape_old)
             cell = cell @ np.diag(s)
@@ -668,10 +747,8 @@ class POVRAYIsosurface:
         self.spacing = tuple(1.0 / np.array(self.density_grid.shape))
 
         scaled_verts, faces, normals, values = self.compute_mesh(
-            self.density_grid,
-            self.cut_off,
-            self.spacing,
-            self.gradient_direction)
+            self.density_grid, self.cut_off, self.spacing, self.gradient_direction
+        )
 
         # The verts are scaled by default, this is the super easy way of
         # distributing them in real space but it's easier to do affine
@@ -691,7 +768,7 @@ class POVRAYIsosurface:
     def set_cut_off(self, value):
         self._cut_off = value
 
-        if self.gradient_direction == 'ascent':
+        if self.gradient_direction == "ascent":
             cv = 2 * self.cut_off
         else:
             cv = 0
@@ -701,8 +778,8 @@ class POVRAYIsosurface:
             # since well be padding, we need to keep the data at origin
             self.cell_origin += -(1.0 / np.array(shape_old)) @ self.cell
             self.density_grid = np.pad(
-                self.density_grid, pad_width=(
-                    1,), mode='constant', constant_values=cv)
+                self.density_grid, pad_width=(1,), mode="constant", constant_values=cv
+            )
             shape_new = self.density_grid.shape
             s = np.array(shape_new) / np.array(shape_old)
             self.cell = self.cell @ np.diag(s)
@@ -710,38 +787,39 @@ class POVRAYIsosurface:
         self.spacing = tuple(1.0 / np.array(self.density_grid.shape))
 
         scaled_verts, faces, _, _ = self.compute_mesh(
-            self.density_grid,
-            self.cut_off,
-            self.spacing,
-            self.gradient_direction)
+            self.density_grid, self.cut_off, self.spacing, self.gradient_direction
+        )
 
         self.verts = scaled_verts
         self.faces = faces
 
     @classmethod
     def from_POVRAY(cls, povray, density_grid, cut_off, **kwargs):
-        return cls(cell=povray.cell,
-                   cell_origin=povray.cell_vertices[0, 0, 0],
-                   density_grid=density_grid,
-                   cut_off=cut_off, **kwargs)
+        return cls(
+            cell=povray.cell,
+            cell_origin=povray.cell_vertices[0, 0, 0],
+            density_grid=density_grid,
+            cut_off=cut_off,
+            **kwargs,
+        )
 
     @staticmethod
-    def wrapped_triples_section(triple_list,
-                                triple_format="<{:f}, {:f}, {:f}>".format,
-                                triples_per_line=4):
+    def wrapped_triples_section(
+        triple_list, triple_format="<{:f}, {:f}, {:f}>".format, triples_per_line=4
+    ):
 
         triples = [triple_format(*x) for x in triple_list]
         n = len(triples)
-        s = ''
+        s = ""
         tpl = triples_per_line
         c = 0
 
         while c < n - tpl:
             c += tpl
-            s += '\n     '
-            s += ', '.join(triples[c - tpl:c])
-        s += '\n    '
-        s += ', '.join(triples[c:])
+            s += "\n     "
+            s += ", ".join(triples[c - tpl : c])
+        s += "\n    "
+        s += ", ".join(triples[c:])
         return s
 
     @staticmethod
@@ -761,15 +839,15 @@ class POVRAYIsosurface:
             from skimage.measure import marching_cubes
         except ImportError:
             # Old skimage (remove at some point)
-            from skimage.measure import (
-                marching_cubes_lewiner as marching_cubes)
+            from skimage.measure import marching_cubes_lewiner as marching_cubes
 
         return marching_cubes(
             density_grid,
             level=cut_off,
             spacing=spacing,
             gradient_direction=gradient_direction,
-            allow_degenerate=False)
+            allow_degenerate=False,
+        )
 
     def format_mesh(self):
         """Returns a formatted data output for POVRAY files
@@ -808,12 +886,14 @@ class POVRAYIsosurface:
         vertex_vectors = self.wrapped_triples_section(
             triple_list=self.verts,
             triple_format="<{:f}, {:f}, {:f}>".format,
-            triples_per_line=4)
+            triples_per_line=4,
+        )
 
         face_indices = self.wrapped_triples_section(
             triple_list=self.faces,
             triple_format="<{:n}, {:n}, {:n}>".format,
-            triples_per_line=5)
+            triples_per_line=5,
+        )
 
         cell = self.cell
         cell_or = self.cell_origin
@@ -836,18 +916,27 @@ class POVRAYIsosurface:
 
 def pop_deprecated(dct, name):
     import warnings
+
     if name in dct:
         del dct[name]
-        warnings.warn(f'The "{name}" keyword of write_pov() is deprecated '
-                      'and has no effect; this will raise an error in the '
-                      'future.', FutureWarning)
+        warnings.warn(
+            f'The "{name}" keyword of write_pov() is deprecated '
+            "and has no effect; this will raise an error in the "
+            "future.",
+            FutureWarning,
+        )
 
 
-def write_pov(filename, atoms, *,
-              povray_settings=None, isosurface_data=None,
-              **generic_projection_settings):
+def write_pov(
+    filename,
+    atoms,
+    *,
+    povray_settings=None,
+    isosurface_data=None,
+    **generic_projection_settings,
+):
 
-    for name in ['run_povray', 'povray_path', 'stderr', 'extras']:
+    for name in ["run_povray", "povray_path", "stderr", "extras"]:
         pop_deprecated(generic_projection_settings, name)
 
     if povray_settings is None:

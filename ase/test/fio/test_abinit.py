@@ -11,10 +11,10 @@ from ase.units import Hartree, Bohr
 
 
 def test_abinit_inputfile_roundtrip(testdir):
-    m1 = bulk('Ti')
+    m1 = bulk("Ti")
     m1.set_initial_magnetic_moments(range(len(m1)))
-    write('abinit_save.in', images=m1, format='abinit-in')
-    m2 = read('abinit_save.in', format='abinit-in')
+    write("abinit_save.in", images=m1, format="abinit-in")
+    m2 = read("abinit_save.in", format="abinit-in")
 
     # (How many decimals?)
     assert not compare_atoms(m1, m2, tol=1e-7)
@@ -63,22 +63,25 @@ def test_read_abinit_output():
     fd = StringIO(sample_outfile)
     results = read_abinit_out(fd)
 
-    assert results.pop('version') == '8.0.8'
+    assert results.pop("version") == "8.0.8"
 
-    atoms = results.pop('atoms')
-    assert all(atoms.symbols == 'OO')
+    atoms = results.pop("atoms")
+    assert all(atoms.symbols == "OO")
     assert atoms.positions == pytest.approx(
-        np.array([[2.5, 2.5, 3.7], [2.5, 2.5, 2.5]]))
+        np.array([[2.5, 2.5, 3.7], [2.5, 2.5, 2.5]])
+    )
     assert all(atoms.pbc)
     assert atoms.cell[:] == pytest.approx(
-        np.array([[5.0, 0.0, 0.1], [0.0, 6.0, 0.0], [0.0, 0.0, 7.0]]))
+        np.array([[5.0, 0.0, 0.1], [0.0, 6.0, 0.0], [0.0, 0.0, 7.0]])
+    )
 
     ref_stress = pytest.approx([2.3, 2.4, 2.5, 3.1, 3.2, 3.3])
-    assert results.pop('stress') / (Hartree / Bohr**3) == ref_stress
-    assert results.pop('forces') == pytest.approx(
-        np.array([[-0.1, -0.3, 0.4], [-0.2, -0.4, -0.5]]))
+    assert results.pop("stress") / (Hartree / Bohr**3) == ref_stress
+    assert results.pop("forces") == pytest.approx(
+        np.array([[-0.1, -0.3, 0.4], [-0.2, -0.4, -0.5]])
+    )
 
-    for name in 'energy', 'free_energy':
+    for name in "energy", "free_energy":
         assert results.pop(name) / Hartree == -42.5
 
     assert not results
@@ -95,25 +98,21 @@ eig_text = """\
 
 
 def test_parse_eig_with_fermiheader():
-    eigval_ref = np.array([
-        [-0.2, 0.2, 0.3],
-        [-0.3, 0.4, 0.5]
-    ]).reshape(1, 2, 3)  # spin x kpts x bands
+    eigval_ref = np.array([[-0.2, 0.2, 0.3], [-0.3, 0.4, 0.5]]).reshape(
+        1, 2, 3
+    )  # spin x kpts x bands
 
-    kpts_ref = np.array([
-        [0.2, 0.3, 0.4],
-        [0.3, 0.4, 0.5]
-    ])
+    kpts_ref = np.array([[0.2, 0.3, 0.4], [0.3, 0.4, 0.5]])
 
     weights_ref = [0.1, 0.2]
 
     eig_buf = StringIO(eig_text)
     data = read_eig(eig_buf)
 
-    assert data['eigenvalues'] / Hartree == pytest.approx(eigval_ref)
-    assert data['ibz_kpoints'] == pytest.approx(kpts_ref)
-    assert data['kpoint_weights'] == pytest.approx(weights_ref)
-    assert data['fermilevel'] / Hartree == pytest.approx(0.123)
+    assert data["eigenvalues"] / Hartree == pytest.approx(eigval_ref)
+    assert data["ibz_kpoints"] == pytest.approx(kpts_ref)
+    assert data["kpoint_weights"] == pytest.approx(weights_ref)
+    assert data["fermilevel"] / Hartree == pytest.approx(0.123)
 
 
 def test_parse_eig_without_fermiheader():
@@ -121,8 +120,8 @@ def test_parse_eig_without_fermiheader():
     next(fd)  # Header is omitted e.g. in non-selfconsistent calculations.
 
     data = read_eig(fd)
-    assert 'fermilevel' not in data
-    assert {'eigenvalues', 'ibz_kpoints', 'kpoint_weights'} == set(data)
+    assert "fermilevel" not in data
+    assert {"eigenvalues", "ibz_kpoints", "kpoint_weights"} == set(data)
 
 
 def test_match_kpt_header():

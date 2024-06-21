@@ -2,13 +2,13 @@ from ase import Atoms
 from ase.io import Trajectory
 from gpaw import GPAW
 
-atoms = Atoms('N2', positions=[[0, 0, -1], [0, 0, 1]])
+atoms = Atoms("N2", positions=[[0, 0, -1], [0, 0, 1]])
 atoms.center(vacuum=3.0)
 
-calc = GPAW(mode='lcao', basis='dzp', txt='gpaw.txt')
+calc = GPAW(mode="lcao", basis="dzp", txt="gpaw.txt")
 atoms.calc = calc
 
-traj = Trajectory('binding_curve.traj', 'w')
+traj = Trajectory("binding_curve.traj", "w")
 
 step = 0.05
 nsteps = int(3 / step)
@@ -19,6 +19,6 @@ for i in range(nsteps):
     atoms.center(vacuum=3.0)
     e = atoms.get_potential_energy()
     f = atoms.get_forces()
-    print('distance, energy', d, e)
-    print('force', f)
+    print("distance, energy", d, e)
+    print("force", f)
     traj.write(atoms)

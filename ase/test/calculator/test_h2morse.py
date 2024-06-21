@@ -1,31 +1,31 @@
 import numpy as np
 import pytest
 from ase.vibrations import Vibrations
-from ase.calculators.h2morse import (H2Morse, H2MorseCalculator,
-                                     Re, De, ome, Etrans)
-from ase.calculators.h2morse import (H2MorseExcitedStatesCalculator,
-                                     H2MorseExcitedStates,
-                                     H2MorseExcitedStatesAndCalculator)
+from ase.calculators.h2morse import H2Morse, H2MorseCalculator, Re, De, ome, Etrans
+from ase.calculators.h2morse import (
+    H2MorseExcitedStatesCalculator,
+    H2MorseExcitedStates,
+    H2MorseExcitedStatesAndCalculator,
+)
 
 
 def test_gs_minimum(testdir):
     """Test ground state minimum distance, energy and
     vibrational frequency"""
     atoms = H2Morse()
-    assert atoms.get_distance(0, 1) == pytest.approx(Re[0], 1.e-12)
+    assert atoms.get_distance(0, 1) == pytest.approx(Re[0], 1.0e-12)
     assert atoms.get_potential_energy() == -De[0]
     # check ground state vibrations
     vib = Vibrations(atoms)
     vib.run()
-    assert (vib.get_frequencies().real[-1] ==
-            pytest.approx(ome[0], 1e-2))
+    assert vib.get_frequencies().real[-1] == pytest.approx(ome[0], 1e-2)
 
 
 def test_gs_io_overlap(testdir):
     """Test ground state IO and 'wave function' overlap"""
     atoms0 = H2Morse()
     calc0 = atoms0.calc
-    fname = 'calc0'
+    fname = "calc0"
     calc0.write(fname)
     calc1 = H2MorseCalculator(fname)
     for wf0, wf1 in zip(calc0.wfs, calc1.wfs):
@@ -51,13 +51,12 @@ def test_excited_state():
 
         exc = H2MorseExcitedStatesCalculator()
         exl = exc.calculate(exatoms)
-        assert (exl[i - 1].energy ==
-                pytest.approx(Etrans[i] - Egs + Egs0, 1e-8))
+        assert exl[i - 1].energy == pytest.approx(Etrans[i] - Egs + Egs0, 1e-8)
 
 
 def test_excited_io(testdir):
     """Check writing and reading"""
-    fname = 'exlist.dat'
+    fname = "exlist.dat"
     atoms = H2Morse()
     exc = H2MorseExcitedStatesCalculator()
     exl1 = exc.calculate(atoms)
@@ -73,7 +72,7 @@ def test_excited_io(testdir):
 def test_traditional(testdir):
     """Check that traditional calling works"""
     atoms = H2Morse()
-    fname = 'exlist.dat'
+    fname = "exlist.dat"
     exl1 = H2MorseExcitedStatesAndCalculator(atoms.calc)
     exl1.write(fname)
     ex1 = exl1[0]

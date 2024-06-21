@@ -6,8 +6,8 @@ import numpy as np
 from ase.utils import IOContext
 
 
-def get_band_gap(calc, direct=False, spin=None, output='-'):
-    warnings.warn('Please use ase.dft.bandgap.bandgap() instead!')
+def get_band_gap(calc, direct=False, spin=None, output="-"):
+    warnings.warn("Please use ase.dft.bandgap.bandgap() instead!")
     gap, (s1, k1, n1), (s2, k2, n2) = bandgap(calc, direct, spin, output)
     ns = calc.get_number_of_spins()
     if ns == 2 and spin is None:
@@ -15,8 +15,15 @@ def get_band_gap(calc, direct=False, spin=None, output='-'):
     return gap, k1, k2
 
 
-def bandgap(calc=None, direct=False, spin=None, output='-',
-            eigenvalues=None, efermi=None, kpts=None):
+def bandgap(
+    calc=None,
+    direct=False,
+    spin=None,
+    output="-",
+    eigenvalues=None,
+    efermi=None,
+    kpts=None,
+):
     """Calculates the band-gap.
 
     Parameters:
@@ -59,9 +66,12 @@ def bandgap(calc=None, direct=False, spin=None, output='-',
         kpts = calc.get_ibz_k_points()
         nk = len(kpts)
         ns = calc.get_number_of_spins()
-        eigenvalues = np.array([[calc.get_eigenvalues(kpt=k, spin=s)
-                                 for k in range(nk)]
-                                for s in range(ns)])
+        eigenvalues = np.array(
+            [
+                [calc.get_eigenvalues(kpt=k, spin=s) for k in range(nk)]
+                for s in range(ns)
+            ]
+        )
         if efermi is None:
             efermi = calc.get_fermi_level()
 
@@ -72,7 +82,7 @@ def bandgap(calc=None, direct=False, spin=None, output='-',
         e_skn = e_skn[np.newaxis]  # spinors
 
     if not np.isfinite(e_skn).all():
-        raise ValueError('Bad eigenvalues!')
+        raise ValueError("Bad eigenvalues!")
 
     gap, (s1, k1, n1), (s2, k2, n2) = _bandgap(e_skn, spin, direct)
 
@@ -83,24 +93,25 @@ def bandgap(calc=None, direct=False, spin=None, output='-',
         def skn(s, k, n):
             """Convert k or (s, k) to string."""
             if kpts is None:
-                return '(s={}, k={}, n={})'.format(s, k, n)
-            return '(s={}, k={}, n={}, [{:.2f}, {:.2f}, {:.2f}])'.format(
-                s, k, n, *kpts[k])
+                return "(s={}, k={}, n={})".format(s, k, n)
+            return "(s={}, k={}, n={}, [{:.2f}, {:.2f}, {:.2f}])".format(
+                s, k, n, *kpts[k]
+            )
 
         if spin is not None:
-            p('spin={}: '.format(spin), end='')
+            p("spin={}: ".format(spin), end="")
         if gap == 0.0:
-            p('No gap')
+            p("No gap")
         elif direct:
-            p('Direct gap: {:.3f} eV'.format(gap))
+            p("Direct gap: {:.3f} eV".format(gap))
             if s1 == s2:
-                p('Transition at:', skn(s1, k1, n1))
+                p("Transition at:", skn(s1, k1, n1))
             else:
-                p('Transition at:', skn('{}->{}'.format(s1, s2), k1, n1))
+                p("Transition at:", skn("{}->{}".format(s1, s2), k1, n1))
         else:
-            p('Gap: {:.3f} eV'.format(gap))
-            p('Transition (v -> c):')
-            p(' ', skn(s1, k1, n1), '->', skn(s2, k2, n2))
+            p("Gap: {:.3f} eV".format(gap))
+            p("Transition (v -> c):")
+            p(" ", skn(s1, k1, n1), "->", skn(s2, k2, n2))
 
     if eigenvalues.ndim != 3:
         p1 = (k1, n1)
@@ -130,11 +141,14 @@ def _bandgap(e_skn, spin, direct):
         return 0.0, (None, None, None), (None, None, None)
 
     if (N_sk == 0).any() or (N_sk == nb).any():
-        raise ValueError('Too few bands!')
+        raise ValueError("Too few bands!")
 
-    e_skn = np.array([[e_skn[s, k, N_sk[s, k] - 1:N_sk[s, k] + 1]
-                       for k in range(nk)]
-                      for s in range(ns)])
+    e_skn = np.array(
+        [
+            [e_skn[s, k, N_sk[s, k] - 1 : N_sk[s, k] + 1] for k in range(nk)]
+            for s in range(ns)
+        ]
+    )
     ev_sk = e_skn[:, :, 0]  # valence band
     ec_sk = e_skn[:, :, 1]  # conduction band
 

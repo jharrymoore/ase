@@ -24,8 +24,9 @@ class MDLogger(IOContext):
     mode="a":      How the file is opened if logfile is a filename.
     """
 
-    def __init__(self, dyn, atoms, logfile, header=True, stress=False,
-                 peratom=False, mode="a"):
+    def __init__(
+        self, dyn, atoms, logfile, header=True, stress=False, peratom=False, mode="a"
+    ):
         if hasattr(dyn, "get_time"):
             self.dyn = weakref.proxy(dyn)
         else:
@@ -42,12 +43,20 @@ class MDLogger(IOContext):
             self.hdr = ""
             self.fmt = ""
         if self.peratom:
-            self.hdr += "%12s %12s %12s  %6s" % ("Etot/N[eV]", "Epot/N[eV]",
-                                                 "Ekin/N[eV]", "T[K]")
+            self.hdr += "%12s %12s %12s  %6s" % (
+                "Etot/N[eV]",
+                "Epot/N[eV]",
+                "Ekin/N[eV]",
+                "T[K]",
+            )
             self.fmt += "%12.4f %12.4f %12.4f  %6.1f"
         else:
-            self.hdr += "%12s %12s %12s  %6s" % ("Etot[eV]", "Epot[eV]",
-                                                 "Ekin[eV]", "T[K]")
+            self.hdr += "%12s %12s %12s  %6s" % (
+                "Etot[eV]",
+                "Epot[eV]",
+                "Ekin[eV]",
+                "T[K]",
+            )
             # Choose a sensible number of decimals
             if global_natoms <= 100:
                 digits = 4
@@ -59,8 +68,9 @@ class MDLogger(IOContext):
                 digits = 1
             self.fmt += 3 * ("%%12.%df " % (digits,)) + " %6.1f"
         if self.stress:
-            self.hdr += ('      ---------------------- stress [GPa] '
-                         '-----------------------')
+            self.hdr += (
+                "      ---------------------- stress [GPa] " "-----------------------"
+            )
             self.fmt += 6 * " %10.3f"
         self.fmt += "\n"
         if header:
@@ -84,7 +94,6 @@ class MDLogger(IOContext):
             dat = ()
         dat += (epot + ekin, epot, ekin, temp)
         if self.stress:
-            dat += tuple(self.atoms.get_stress(
-                include_ideal_gas=True) / units.GPa)
+            dat += tuple(self.atoms.get_stress(include_ideal_gas=True) / units.GPa)
         self.logfile.write(self.fmt % dat)
         self.logfile.flush()

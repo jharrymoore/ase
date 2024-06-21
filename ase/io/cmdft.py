@@ -14,7 +14,7 @@ def read_cmdft(fileobj):
         w = lines.pop(0).split()
         if w[0].startswith('"'):
             position = Bohr * np.array([float(w[3]), float(w[4]), float(w[5])])
-            s.append(Atom(w[0].replace('"', ''), position))
+            s.append(Atom(w[0].replace('"', ""), position))
         else:
             finished = True
 

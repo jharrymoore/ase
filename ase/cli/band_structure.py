@@ -10,7 +10,7 @@ def read_band_structure(filename):
 
     bs = read_json(filename)
     if not isinstance(bs, BandStructure):
-        raise CLIError(f'Expected band structure, but file contains: {bs}')
+        raise CLIError(f"Expected band structure, but file contains: {bs}")
     return bs
 
 
@@ -22,10 +22,9 @@ def main(args, parser):
     fig = plt.figure(args.calculation)
     ax = fig.gca()
 
-    bs.plot(ax=ax,
-            filename=args.output,
-            emin=emin + bs.reference,
-            emax=emax + bs.reference)
+    bs.plot(
+        ax=ax, filename=args.output, emin=emin + bs.reference, emax=emax + bs.reference
+    )
 
     if args.output is None:
         plt.show()
@@ -45,13 +44,18 @@ class CLICommand:
 
     @staticmethod
     def add_arguments(parser):
-        parser.add_argument('calculation',
-                            help='Path to output file(s) from calculation.')
-        parser.add_argument('-o', '--output', help='Write image to a file')
-        parser.add_argument('-r', '--range', nargs=2, default=['-3', '3'],
-                            metavar=('emin', 'emax'),
-                            help='Default: "-3.0 3.0" '
-                            '(in eV relative to Fermi level).')
+        parser.add_argument(
+            "calculation", help="Path to output file(s) from calculation."
+        )
+        parser.add_argument("-o", "--output", help="Write image to a file")
+        parser.add_argument(
+            "-r",
+            "--range",
+            nargs=2,
+            default=["-3", "3"],
+            metavar=("emin", "emax"),
+            help='Default: "-3.0 3.0" ' "(in eV relative to Fermi level).",
+        )
 
     @staticmethod
     def run(args, parser):

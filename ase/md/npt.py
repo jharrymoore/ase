@@ -1,4 +1,4 @@
-'''Constant pressure/stress and temperature dynamics.
+"""Constant pressure/stress and temperature dynamics.
 
 Combined Nose-Hoover and Parrinello-Rahman dynamics, creating an NPT
 (or N,stress,T) ensemble.
@@ -18,7 +18,7 @@ using a centered difference method [3].
     "Time-reversible equilibrium and nonequilibrium isothermal-isobaric
     simulations with centered-difference Stoermer algorithms.", Physical
     Review A, 41, p. 4552 (1990).
-'''
+"""
 
 import sys
 import weakref
@@ -37,15 +37,25 @@ linalg = np.linalg
 class NPT(MolecularDynamics):
 
     classname = "NPT"  # Used by the trajectory.
-    _npt_version = 2   # Version number, used for Asap compatibility.
+    _npt_version = 2  # Version number, used for Asap compatibility.
 
-    def __init__(self, atoms,
-                 timestep, temperature=None, externalstress=None,
-                 ttime=None, pfactor=None,
-                 *, temperature_K=None,
-                 mask=None, trajectory=None, logfile=None, loginterval=1,
-                 append_trajectory=False):
-        '''Constant pressure/stress and temperature dynamics.
+    def __init__(
+        self,
+        atoms,
+        timestep,
+        temperature=None,
+        externalstress=None,
+        ttime=None,
+        pfactor=None,
+        *,
+        temperature_K=None,
+        mask=None,
+        trajectory=None,
+        logfile=None,
+        loginterval=1,
+        append_trajectory=False,
+    ):
+        """Constant pressure/stress and temperature dynamics.
 
         Combined Nose-Hoover and Parrinello-Rahman dynamics, creating an
         NPT (or N,stress,T) ensemble.
@@ -134,18 +144,25 @@ class NPT(MolecularDynamics):
         4) F. D. Di Tolla and M. Ronchetti, Physical
            Review E 48, p. 1726 (1993).
 
-        '''
+        """
 
-        MolecularDynamics.__init__(self, atoms, timestep, trajectory,
-                                   logfile, loginterval,
-                                   append_trajectory=append_trajectory)
+        MolecularDynamics.__init__(
+            self,
+            atoms,
+            timestep,
+            trajectory,
+            logfile,
+            loginterval,
+            append_trajectory=append_trajectory,
+        )
         # self.atoms = atoms
         # self.timestep = timestep
         if externalstress is None and pfactor is not None:
             raise TypeError("Missing 'externalstress' argument.")
         self.zero_center_of_mass_momentum(verbose=1)
         self.temperature = units.kB * self._process_temperature(
-            temperature, temperature_K, 'eV')
+            temperature, temperature_K, "eV"
+        )
         self.set_stress(externalstress)
         self.set_mask(mask)
         self.eta = np.zeros((3, 3), float)
@@ -170,7 +187,8 @@ class NPT(MolecularDynamics):
             The new temperature, in K.
         """
         self.temperature = units.kB * self._process_temperature(
-            temperature, temperature_K, 'eV')
+            temperature, temperature_K, "eV"
+        )
         self._calculateconstants()
 
     def set_stress(self, stress):
@@ -189,11 +207,17 @@ class NPT(MolecularDynamics):
             stress = np.array(stress)
             if stress.shape == (3, 3):
                 if not self._issymmetric(stress):
-                    raise ValueError(
-                        "The external stress must be a symmetric tensor.")
-                stress = np.array((stress[0, 0], stress[1, 1],
-                                   stress[2, 2], stress[1, 2],
-                                   stress[0, 2], stress[0, 1]))
+                    raise ValueError("The external stress must be a symmetric tensor.")
+                stress = np.array(
+                    (
+                        stress[0, 0],
+                        stress[1, 1],
+                        stress[2, 2],
+                        stress[1, 2],
+                        stress[0, 2],
+                        stress[0, 1],
+                    )
+                )
             elif stress.shape != (6,):
                 raise ValueError("The external stress has the wrong shape.")
         self.externalstress = stress
@@ -216,8 +240,9 @@ class NPT(MolecularDynamics):
         if not hasattr(mask, "shape"):
             mask = np.array(mask)
         if mask.shape != (3,) and mask.shape != (3, 3):
-            raise RuntimeError('The mask has the wrong shape ' +
-                               '(must be a 3-vector or 3x3 matrix)')
+            raise RuntimeError(
+                "The mask has the wrong shape " + "(must be a 3-vector or 3x3 matrix)"
+            )
         else:
             mask = np.not_equal(mask, 0)  # Make sure it is 0/1
 
@@ -267,7 +292,8 @@ class NPT(MolecularDynamics):
         else:
             if self.have_the_atoms_been_changed():
                 raise NotImplementedError(
-                    "You have modified the atoms since the last timestep.")
+                    "You have modified the atoms since the last timestep."
+                )
 
         for i in range(steps):
             self.step()
@@ -284,8 +310,7 @@ class NPT(MolecularDynamics):
         expected_r = np.dot(self.q + 0.5, h)
         err = max(abs((expected_r - self.atoms.get_positions()).ravel()))
         if err > limit:
-            self._warning("The atomic positions have been modified: " +
-                          str(err))
+            self._warning("The atomic positions have been modified: " + str(err))
             return 1
         return 0
 
@@ -311,20 +336,25 @@ class NPT(MolecularDynamics):
             deltaeta = np.zeros(6, float)
         else:
             stress = self.stresscalculator()
-            deltaeta = -2 * dt * (self.pfact * linalg.det(self.h) *
-                                  (stress - self.externalstress))
+            deltaeta = (
+                -2
+                * dt
+                * (self.pfact * linalg.det(self.h) * (stress - self.externalstress))
+            )
 
         if self.frac_traceless == 1:
-            eta_future = self.eta_past + self.mask * \
-                self._makeuppertriangular(deltaeta)
+            eta_future = self.eta_past + self.mask * self._makeuppertriangular(deltaeta)
         else:
             trace_part, traceless_part = self._separatetrace(
-                self._makeuppertriangular(deltaeta))
-            eta_future = (self.eta_past + trace_part +
-                          self.frac_traceless * traceless_part)
+                self._makeuppertriangular(deltaeta)
+            )
+            eta_future = (
+                self.eta_past + trace_part + self.frac_traceless * traceless_part
+            )
 
-        deltazeta = 2 * dt * self.tfact * (self.atoms.get_kinetic_energy() -
-                                           self.desiredEkin)
+        deltazeta = (
+            2 * dt * self.tfact * (self.atoms.get_kinetic_energy() - self.desiredEkin)
+        )
         zeta_future = self.zeta_past + deltazeta
         # Advance time
         self.timeelapsed += dt
@@ -343,8 +373,8 @@ class NPT(MolecularDynamics):
         force = self.forcecalculator()
         self._calculate_q_future(force)
         self.atoms.set_momenta(
-            np.dot(self.q_future - self.q_past, self.h / (2 * dt)) *
-            self._getmasses())
+            np.dot(self.q_future - self.q_past, self.h / (2 * dt)) * self._getmasses()
+        )
         # self.stresscalculator()
 
     def forcecalculator(self):
@@ -375,15 +405,15 @@ class NPT(MolecularDynamics):
             print("Max:", max((self.h[1, 0], self.h[2, 0], self.h[2, 1])))
             raise NotImplementedError(
                 "Can (so far) only operate on lists of atoms where the "
-                "computational box is an upper triangular matrix.")
+                "computational box is an upper triangular matrix."
+            )
         self.inv_h = linalg.inv(self.h)
         # The contents of the q arrays should migrate in parallel simulations.
         # self._make_special_q_arrays()
         self.q = np.dot(self.atoms.get_positions(), self.inv_h) - 0.5
         # zeta and eta were set in __init__
         self._initialize_eta_h()
-        deltazeta = dt * self.tfact * (atoms.get_kinetic_energy() -
-                                       self.desiredEkin)
+        deltazeta = dt * self.tfact * (atoms.get_kinetic_energy() - self.desiredEkin)
         self.zeta_past = self.zeta - deltazeta
         self._calculate_q_past_and_future()
         self.initialized = 1
@@ -402,13 +432,16 @@ class NPT(MolecularDynamics):
         # tretaTeta = sum(diagonal(matrixmultiply(transpose(self.eta),
         #                                        self.eta)))
         contractedeta = np.sum((self.eta * self.eta).ravel())
-        gibbs = (self.atoms.get_potential_energy() +
-                 self.atoms.get_kinetic_energy()
-                 - np.sum(self.externalstress[0:3]) * linalg.det(self.h) / 3.0)
+        gibbs = (
+            self.atoms.get_potential_energy()
+            + self.atoms.get_kinetic_energy()
+            - np.sum(self.externalstress[0:3]) * linalg.det(self.h) / 3.0
+        )
         if self.ttime is not None:
-            gibbs += (1.5 * n * self.temperature *
-                      (self.ttime * self.zeta)**2 +
-                      3 * self.temperature * (n - 1) * self.zeta_integrated)
+            gibbs += (
+                1.5 * n * self.temperature * (self.ttime * self.zeta) ** 2
+                + 3 * self.temperature * (n - 1) * self.zeta_integrated
+            )
         else:
             assert self.zeta == 0.0
         if self.pfactor_given is not None:
@@ -427,11 +460,10 @@ class NPT(MolecularDynamics):
         abscm = np.sqrt(np.sum(cm * cm))
         if verbose and abscm > 1e-4:
             self._warning(
-                self.classname +
-                ": Setting the center-of-mass momentum to zero "
-                "(was %.6g %.6g %.6g)" % tuple(cm))
-        self.atoms.set_momenta(self.atoms.get_momenta() -
-                               cm / self._getnatoms())
+                self.classname + ": Setting the center-of-mass momentum to zero "
+                "(was %.6g %.6g %.6g)" % tuple(cm)
+            )
+        self.atoms.set_momenta(self.atoms.get_momenta() - cm / self._getnatoms())
 
     def attach_atoms(self, atoms):
         """Assign atoms to a restored dynamics object.
@@ -444,15 +476,17 @@ class NPT(MolecularDynamics):
         except AttributeError:
             pass
         else:
-            raise RuntimeError("Cannot call attach_atoms on a dynamics "
-                               "which already has atoms.")
+            raise RuntimeError(
+                "Cannot call attach_atoms on a dynamics " "which already has atoms."
+            )
         MolecularDynamics.__init__(self, atoms, self.dt)
         limit = 1e-6
         h = self._getbox()
         if max(abs((h - self.h).ravel())) > limit:
             raise RuntimeError(
                 "The unit cell of the atoms does not match "
-                "the unit cell stored in the file.")
+                "the unit cell stored in the file."
+            )
         self.inv_h = linalg.inv(self.h)
         self.q = np.dot(self.atoms.get_positions(), self.inv_h) - 0.5
         self._calculate_q_past_and_future()
@@ -472,36 +506,39 @@ class NPT(MolecularDynamics):
         """
         if hasattr(function, "set_extra_data"):
             # We are attaching a BundleTrajectory or similar
-            function.set_extra_data("npt_init",
-                                    WeakMethodWrapper(self, "get_init_data"),
-                                    once=True)
-            function.set_extra_data("npt_dynamics",
-                                    WeakMethodWrapper(self, "get_data"))
+            function.set_extra_data(
+                "npt_init", WeakMethodWrapper(self, "get_init_data"), once=True
+            )
+            function.set_extra_data("npt_dynamics", WeakMethodWrapper(self, "get_data"))
         MolecularDynamics.attach(self, function, interval, *args, **kwargs)
 
     def get_init_data(self):
         "Return the data needed to initialize a new NPT dynamics."
-        return {'dt': self.dt,
-                'temperature': self.temperature,
-                'desiredEkin': self.desiredEkin,
-                'externalstress': self.externalstress,
-                'mask': self.mask,
-                'ttime': self.ttime,
-                'tfact': self.tfact,
-                'pfactor_given': self.pfactor_given,
-                'pfact': self.pfact,
-                'frac_traceless': self.frac_traceless}
+        return {
+            "dt": self.dt,
+            "temperature": self.temperature,
+            "desiredEkin": self.desiredEkin,
+            "externalstress": self.externalstress,
+            "mask": self.mask,
+            "ttime": self.ttime,
+            "tfact": self.tfact,
+            "pfactor_given": self.pfactor_given,
+            "pfact": self.pfact,
+            "frac_traceless": self.frac_traceless,
+        }
 
     def get_data(self):
         "Return data needed to restore the state."
-        return {'eta': self.eta,
-                'eta_past': self.eta_past,
-                'zeta': self.zeta,
-                'zeta_past': self.zeta_past,
-                'zeta_integrated': self.zeta_integrated,
-                'h': self.h,
-                'h_past': self.h_past,
-                'timeelapsed': self.timeelapsed}
+        return {
+            "eta": self.eta,
+            "eta_past": self.eta_past,
+            "zeta": self.zeta,
+            "zeta_past": self.zeta_past,
+            "zeta_integrated": self.zeta_integrated,
+            "h": self.h,
+            "h_past": self.h_past,
+            "timeelapsed": self.timeelapsed,
+        }
 
     @classmethod
     def read_from_trajectory(cls, trajectory, frame=-1, atoms=None):
@@ -523,29 +560,32 @@ class NPT(MolecularDynamics):
             Pre-read atoms.  Do not use.
         """
         if isinstance(trajectory, str):
-            if trajectory.endswith('/'):
+            if trajectory.endswith("/"):
                 trajectory = trajectory[:-1]
-            if trajectory.endswith('.bundle'):
+            if trajectory.endswith(".bundle"):
                 from ase.io.bundletrajectory import BundleTrajectory
+
                 trajectory = BundleTrajectory(trajectory)
             else:
-                raise ValueError(
-                    f"Cannot open '{trajectory}': unsupported file format")
+                raise ValueError(f"Cannot open '{trajectory}': unsupported file format")
         # trajectory is now a BundleTrajectory object (or compatible)
         if atoms is None:
             atoms = trajectory[frame]
-        init_data = trajectory.read_extra_data('npt_init', 0)
-        frame_data = trajectory.read_extra_data('npt_dynamics', frame)
-        dyn = cls(atoms, timestep=init_data['dt'],
-                  temperature=init_data['temperature'],
-                  externalstress=init_data['externalstress'],
-                  ttime=init_data['ttime'],
-                  pfactor=init_data['pfactor_given'],
-                  mask=init_data['mask'])
-        dyn.desiredEkin = init_data['desiredEkin']
-        dyn.tfact = init_data['tfact']
-        dyn.pfact = init_data['pfact']
-        dyn.frac_traceless = init_data['frac_traceless']
+        init_data = trajectory.read_extra_data("npt_init", 0)
+        frame_data = trajectory.read_extra_data("npt_dynamics", frame)
+        dyn = cls(
+            atoms,
+            timestep=init_data["dt"],
+            temperature=init_data["temperature"],
+            externalstress=init_data["externalstress"],
+            ttime=init_data["ttime"],
+            pfactor=init_data["pfactor_given"],
+            mask=init_data["mask"],
+        )
+        dyn.desiredEkin = init_data["desiredEkin"]
+        dyn.tfact = init_data["tfact"]
+        dyn.pfact = init_data["pfact"]
+        dyn.frac_traceless = init_data["frac_traceless"]
         for k, v in frame_data.items():
             setattr(dyn, k, v)
         return (dyn, atoms)
@@ -562,7 +602,7 @@ class NPT(MolecularDynamics):
         """return two matrices, one proportional to the identity
         the other traceless, which sum to the given matrix
         """
-        tracePart = ((mat[0][0] + mat[1][1] + mat[2][2]) / 3.) * np.identity(3)
+        tracePart = ((mat[0][0] + mat[1][1] + mat[2][2]) / 3.0) * np.identity(3)
         return tracePart, mat - tracePart
 
     # A number of convenient helper methods
@@ -575,19 +615,18 @@ class NPT(MolecularDynamics):
         "Calculate future q.  Needed in Timestep and Initialization."
         dt = self.dt
         id3 = np.identity(3)
-        alpha = (dt * dt) * np.dot(force / self._getmasses(),
-                                   self.inv_h)
-        beta = dt * np.dot(self.h, np.dot(self.eta + 0.5 * self.zeta * id3,
-                                          self.inv_h))
+        alpha = (dt * dt) * np.dot(force / self._getmasses(), self.inv_h)
+        beta = dt * np.dot(self.h, np.dot(self.eta + 0.5 * self.zeta * id3, self.inv_h))
         inv_b = linalg.inv(beta + id3)
-        self.q_future = np.dot(2 * self.q +
-                               np.dot(self.q_past, beta - id3) + alpha,
-                               inv_b)
+        self.q_future = np.dot(
+            2 * self.q + np.dot(self.q_past, beta - id3) + alpha, inv_b
+        )
 
     def _calculate_q_past_and_future(self):
         def ekin(p, m=self.atoms.get_masses()):
             p2 = np.sum(p * p, -1)
             return 0.5 * np.sum(p2 / m) / len(m)
+
         p0 = self.atoms.get_momenta()
         m = self._getmasses()
         p = np.array(p0, copy=1)
@@ -607,22 +646,29 @@ class NPT(MolecularDynamics):
         if self.pfactor_given is None:
             deltaeta = np.zeros(6, float)
         else:
-            deltaeta = (-self.dt * self.pfact * linalg.det(self.h)
-                        * (self.stresscalculator() - self.externalstress))
+            deltaeta = (
+                -self.dt
+                * self.pfact
+                * linalg.det(self.h)
+                * (self.stresscalculator() - self.externalstress)
+            )
         if self.frac_traceless == 1:
-            self.eta_past = self.eta - self.mask * \
-                self._makeuppertriangular(deltaeta)
+            self.eta_past = self.eta - self.mask * self._makeuppertriangular(deltaeta)
         else:
             trace_part, traceless_part = self._separatetrace(
-                self._makeuppertriangular(deltaeta))
-            self.eta_past = (self.eta - trace_part -
-                             self.frac_traceless * traceless_part)
+                self._makeuppertriangular(deltaeta)
+            )
+            self.eta_past = self.eta - trace_part - self.frac_traceless * traceless_part
 
     def _makeuppertriangular(self, sixvector):
         "Make an upper triangular matrix from a 6-vector."
-        return np.array(((sixvector[0], sixvector[5], sixvector[4]),
-                         (0, sixvector[1], sixvector[3]),
-                         (0, 0, sixvector[2])))
+        return np.array(
+            (
+                (sixvector[0], sixvector[5], sixvector[4]),
+                (0, sixvector[1], sixvector[3]),
+                (0, 0, sixvector[2]),
+            )
+        )
 
     @staticmethod
     def _isuppertriangular(m) -> bool:
@@ -637,8 +683,7 @@ class NPT(MolecularDynamics):
         if self.ttime is None:
             self.tfact = 0.0
         else:
-            self.tfact = 2.0 / (3 * n * self.temperature *
-                                self.ttime * self.ttime)
+            self.tfact = 2.0 / (3 * n * self.temperature * self.ttime * self.ttime)
         if self.pfactor_given is None:
             self.pfact = 0.0
         else:

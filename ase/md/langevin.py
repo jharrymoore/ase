@@ -13,10 +13,22 @@ class Langevin(MolecularDynamics):
     # Helps Asap doing the right thing.  Increment when changing stuff:
     _lgv_version = 5
 
-    def __init__(self, atoms, timestep, temperature=None, friction=None,
-                 fixcm=True, *, temperature_K=None, trajectory=None,
-                 logfile=None, loginterval=1, communicator=world,
-                 rng=None, append_trajectory=False):
+    def __init__(
+        self,
+        atoms,
+        timestep,
+        temperature=None,
+        friction=None,
+        fixcm=True,
+        *,
+        temperature_K=None,
+        trajectory=None,
+        logfile=None,
+        loginterval=1,
+        communicator=world,
+        rng=None,
+        append_trajectory=False
+    ):
         """
         Parameters:
 
@@ -77,8 +89,9 @@ class Langevin(MolecularDynamics):
         if friction is None:
             raise TypeError("Missing 'friction' argument.")
         self.fr = friction
-        self.temp = units.kB * self._process_temperature(temperature,
-                                                         temperature_K, 'eV')
+        self.temp = units.kB * self._process_temperature(
+            temperature, temperature_K, "eV"
+        )
         self.fix_com = fixcm
         if communicator is None:
             communicator = DummyMPI()
@@ -87,21 +100,32 @@ class Langevin(MolecularDynamics):
             self.rng = np.random
         else:
             self.rng = rng
-        MolecularDynamics.__init__(self, atoms, timestep, trajectory,
-                                   logfile, loginterval,
-                                   append_trajectory=append_trajectory)
+        MolecularDynamics.__init__(
+            self,
+            atoms,
+            timestep,
+            trajectory,
+            logfile,
+            loginterval,
+            append_trajectory=append_trajectory,
+        )
         self.updatevars()
 
     def todict(self):
         d = MolecularDynamics.todict(self)
-        d.update({'temperature_K': self.temp / units.kB,
-                  'friction': self.fr,
-                  'fixcm': self.fix_com})
+        d.update(
+            {
+                "temperature_K": self.temp / units.kB,
+                "friction": self.fr,
+                "fixcm": self.fix_com,
+            }
+        )
         return d
 
     def set_temperature(self, temperature=None, temperature_K=None):
-        self.temp = units.kB * self._process_temperature(temperature,
-                                                         temperature_K, 'eV')
+        self.temp = units.kB * self._process_temperature(
+            temperature, temperature_K, "eV"
+        )
         self.updatevars()
 
     def set_friction(self, friction):
@@ -119,11 +143,11 @@ class Langevin(MolecularDynamics):
         masses = self.masses
         sigma = np.sqrt(2 * T * fr / masses)
 
-        self.c1 = dt / 2. - dt * dt * fr / 8.
-        self.c2 = dt * fr / 2 - dt * dt * fr * fr / 8.
-        self.c3 = np.sqrt(dt) * sigma / 2. - dt**1.5 * fr * sigma / 8.
+        self.c1 = dt / 2.0 - dt * dt * fr / 8.0
+        self.c2 = dt * fr / 2 - dt * dt * fr * fr / 8.0
+        self.c3 = np.sqrt(dt) * sigma / 2.0 - dt**1.5 * fr * sigma / 8.0
         self.c5 = dt**1.5 * sigma / (2 * np.sqrt(3))
-        self.c4 = fr / 2. * self.c5
+        self.c4 = fr / 2.0 * self.c5
 
     def step(self, forces=None):
         atoms = self.atoms
@@ -145,7 +169,7 @@ class Langevin(MolecularDynamics):
         # triple defined in the constraints. This is needed to achieve the
         # correct target temperature.
         for constraint in self.atoms.constraints:
-            if hasattr(constraint, 'redistribute_forces_md'):
+            if hasattr(constraint, "redistribute_forces_md"):
                 constraint.redistribute_forces_md(atoms, xi, rand=True)
                 constraint.redistribute_forces_md(atoms, eta, rand=True)
 
@@ -159,12 +183,12 @@ class Langevin(MolecularDynamics):
         self.rnd_vel = self.c3 * xi - self.c4 * eta
         if self.fix_com:
             self.rnd_pos -= self.rnd_pos.sum(axis=0) / natoms
-            self.rnd_vel -= (self.rnd_vel *
-                             self.masses).sum(axis=0) / (self.masses * natoms)
+            self.rnd_vel -= (self.rnd_vel * self.masses).sum(axis=0) / (
+                self.masses * natoms
+            )
 
         # First halfstep in the velocity.
-        self.v += (self.c1 * forces / self.masses - self.c2 * self.v +
-                   self.rnd_vel)
+        self.v += self.c1 * forces / self.masses - self.c2 * self.v + self.rnd_vel
 
         # Full step in positions
         x = atoms.get_positions()
@@ -177,8 +201,7 @@ class Langevin(MolecularDynamics):
         forces = atoms.get_forces(md=True)
 
         # Update the velocities
-        self.v += (self.c1 * forces / self.masses - self.c2 * self.v +
-                   self.rnd_vel)
+        self.v += self.c1 * forces / self.masses - self.c2 * self.v + self.rnd_vel
 
         # Second part of RATTLE taken care of here
         atoms.set_momenta(self.v * self.masses)

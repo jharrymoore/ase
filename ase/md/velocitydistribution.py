@@ -23,7 +23,7 @@ class UnitError(Exception):
 
 
 def force_temperature(atoms, temperature, unit="K"):
-    """ force (nucl.) temperature to have a precise value
+    """force (nucl.) temperature to have a precise value
 
     Parameters:
     atoms: ase.Atoms
@@ -77,16 +77,20 @@ def _maxwellboltzmanndistribution(masses, temp, communicator=None, rng=None):
     if communicator is None:
         communicator = world
     xi = rng.standard_normal((len(masses), 3))
-    if communicator != 'serial':
+    if communicator != "serial":
         communicator.broadcast(xi, 0)
     momenta = xi * np.sqrt(masses * temp)[:, np.newaxis]
     return momenta
 
 
 def MaxwellBoltzmannDistribution(
-    atoms, temp=None, *, temperature_K=None,
-    communicator=None, force_temp=False,
-    rng=None
+    atoms,
+    temp=None,
+    *,
+    temperature_K=None,
+    communicator=None,
+    force_temp=False,
+    rng=None,
 ):
     """Sets the momenta to a Maxwell-Boltzmann distribution.
 
@@ -114,7 +118,7 @@ def MaxwellBoltzmannDistribution(
     rng: Numpy RNG (optional)
         Random number generator.  Default: numpy.random
     """
-    temp = units.kB * process_temperature(temp, temperature_K, 'eV')
+    temp = units.kB * process_temperature(temp, temperature_K, "eV")
     masses = atoms.get_masses()
     momenta = _maxwellboltzmanndistribution(masses, temp, communicator, rng)
     atoms.set_momenta(momenta)
@@ -277,10 +281,10 @@ def phonon_harmonics(
     """
 
     # Handle the temperature units
-    temp = units.kB * process_temperature(temp, temperature_K, 'eV')
+    temp = units.kB * process_temperature(temp, temperature_K, "eV")
 
     # Build dynamical matrix
-    rminv = (masses ** -0.5).repeat(3)
+    rminv = (masses**-0.5).repeat(3)
     dynamical_matrix = force_constants * rminv[:, None] * rminv[None, :]
 
     # Solve eigenvalue problem to compute phonon spectrum and eigenvectors

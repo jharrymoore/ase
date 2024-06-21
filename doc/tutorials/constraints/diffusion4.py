@@ -5,8 +5,8 @@ from ase.optimize import QuasiNewton
 
 # 2x2-Al(001) surface with 3 layers and an
 # Au atom adsorbed in a hollow site:
-slab = fcc100('Al', size=(2, 2, 3))
-add_adsorbate(slab, 'Au', 1.7, 'hollow')
+slab = fcc100("Al", size=(2, 2, 3))
+add_adsorbate(slab, "Au", 1.7, "hollow")
 slab.center(axis=2, vacuum=4.0)
 
 # Make sure the structure is correct:
@@ -27,7 +27,7 @@ slab.set_constraint([fixlayers, plane])
 slab.calc = EMT()
 
 for i in range(5):
-    qn = QuasiNewton(slab, trajectory='mep%d.traj' % i)
+    qn = QuasiNewton(slab, trajectory="mep%d.traj" % i)
     qn.run(fmax=0.05)
     # Move gold atom along x-axis:
     slab[-1].x += slab.get_cell()[0, 0] / 8

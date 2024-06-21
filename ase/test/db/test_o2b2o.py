@@ -5,12 +5,13 @@ import numpy as np
 
 
 def test_o2b2o():
-    for o1 in [1.0,
-               {'a': np.zeros((2, 2), np.float32),
-                'b': np.zeros((0, 2), int)},
-               ['a', 42, True, None, np.nan, np.inf, 1j],
-               Cell(np.eye(3)),
-               {'a': {'b': {'c': np.ones(3)}}}]:
+    for o1 in [
+        1.0,
+        {"a": np.zeros((2, 2), np.float32), "b": np.zeros((0, 2), int)},
+        ["a", 42, True, None, np.nan, np.inf, 1j],
+        Cell(np.eye(3)),
+        {"a": {"b": {"c": np.ones(3)}}},
+    ]:
         p1 = pickle.dumps(o1)
         b1 = object_to_bytes(o1)
         o2 = bytes_to_object(b1)

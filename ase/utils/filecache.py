@@ -32,7 +32,7 @@ class Locked(Exception):
 
 
 class JSONBackend:
-    extension = '.json'
+    extension = ".json"
     DecodeError = json.decoder.JSONDecodeError
 
     @staticmethod
@@ -50,7 +50,7 @@ class JSONBackend:
 
     @staticmethod
     def write(fd, value):
-        fd.write(encode_json(value).encode('utf-8'))
+        fd.write(encode_json(value).encode("utf-8"))
 
     @classmethod
     def dump_cache(cls, path, dct, comm):
@@ -62,19 +62,19 @@ class JSONBackend:
 
 
 class ULMBackend:
-    extension = '.ulm'
+    extension = ".ulm"
     DecodeError = InvalidULMFileError
 
     @staticmethod
     def open_for_writing(path, comm):
         fd = opencew(path, world=comm)
         if fd is not None:
-            return Writer(fd, 'w', '')
+            return Writer(fd, "w", "")
 
     @staticmethod
     def read(fname):
-        with ulmopen(fname, 'r') as r:
-            data = r._data['cache']
+        with ulmopen(fname, "r") as r:
+            data = r._data["cache"]
             if isinstance(data, NDArrayReader):
                 return data.read()
         return data
@@ -82,12 +82,12 @@ class ULMBackend:
     @staticmethod
     def open_and_write(target, data, comm):
         if comm.rank == 0:
-            with ulmopen(target, 'w') as w:
-                w.write('cache', data)
+            with ulmopen(target, "w") as w:
+                w.write("cache", data)
 
     @staticmethod
     def write(fd, value):
-        fd.write('cache', value)
+        fd.write("cache", value)
 
     @classmethod
     def dump_cache(cls, path, dct, comm):
@@ -108,7 +108,7 @@ class CacheLock:
         try:
             self.backend.write(self.fd, value)
         except Exception as ex:
-            raise RuntimeError(f'Failed to save {value} to cache') from ex
+            raise RuntimeError(f"Failed to save {value} to cache") from ex
         finally:
             self.fd.close()
 
@@ -121,15 +121,15 @@ class _MultiFileCacheTemplate(MutableMapping):
         self.comm = comm
 
     def _filename(self, key):
-        return self.directory / (f'cache.{key}' + self.backend.extension)
+        return self.directory / (f"cache.{key}" + self.backend.extension)
 
     def _glob(self):
-        return self.directory.glob('cache.*' + self.backend.extension)
+        return self.directory.glob("cache.*" + self.backend.extension)
 
     def __iter__(self):
         for path in self._glob():
-            cache, key = path.stem.split('.', 1)
-            if cache != 'cache':
+            cache, key = path.stem.split(".", 1)
+            if cache != "cache":
                 continue
             yield key
 
@@ -180,8 +180,7 @@ class _MultiFileCacheTemplate(MutableMapping):
             missing(key)
 
     def combine(self):
-        cache = self.backend.dump_cache(self.directory, dict(self),
-                                        comm=self.comm)
+        cache = self.backend.dump_cache(self.directory, dict(self), comm=self.comm)
         assert set(cache) == set(self)
         self.clear()
         assert len(self) == 0
@@ -213,7 +212,7 @@ class _CombinedCacheTemplate(Mapping):
 
     @property
     def _filename(self):
-        return self.directory / ('combined' + self.backend.extension)
+        return self.directory / ("combined" + self.backend.extension)
 
     def __len__(self):
         return len(self._dct)
@@ -227,7 +226,7 @@ class _CombinedCacheTemplate(Mapping):
     def _dump(self):
         target = self._filename
         if target.exists():
-            raise RuntimeError(f'Already exists: {target}')
+            raise RuntimeError(f"Already exists: {target}")
         self.directory.mkdir(exist_ok=True, parents=True)
         self.backend.open_and_write(target, self._dct, comm=self.comm)
 
@@ -253,8 +252,7 @@ class _CombinedCacheTemplate(Mapping):
         return self
 
     def split(self):
-        cache = self.backend.create_multifile_cache(self.directory,
-                                                    comm=self.comm)
+        cache = self.backend.create_multifile_cache(self.directory, comm=self.comm)
         assert len(cache) == 0
         cache.update(self)
         assert set(cache) == set(self)

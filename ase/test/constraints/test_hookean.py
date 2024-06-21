@@ -25,25 +25,30 @@ def test_hookean():
             self.energies.append(atoms.get_total_energy())
 
     # Make Pt 110 slab with Cu2 adsorbate.
-    atoms = fcc110('Pt', (2, 2, 2), vacuum=7.)
-    adsorbate = Atoms([Atom('Cu', atoms[7].position + (0., 0., 2.5)),
-                       Atom('Cu', atoms[7].position + (0., 0., 5.0))])
+    atoms = fcc110("Pt", (2, 2, 2), vacuum=7.0)
+    adsorbate = Atoms(
+        [
+            Atom("Cu", atoms[7].position + (0.0, 0.0, 2.5)),
+            Atom("Cu", atoms[7].position + (0.0, 0.0, 5.0)),
+        ]
+    )
     atoms.extend(adsorbate)
     calc = EMT()
     atoms.calc = calc
 
     # Constrain the surface to be fixed and a Hookean constraint between
     # the adsorbate atoms.
-    constraints = [FixAtoms(indices=[atom.index for atom in atoms if
-                                     atom.symbol == 'Pt']),
-                   Hookean(a1=8, a2=9, rt=2.6, k=15.),
-                   Hookean(a1=8, a2=(0., 0., 1., -15.), k=15.)]
+    constraints = [
+        FixAtoms(indices=[atom.index for atom in atoms if atom.symbol == "Pt"]),
+        Hookean(a1=8, a2=9, rt=2.6, k=15.0),
+        Hookean(a1=8, a2=(0.0, 0.0, 1.0, -15.0), k=15.0),
+    ]
     atoms.set_constraint(constraints)
 
     # Give it some kinetic energy.
     momenta = atoms.get_momenta()
-    momenta[9, 2] += 20.
-    momenta[9, 1] += 2.
+    momenta[9, 2] += 20.0
+    momenta[9, 1] += 2.0
     atoms.set_momenta(momenta)
 
     # Propagate in Velocity Verlet (NVE).

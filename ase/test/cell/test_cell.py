@@ -65,9 +65,9 @@ def test_area(randcell):
 
 
 @pytest.mark.parametrize(
-    'zeromask',
+    "zeromask",
     [[], [1], [0, 2], [0, 1, 2]],
-    ids=lambda mask: 'dim={}'.format(3 - len(mask))
+    ids=lambda mask: "dim={}".format(3 - len(mask)),
 )
 def test_reciprocal_ndim(randcell, zeromask):
     randcell[zeromask] = 0

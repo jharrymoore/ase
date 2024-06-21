@@ -41,15 +41,20 @@ def fit_raw(energies, forces, positions, cell=None, pbc=None):
             s0 = path[i - 1]
             s1 = path[i]
             x = np.linspace(s0, s1, 20, endpoint=False)
-            c = np.linalg.solve(np.array([(1, s0, s0**2, s0**3),
-                                          (1, s1, s1**2, s1**3),
-                                          (0, 1, 2 * s0, 3 * s0**2),
-                                          (0, 1, 2 * s1, 3 * s1**2)]),
-                                np.array([energies[i - 1], energies[i],
-                                          lastslope, slope]))
+            c = np.linalg.solve(
+                np.array(
+                    [
+                        (1, s0, s0**2, s0**3),
+                        (1, s1, s1**2, s1**3),
+                        (0, 1, 2 * s0, 3 * s0**2),
+                        (0, 1, 2 * s1, 3 * s1**2),
+                    ]
+                ),
+                np.array([energies[i - 1], energies[i], lastslope, slope]),
+            )
             y = c[0] + x * (c[1] + x * (c[2] + x * c[3]))
-            fit_path[(i - 1) * 20:i * 20] = x
-            fit_energies[(i - 1) * 20:i * 20] = y
+            fit_path[(i - 1) * 20 : i * 20] = x
+            fit_energies[(i - 1) * 20 : i * 20] = y
 
         lastslope = slope
 
@@ -58,27 +63,31 @@ def fit_raw(energies, forces, positions, cell=None, pbc=None):
     return ForceFit(path, energies, fit_path, fit_energies, lines)
 
 
-class ForceFit(namedtuple('ForceFit', ['path', 'energies', 'fit_path',
-                                       'fit_energies', 'lines'])):
+class ForceFit(
+    namedtuple("ForceFit", ["path", "energies", "fit_path", "fit_energies", "lines"])
+):
     """Data container to hold fitting parameters for force curves."""
 
     def plot(self, ax=None):
         import matplotlib.pyplot as plt
+
         if ax is None:
             ax = plt.gca()
 
-        ax.plot(self.path, self.energies, 'o')
+        ax.plot(self.path, self.energies, "o")
         for x, y in self.lines:
-            ax.plot(x, y, '-g')
-        ax.plot(self.fit_path, self.fit_energies, 'k-')
-        ax.set_xlabel(r'path [Å]')
-        ax.set_ylabel('energy [eV]')
+            ax.plot(x, y, "-g")
+        ax.plot(self.fit_path, self.fit_energies, "k-")
+        ax.set_xlabel(r"path [Å]")
+        ax.set_ylabel("energy [eV]")
         Ef = max(self.energies) - self.energies[0]
         Er = max(self.energies) - self.energies[-1]
         dE = self.energies[-1] - self.energies[0]
-        ax.set_title(r'$E_\mathrm{{f}} \approx$ {:.3f} eV; '
-                     r'$E_\mathrm{{r}} \approx$ {:.3f} eV; '
-                     r'$\Delta E$ = {:.3f} eV'.format(Ef, Er, dE))
+        ax.set_title(
+            r"$E_\mathrm{{f}} \approx$ {:.3f} eV; "
+            r"$E_\mathrm{{r}} \approx$ {:.3f} eV; "
+            r"$\Delta E$ = {:.3f} eV".format(Ef, Er, dE)
+        )
         return ax
 
 
@@ -103,6 +112,7 @@ def force_curve(images, ax=None):
 
     if ax is None:
         import matplotlib.pyplot as plt
+
         ax = plt.gca()
 
     nim = len(images)
@@ -112,8 +122,7 @@ def force_curve(images, ax=None):
 
     # XXX force_consistent=True will work with some calculators,
     # but won't work if images were loaded from a trajectory.
-    energies = [atoms.get_potential_energy()
-                for atoms in images]
+    energies = [atoms.get_potential_energy() for atoms in images]
 
     for i in range(nim):
         atoms = images[i]
@@ -129,11 +138,10 @@ def force_curve(images, ax=None):
         else:
             leftpos = atoms.positions
 
-        disp_ac, _ = find_mic(rightpos - leftpos, cell=atoms.cell,
-                              pbc=atoms.pbc)
+        disp_ac, _ = find_mic(rightpos - leftpos, cell=atoms.cell, pbc=atoms.pbc)
 
         def total_displacement(disp):
-            disp_a = (disp**2).sum(axis=1)**.5
+            disp_a = (disp**2).sum(axis=1) ** 0.5
             return sum(disp_a)
 
         dE_fdotr = -0.5 * np.vdot(f_ac.ravel(), disp_ac.ravel())
@@ -151,30 +159,33 @@ def force_curve(images, ax=None):
         y1 = energies[i] - dE_fdotr * linescale
         y2 = energies[i] + dE_fdotr * linescale
 
-        ax.plot([x1, x2], [y1, y2], 'b-')
-        ax.plot(accumulated_distance, energies[i], 'bo')
-        ax.set_ylabel('Energy [eV]')
-        ax.set_xlabel('Accumulative distance [Å]')
+        ax.plot([x1, x2], [y1, y2], "b-")
+        ax.plot(accumulated_distance, energies[i], "bo")
+        ax.set_ylabel("Energy [eV]")
+        ax.set_xlabel("Accumulative distance [Å]")
         accumulated_distances.append(accumulated_distance)
         accumulated_distance += total_displacement(rightpos - atoms.positions)
 
-    ax.plot(accumulated_distances, energies, ':', zorder=-1, color='k')
+    ax.plot(accumulated_distances, energies, ":", zorder=-1, color="k")
     return ax
 
 
 def plotfromfile(*fnames):
     from ase.io import read
+
     nplots = len(fnames)
 
     for i, fname in enumerate(fnames):
-        images = read(fname, ':')
+        images = read(fname, ":")
         import matplotlib.pyplot as plt
+
         plt.subplot(nplots, 1, 1 + i)
         force_curve(images)
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     fnames = sys.argv[1:]
     plotfromfile(*fnames)

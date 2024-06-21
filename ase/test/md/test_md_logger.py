@@ -27,7 +27,7 @@ def calc():
 
 
 def fmax(forces):
-    return np.sqrt((forces ** 2).sum(axis=1).max())
+    return np.sqrt((forces**2).sum(axis=1).max())
 
 
 md_cls_and_kwargs = [
@@ -36,14 +36,14 @@ md_cls_and_kwargs = [
 ]
 
 
-@pytest.mark.parametrize('cls', [FIRE, BFGS])
+@pytest.mark.parametrize("cls", [FIRE, BFGS])
 def test_optimizer(cls, testdir, atoms, calc):
     """run optimization and verify that log and trajectory coincide"""
 
     opt_atoms = atoms.copy()
     opt_atoms.constraints = atoms.constraints
-    logfile = 'opt.log'
-    trajectory = 'opt.traj'
+    logfile = "opt.log"
+    trajectory = "opt.traj"
     opt_atoms.calc = calc
 
     with cls(opt_atoms, logfile=logfile, trajectory=trajectory) as opt:
@@ -59,9 +59,9 @@ def test_optimizer(cls, testdir, atoms, calc):
             assert np.allclose(fmax1, fmax2, atol=0.01), (fmax1, fmax2)
 
 
-@pytest.mark.parametrize('cls_and_kwargs', md_cls_and_kwargs)
+@pytest.mark.parametrize("cls_and_kwargs", md_cls_and_kwargs)
 def test_md(cls_and_kwargs, atoms, calc, testdir):
-    """ run MD for 10 steps and verify that trajectory and log coincide """
+    """run MD for 10 steps and verify that trajectory and log coincide"""
 
     cls, kwargs = cls_and_kwargs
     if hasattr(atoms, "constraints"):
@@ -69,12 +69,13 @@ def test_md(cls_and_kwargs, atoms, calc, testdir):
 
     atoms.calc = calc
 
-    logfile = 'md.log'
-    trajectory = 'md.traj'
+    logfile = "md.log"
+    trajectory = "md.traj"
     timestep = 1 * u.fs
 
-    with cls(atoms, logfile=logfile, timestep=timestep,
-             trajectory=trajectory, **kwargs) as md:
+    with cls(
+        atoms, logfile=logfile, timestep=timestep, trajectory=trajectory, **kwargs
+    ) as md:
         md.run(steps=5)
         md.run(steps=5)
 

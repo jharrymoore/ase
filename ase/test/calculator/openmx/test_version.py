@@ -13,4 +13,4 @@ The number of threads in each node for OpenMP parallelization is 1.
 
 
 def test_parse_omx_version():
-    assert parse_omx_version(sample_output) == '3.8.5'
+    assert parse_omx_version(sample_output) == "3.8.5"

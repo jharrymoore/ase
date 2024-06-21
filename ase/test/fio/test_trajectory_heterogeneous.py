@@ -5,16 +5,16 @@ from ase.io import read
 
 
 def test_trajectory_heterogeneous():
-    a0 = molecule('H2O')
+    a0 = molecule("H2O")
     a1 = a0.copy()
     a1.rattle(stdev=0.5)
     a2 = a0.copy()
     a2.set_masses()
     a2.center(vacuum=2.0)
     a2.rattle(stdev=0.2)
-    a3 = molecule('CH3CH2OH')
-    a4 = bulk('Au').repeat((2, 2, 2))
-    a5 = bulk('Cu').repeat((2, 2, 3))
+    a3 = molecule("CH3CH2OH")
+    a4 = bulk("Au").repeat((2, 2, 2))
+    a5 = bulk("Cu").repeat((2, 2, 3))
 
     # Add constraints to some of the images:
     images = [a0, a1, a2, a3, a4, a5]
@@ -23,13 +23,13 @@ def test_trajectory_heterogeneous():
         if i == 2:
             img.constraints.append(FixBondLength(5, 6))
 
-    with Trajectory('out.traj', 'w') as traj:
+    with Trajectory("out.traj", "w") as traj:
         for i, img in enumerate(images):
             traj.write(img)
             print(i, traj.multiple_headers)
             assert traj.multiple_headers == (i >= 2)
 
-    with Trajectory('out.traj') as rtraj:
+    with Trajectory("out.traj") as rtraj:
         newimages = list(rtraj)
 
     assert len(images) == len(newimages)
@@ -44,7 +44,7 @@ def test_trajectory_heterogeneous():
         # assert headers_equal(h1, h2)
 
     # Test append mode:
-    with Trajectory('out.traj', 'a') as atraj:
-        atraj.write(molecule('H2'))
-        atraj.write(molecule('H2'))
-    read('out.traj', index=':')
+    with Trajectory("out.traj", "a") as atraj:
+        atraj.write(molecule("H2"))
+        atraj.write(molecule("H2"))
+    read("out.traj", index=":")

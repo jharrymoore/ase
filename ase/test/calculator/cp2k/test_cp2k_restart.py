@@ -14,7 +14,8 @@ from ase.io.cp2k import read_cp2k_restart
 
 @pytest.fixture
 def inp():
-    return StringIO("""\
+    return StringIO(
+        """\
  # Version information for this restart file
  &MOTION
    &CELL_OPT
@@ -40,7 +41,8 @@ cu1    1.6455807102639135E+00    5.4728919446731368E+00    5.7625128629895181E+0
    &PRINT
    &END PRINT
  &END FORCE_EVAL
-""")
+"""
+    )
 
 
 def test_restart(inp):

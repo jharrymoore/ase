@@ -52,37 +52,45 @@ SORTED = {
 }
 
 REFERENCE = {
-    'positions': np.array([
-        [0, 0, 0],
-        [1, 0, 0],
-        [2, 0, 0],
-    ]),
-    'cell': np.eye(3) * 10,
-    'bonds': {
-        'atoms': np.array([
-            [0, 1],
-            [1, 2],
-        ]),
-        'types': np.array([1, 2]),
+    "positions": np.array(
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [2, 0, 0],
+        ]
+    ),
+    "cell": np.eye(3) * 10,
+    "bonds": {
+        "atoms": np.array(
+            [
+                [0, 1],
+                [1, 2],
+            ]
+        ),
+        "types": np.array([1, 2]),
     },
-    'angles': {
-        'atoms': np.array([
-            [0, 1, 2],
-        ]),
-        'types': np.array([1]),
+    "angles": {
+        "atoms": np.array(
+            [
+                [0, 1, 2],
+            ]
+        ),
+        "types": np.array([1]),
     },
-    'dihedrals': {
-        'atoms': np.array([
-            [0, 1, 2, 0],
-        ]),
-        'types': np.array([1]),
+    "dihedrals": {
+        "atoms": np.array(
+            [
+                [0, 1, 2, 0],
+            ]
+        ),
+        "types": np.array([1]),
     },
 }
 
 
 @pytest.fixture
 def fmt():
-    return 'lammps-data'
+    return "lammps-data"
 
 
 @pytest.fixture(params=[True, False])
@@ -102,18 +110,15 @@ def parse_tuples(atoms, regex, permutation, label):
     types = np.array([], int)
 
     tuples = atoms.arrays[label]
-    bonded = np.where(tuples != '_')[0]
+    bonded = np.where(tuples != "_")[0]
 
     for i, per_atom in zip(bonded, tuples[bonded]):
         per_atom = np.array(regex.findall(per_atom), int)
-        new_tuples = np.array([
-            np.full(per_atom.shape[0], i, int),
-            *(per_atom[:, :-1].T)
-        ])
+        new_tuples = np.array(
+            [np.full(per_atom.shape[0], i, int), *(per_atom[:, :-1].T)]
+        )
 
-        all_tuples = np.append(all_tuples,
-                               new_tuples[permutation, :].T,
-                               axis=0)
+        all_tuples = np.append(all_tuples, new_tuples[permutation, :].T, axis=0)
         types = np.append(types, per_atom[:, -1])
 
     return all_tuples, types
@@ -121,25 +126,25 @@ def parse_tuples(atoms, regex, permutation, label):
 
 def test_positions(lammpsdata):
     atoms, sorted = lammpsdata
-    assert pytest.approx(atoms.positions) == REFERENCE['positions'][sorted]
+    assert pytest.approx(atoms.positions) == REFERENCE["positions"][sorted]
 
 
 def test_cell(lammpsdata):
     atoms, _ = lammpsdata
-    assert pytest.approx(atoms.cell.array) == REFERENCE['cell']
+    assert pytest.approx(atoms.cell.array) == REFERENCE["cell"]
 
 
 def test_connectivity(lammpsdata):
     atoms, sorted = lammpsdata
 
     parser_data = {
-        'bonds': ((0, 1), re.compile(r'(\d+)\((\d+)\)')),
-        'angles': ((1, 0, 2), re.compile(r'(\d+)-(\d+)\((\d+)\)')),
-        'dihedrals': ((0, 1, 2, 3), re.compile(r'(\d+)-(\d+)-(\d+)\((\d+)\)')),
+        "bonds": ((0, 1), re.compile(r"(\d+)\((\d+)\)")),
+        "angles": ((1, 0, 2), re.compile(r"(\d+)-(\d+)\((\d+)\)")),
+        "dihedrals": ((0, 1, 2, 3), re.compile(r"(\d+)-(\d+)-(\d+)\((\d+)\)")),
     }
 
     for k, v in parser_data.items():
         tuples, types = parse_tuples(atoms, v[1], v[0], k)
         tuples = sorted[tuples.flatten()].reshape(tuples.shape)
-        assert np.all(tuples == REFERENCE[k]['atoms'])
-        assert np.all(types == REFERENCE[k]['types'])
+        assert np.all(tuples == REFERENCE[k]["atoms"])
+        assert np.all(types == REFERENCE[k]["types"])

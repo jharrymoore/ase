@@ -69,7 +69,7 @@ operators = {
     ast.Pow: power,
     ast.USub: op.neg,
     ast.Mod: op.mod,
-    ast.FloorDiv: op.ifloordiv
+    ast.FloorDiv: op.ifloordiv,
 }
 
 # Take all functions from math module as allowed functions
@@ -165,7 +165,8 @@ def _eval(node):
             raise TypeError(
                 "Found a str in the expression, either param_dct/the "
                 "expression has a mistake in the parameter names or "
-                "attempting to parse non-mathematical code")
+                "attempting to parse non-mathematical code"
+            )
     else:
         raise TypeError(node)
 

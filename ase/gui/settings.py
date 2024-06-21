@@ -6,43 +6,56 @@ import ase.gui.ui as ui
 class Settings:
     def __init__(self, gui):
         self.gui = gui
-        win = ui.Window(_('Settings'), wmtype='utility')
+        win = ui.Window(_("Settings"), wmtype="utility")
 
         # Constraints
-        win.add(_('Constraints:'))
-        win.add([ui.Button(_('Fix'), self.constrain_selected),
-                 '/',
-                 ui.Button(_('release'), self.release_selected),
-                 _(' selected atoms')])
-        win.add(ui.Button(_('Clear all constraints'), self.clear_constraints))
+        win.add(_("Constraints:"))
+        win.add(
+            [
+                ui.Button(_("Fix"), self.constrain_selected),
+                "/",
+                ui.Button(_("release"), self.release_selected),
+                _(" selected atoms"),
+            ]
+        )
+        win.add(ui.Button(_("Clear all constraints"), self.clear_constraints))
 
         # Visibility
-        win.add(_('Visibility:'))
-        win.add([ui.Button(_('Hide'), self.hide_selected),
-                 '/',
-                 ui.Button(_('show'), self.show_selected),
-                 _(' selected atoms')])
-        win.add(ui.Button(_('View all atoms'), self.view_all))
+        win.add(_("Visibility:"))
+        win.add(
+            [
+                ui.Button(_("Hide"), self.hide_selected),
+                "/",
+                ui.Button(_("show"), self.show_selected),
+                _(" selected atoms"),
+            ]
+        )
+        win.add(ui.Button(_("View all atoms"), self.view_all))
 
         # Miscellaneous
-        win.add(_('Miscellaneous:'))
-        self.scale = ui.SpinBox(self.gui.images.atom_scale,
-                                0.2, 2.0, 0.1, self.scale_radii)
-        win.add([_('Scale atomic radii:'), self.scale])
+        win.add(_("Miscellaneous:"))
+        self.scale = ui.SpinBox(
+            self.gui.images.atom_scale, 0.2, 2.0, 0.1, self.scale_radii
+        )
+        win.add([_("Scale atomic radii:"), self.scale])
         self.force_vector_scale = ui.SpinBox(
             self.gui.force_vector_scale,
-            0.0, 1e32, 0.1,
+            0.0,
+            1e32,
+            0.1,
             rounding=2,
-            callback=self.scale_force_vectors
+            callback=self.scale_force_vectors,
         )
-        win.add([_('Scale force vectors:'), self.force_vector_scale])
+        win.add([_("Scale force vectors:"), self.force_vector_scale])
         self.velocity_vector_scale = ui.SpinBox(
             self.gui.velocity_vector_scale,
-            0.0, 1e32, 0.1,
+            0.0,
+            1e32,
+            0.1,
             rounding=2,
-            callback=self.scale_velocity_vectors
+            callback=self.scale_velocity_vectors,
         )
-        win.add([_('Scale velocity vectors:'), self.velocity_vector_scale])
+        win.add([_("Scale velocity vectors:"), self.velocity_vector_scale])
 
     def scale_radii(self):
         self.gui.images.atom_scale = self.scale.value

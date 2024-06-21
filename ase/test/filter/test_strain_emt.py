@@ -5,7 +5,7 @@ from ase.build import bulk
 
 
 def test_strain_emt():
-    cu = bulk('Cu', 'fcc', a=3.6)
+    cu = bulk("Cu", "fcc", a=3.6)
     cu.calc = EMT()
     f = StrainFilter(cu)
     opt = MDMin(f, dt=0.01)

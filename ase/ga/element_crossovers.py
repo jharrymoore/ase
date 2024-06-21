@@ -13,8 +13,14 @@ class ElementCrossover(OffspringCreator):
 
     """
 
-    def __init__(self, element_pool, max_diff_elements,
-                 min_percentage_elements, verbose, rng=np.random):
+    def __init__(
+        self,
+        element_pool,
+        max_diff_elements,
+        min_percentage_elements,
+        verbose,
+        rng=np.random,
+    ):
         OffspringCreator.__init__(self, verbose, rng=rng)
 
         if not isinstance(element_pool[0], (list, np.ndarray)):
@@ -74,17 +80,29 @@ class OnePointElementCrossover(ElementCrossover):
         By default numpy.random.
     """
 
-    def __init__(self, element_pool, max_diff_elements=None,
-                 min_percentage_elements=None, verbose=False, rng=np.random):
-        ElementCrossover.__init__(self, element_pool, max_diff_elements,
-                                  min_percentage_elements, verbose, rng=rng)
-        self.descriptor = 'OnePointElementCrossover'
+    def __init__(
+        self,
+        element_pool,
+        max_diff_elements=None,
+        min_percentage_elements=None,
+        verbose=False,
+        rng=np.random,
+    ):
+        ElementCrossover.__init__(
+            self,
+            element_pool,
+            max_diff_elements,
+            min_percentage_elements,
+            verbose,
+            rng=rng,
+        )
+        self.descriptor = "OnePointElementCrossover"
 
     def get_new_individual(self, parents):
         f, m = parents
 
         indi = self.initialize_individual(f)
-        indi.info['data']['parents'] = [i.info['confid'] for i in parents]
+        indi.info["data"]["parents"] = [i.info["confid"] for i in parents]
 
         cut_choices = [i for i in range(1, len(f) - 1)]
         self.rng.shuffle(cut_choices)
@@ -95,12 +113,13 @@ class OnePointElementCrossover(ElementCrossover):
             ok = True
             for i, e in enumerate(self.element_pools):
                 elems = e[:]
-                elems_in, indices_in = zip(*[(a.symbol, a.index) for a in f
-                                             if a.symbol in elems])
+                elems_in, indices_in = zip(
+                    *[(a.symbol, a.index) for a in f if a.symbol in elems]
+                )
                 max_diff_elem = self.max_diff_elements[i]
                 min_percent_elem = self.min_percentage_elements[i]
                 if min_percent_elem == 0:
-                    min_percent_elem = 1. / len(elems_in)
+                    min_percent_elem = 1.0 / len(elems_in)
                 if max_diff_elem is None:
                     max_diff_elem = len(elems_in)
 
@@ -125,22 +144,25 @@ class OnePointElementCrossover(ElementCrossover):
         for a in f[:cut] + m[cut:]:
             indi.append(a)
 
-        parent_message = ':Parents {0} {1}'.format(f.info['confid'],
-                                                   m.info['confid'])
-        return (self.finalize_individual(indi),
-                self.descriptor + parent_message)
+        parent_message = ":Parents {0} {1}".format(f.info["confid"], m.info["confid"])
+        return (self.finalize_individual(indi), self.descriptor + parent_message)
 
 
 class TwoPointElementCrossover(ElementCrossover):
     """Crosses two individuals by choosing two cross points
     at random"""
 
-    def __init__(self, element_pool, max_diff_elements=None,
-                 min_percentage_elements=None, verbose=False):
-        ElementCrossover.__init__(self, element_pool,
-                                  max_diff_elements,
-                                  min_percentage_elements, verbose)
-        self.descriptor = 'TwoPointElementCrossover'
+    def __init__(
+        self,
+        element_pool,
+        max_diff_elements=None,
+        min_percentage_elements=None,
+        verbose=False,
+    ):
+        ElementCrossover.__init__(
+            self, element_pool, max_diff_elements, min_percentage_elements, verbose
+        )
+        self.descriptor = "TwoPointElementCrossover"
 
     def get_new_individual(self, parents):
         raise NotImplementedError

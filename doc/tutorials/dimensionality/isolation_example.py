@@ -7,8 +7,8 @@ from ase.geometry.dimensionality import isolate_components
 
 # build two slabs of different types of MoS2
 rep = [4, 4, 1]
-a = ase.build.mx2(formula='MoS2', kind='2H', a=3.18, thickness=3.19) * rep
-b = ase.build.mx2(formula='MoS2', kind='1T', a=3.18, thickness=3.19) * rep
+a = ase.build.mx2(formula="MoS2", kind="2H", a=3.18, thickness=3.19) * rep
+b = ase.build.mx2(formula="MoS2", kind="1T", a=3.18, thickness=3.19) * rep
 positions = np.concatenate([a.get_positions(), b.get_positions() + [0, 0, 7]])
 numbers = np.concatenate([a.numbers, b.numbers])
 cell = a.cell

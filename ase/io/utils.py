@@ -10,9 +10,18 @@ from ase.data.colors import jmol_colors
 
 class PlottingVariables:
     # removed writer - self
-    def __init__(self, atoms, rotation='', show_unit_cell=2,
-                 radii=None, bbox=None, colors=None, scale=20,
-                 maxwidth=500, extra_offset=(0., 0.)):
+    def __init__(
+        self,
+        atoms,
+        rotation="",
+        show_unit_cell=2,
+        radii=None,
+        bbox=None,
+        colors=None,
+        scale=20,
+        maxwidth=500,
+        extra_offset=(0.0, 0.0),
+    ):
         self.numbers = atoms.get_atomic_numbers()
         self.colors = colors
         if colors is None:
@@ -40,8 +49,7 @@ class PlottingVariables:
             for c1 in range(2):
                 for c2 in range(2):
                     for c3 in range(2):
-                        cell_vertices[c1, c2, c3] = np.dot([c1, c2, c3],
-                                                           cell) + disp
+                        cell_vertices[c1, c2, c3] = np.dot([c1, c2, c3], cell) + disp
             cell_vertices.shape = (8, 3)
             cell_vertices = np.dot(cell_vertices, rotation)
         else:
@@ -60,8 +68,10 @@ class PlottingVariables:
         r2 = radii**2
         for n in range(nlines):
             d = D[T[n]]
-            if ((((R - L[n] - d)**2).sum(1) < r2) &
-                    (((R - L[n] + d)**2).sum(1) < r2)).any():
+            if (
+                (((R - L[n] - d) ** 2).sum(1) < r2)
+                & (((R - L[n] + d) ** 2).sum(1) < r2)
+            ).any():
                 T[n] = -1
 
         positions = np.dot(positions, rotation)
@@ -119,7 +129,7 @@ class PlottingVariables:
         self.occs = None
 
         try:
-            self.occs = atoms.info['occupancy']
+            self.occs = atoms.info["occupancy"]
             self.tags = atoms.get_tags()
             self.frac_occ = True
         except KeyError:
@@ -132,7 +142,7 @@ def cell_to_lines(writer, cell):
     nlines = 0
     nsegments = []
     for c in range(3):
-        d = sqrt((cell[c]**2).sum())
+        d = sqrt((cell[c] ** 2).sum())
         n = max(2, int(d / 0.3))
         nsegments.append(n)
         nlines += 4 * n
@@ -171,35 +181,42 @@ def make_patch_list(writer):
                 # first an empty circle if a site is not fully occupied
                 if (np.sum([v for v in site_occ.values()])) < 1.0:
                     # fill with white
-                    fill = '#ffffff'
-                    patch = Circle(xy, r, facecolor=fill,
-                                   edgecolor='black')
+                    fill = "#ffffff"
+                    patch = Circle(xy, r, facecolor=fill, edgecolor="black")
                     patch_list.append(patch)
 
                 start = 0
                 # start with the dominant species
-                for sym, occ in sorted(site_occ.items(),
-                                       key=lambda x: x[1],
-                                       reverse=True):
+                for sym, occ in sorted(
+                    site_occ.items(), key=lambda x: x[1], reverse=True
+                ):
                     if np.round(occ, decimals=4) == 1.0:
-                        patch = Circle(xy, r, facecolor=writer.colors[a],
-                                       edgecolor='black')
+                        patch = Circle(
+                            xy, r, facecolor=writer.colors[a], edgecolor="black"
+                        )
                         patch_list.append(patch)
                     else:
                         # jmol colors for the moment
-                        extent = 360. * occ
+                        extent = 360.0 * occ
                         patch = Wedge(
-                            xy, r, start, start + extent,
+                            xy,
+                            r,
+                            start,
+                            start + extent,
                             facecolor=jmol_colors[atomic_numbers[sym]],
-                            edgecolor='black')
+                            edgecolor="black",
+                        )
                         patch_list.append(patch)
                         start += extent
 
             else:
-                if ((xy[1] + r > 0) and (xy[1] - r < writer.h) and
-                        (xy[0] + r > 0) and (xy[0] - r < writer.w)):
-                    patch = Circle(xy, r, facecolor=writer.colors[a],
-                                   edgecolor='black')
+                if (
+                    (xy[1] + r > 0)
+                    and (xy[1] - r < writer.h)
+                    and (xy[0] + r > 0)
+                    and (xy[0] - r < writer.w)
+                ):
+                    patch = Circle(xy, r, facecolor=writer.colors[a], edgecolor="black")
                     patch_list.append(patch)
         else:
             a -= writer.natoms
@@ -236,7 +253,7 @@ class ImageIterator:
         if isinstance(index, str):
             index = string2index(index)
 
-        if index is None or index == ':':
+        if index is None or index == ":":
             index = slice(None, None, None)
 
         if not isinstance(index, (slice, str)):
@@ -247,15 +264,16 @@ class ImageIterator:
 
     def _getslice(self, fd, indices):
         try:
-            iterator = islice(self.ichunks(fd),
-                              indices.start, indices.stop,
-                              indices.step)
+            iterator = islice(
+                self.ichunks(fd), indices.start, indices.stop, indices.step
+            )
         except ValueError:
             # Negative indices.  Go through the whole thing to get the length,
             # which allows us to evaluate the slice, and then read it again
-            if not hasattr(fd, 'seekable') or not fd.seekable():
-                raise ValueError(('Negative indices only supported for '
-                                  'seekable streams'))
+            if not hasattr(fd, "seekable") or not fd.seekable():
+                raise ValueError(
+                    ("Negative indices only supported for " "seekable streams")
+                )
 
             startpos = fd.tell()
             nchunks = 0
@@ -287,11 +305,14 @@ def verify_cell_for_export(cell, check_orthorhombric=True):
     """
 
     if check_orthorhombric and not cell.orthorhombic:
-        raise ValueError('To export to this format, the cell needs to be '
-                         'orthorhombic.')
+        raise ValueError(
+            "To export to this format, the cell needs to be " "orthorhombic."
+        )
     if cell.rank < 3:
-        raise ValueError('To export to this format, the cell size needs '
-                         'to be set: current cell is {}.'.format(cell))
+        raise ValueError(
+            "To export to this format, the cell size needs "
+            "to be set: current cell is {}.".format(cell)
+        )
 
 
 def verify_dictionary(atoms, dictionary, dictionary_name):
@@ -317,5 +338,7 @@ def verify_dictionary(atoms, dictionary, dictionary_name):
     # Check if we have enough key
     for key in set(atoms.symbols):
         if key not in dictionary:
-            raise ValueError('Missing the {} key in the `{}` dictionary.'
-                             ''.format(key, dictionary_name))
+            raise ValueError(
+                "Missing the {} key in the `{}` dictionary."
+                "".format(key, dictionary_name)
+            )

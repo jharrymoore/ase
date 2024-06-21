@@ -31,11 +31,11 @@ ATOM                             0.443   1.409   1.905                       C
 ATOM                             1.837   1.409   1.373                       O 
 """
 
-cellref = pytest.approx(np.array([[2., 0., 0.], [0., 2., 0.], [0., 0., 2.]]))
+cellref = pytest.approx(np.array([[2.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 2.0]]))
 posref = pytest.approx(np.array([[0.443, 1.409, 1.905], [1.837, 1.409, 1.373]]))
 
 
-@pytest.mark.parametrize('body', [body1, body2, body3])
+@pytest.mark.parametrize("body", [body1, body2, body3])
 def test_pdb_optional_tag_body_without_header(body):
     atoms = read_proteindatabank(StringIO(body))
 
@@ -44,7 +44,7 @@ def test_pdb_optional_tag_body_without_header(body):
     assert atoms.get_positions() == posref
 
 
-@pytest.mark.parametrize('body', [body1, body2, body3])
+@pytest.mark.parametrize("body", [body1, body2, body3])
 def test_pdb_optional_tag_body(body):
     txt = header1 + body
     atoms = read_proteindatabank(StringIO(txt))
@@ -55,7 +55,7 @@ def test_pdb_optional_tag_body(body):
     assert atoms.get_positions() == posref
 
 
-@pytest.mark.parametrize('header', [header1, header2])
+@pytest.mark.parametrize("header", [header1, header2])
 def test_pdb_optional_heading(header):
     txt = header + body1
     atoms = read_proteindatabank(StringIO(txt))
@@ -69,18 +69,18 @@ def test_pdb_optional_heading(header):
 def test_pdb_filled_optional_fields():
     atoms = read_proteindatabank(StringIO(body1))
 
-    assert all(atoms.get_array('occupancy') == np.array([1., 1.]))
-    assert all(atoms.get_array('bfactor') == np.array([0., 0.]))
-    assert all(atoms.get_array('atomtypes') == np.array(['C', 'O']))
-    assert all(atoms.get_array('residuenames') == np.array(['MOL ', 'MOL ']))
-    assert all(atoms.get_array('residuenumbers') == np.array([1, 1]))
+    assert all(atoms.get_array("occupancy") == np.array([1.0, 1.0]))
+    assert all(atoms.get_array("bfactor") == np.array([0.0, 0.0]))
+    assert all(atoms.get_array("atomtypes") == np.array(["C", "O"]))
+    assert all(atoms.get_array("residuenames") == np.array(["MOL ", "MOL "]))
+    assert all(atoms.get_array("residuenumbers") == np.array([1, 1]))
 
 
 def test_pdb_unfilled_optional_fields():
     atoms = read_proteindatabank(StringIO(body3))
 
-    assert not ('occupancy' in atoms.__dict__['arrays'])
-    assert all(atoms.get_array('bfactor') == np.array([0., 0.]))
-    assert all(atoms.get_array('atomtypes') == np.array(['', '']))
-    assert all(atoms.get_array('residuenames') == np.array(['    ', '    ']))
-    assert all(atoms.get_array('residuenumbers') == np.array([1, 1]))
+    assert not ("occupancy" in atoms.__dict__["arrays"])
+    assert all(atoms.get_array("bfactor") == np.array([0.0, 0.0]))
+    assert all(atoms.get_array("atomtypes") == np.array(["", ""]))
+    assert all(atoms.get_array("residuenames") == np.array(["    ", "    "]))
+    assert all(atoms.get_array("residuenumbers") == np.array([1, 1]))

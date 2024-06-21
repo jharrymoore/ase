@@ -15,9 +15,9 @@ def distance(s1, s2, permute=True):
     s2 = s2.copy()
     for s in [s1, s2]:
         s.translate(-s.get_center_of_mass())
-    s2pos = 1. * s2.get_positions()
+    s2pos = 1.0 * s2.get_positions()
 
-    def align(struct, xaxis='x', yaxis='y'):
+    def align(struct, xaxis="x", yaxis="y"):
         """Align moments of inertia with the coordinate system."""
         Is, Vs = struct.get_moments_of_inertia(True)
         IV = list(zip(Is, Vs))
@@ -40,7 +40,7 @@ def distance(s1, s2, permute=True):
                 dmin = np.Inf
                 for i, b in enumerate(s2):
                     if a.symbol == b.symbol:
-                        d = np.sum((a.position - b.position)**2)
+                        d = np.sum((a.position - b.position) ** 2)
                         if d < dmin:
                             dmin = d
                             imin = i
@@ -52,7 +52,7 @@ def distance(s1, s2, permute=True):
 
     dists = []
     # principles
-    for x, y in zip(['x', '-x', 'x', '-x'], ['y', 'y', '-y', '-y']):
+    for x, y in zip(["x", "-x", "x", "-x"], ["y", "y", "-y", "-y"]):
         s2.set_positions(s2pos)
         align(s2, x, y)
         dists.append(dd(s1, s2, permute))

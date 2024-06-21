@@ -5,9 +5,11 @@ import numpy as np
 
 from ase import Atoms
 from ase.constraints import dict2constraint
-from ase.calculators.calculator import (all_properties,
-                                        PropertyNotImplementedError,
-                                        kptdensity2monkhorstpack)
+from ase.calculators.calculator import (
+    all_properties,
+    PropertyNotImplementedError,
+    kptdensity2monkhorstpack,
+)
 from ase.calculators.singlepoint import SinglePointCalculator
 from ase.data import chemical_symbols, atomic_masses
 from ase.formula import Formula
@@ -17,6 +19,7 @@ from ase.io.jsonio import decode
 
 class FancyDict(dict):
     """Dictionary with keys available as attributes also."""
+
     def __getattr__(self, key):
         if key not in self:
             return dict.__getattribute__(self, key)
@@ -31,28 +34,29 @@ class FancyDict(dict):
 
 def atoms2dict(atoms):
     dct = {
-        'numbers': atoms.numbers,
-        'positions': atoms.positions,
-        'unique_id': '%x' % randint(16**31, 16**32 - 1)}
+        "numbers": atoms.numbers,
+        "positions": atoms.positions,
+        "unique_id": "%x" % randint(16**31, 16**32 - 1),
+    }
     if atoms.pbc.any():
-        dct['pbc'] = atoms.pbc
+        dct["pbc"] = atoms.pbc
     if atoms.cell.any():
-        dct['cell'] = atoms.cell
-    if atoms.has('initial_magmoms'):
-        dct['initial_magmoms'] = atoms.get_initial_magnetic_moments()
-    if atoms.has('initial_charges'):
-        dct['initial_charges'] = atoms.get_initial_charges()
-    if atoms.has('masses'):
-        dct['masses'] = atoms.get_masses()
-    if atoms.has('tags'):
-        dct['tags'] = atoms.get_tags()
-    if atoms.has('momenta'):
-        dct['momenta'] = atoms.get_momenta()
+        dct["cell"] = atoms.cell
+    if atoms.has("initial_magmoms"):
+        dct["initial_magmoms"] = atoms.get_initial_magnetic_moments()
+    if atoms.has("initial_charges"):
+        dct["initial_charges"] = atoms.get_initial_charges()
+    if atoms.has("masses"):
+        dct["masses"] = atoms.get_masses()
+    if atoms.has("tags"):
+        dct["tags"] = atoms.get_tags()
+    if atoms.has("momenta"):
+        dct["momenta"] = atoms.get_momenta()
     if atoms.constraints:
-        dct['constraints'] = [c.todict() for c in atoms.constraints]
+        dct["constraints"] = [c.todict() for c in atoms.constraints]
     if atoms.calc is not None:
-        dct['calculator'] = atoms.calc.name.lower()
-        dct['calculator_parameters'] = atoms.calc.todict()
+        dct["calculator"] = atoms.calc.name.lower()
+        dct["calculator_parameters"] = atoms.calc.todict()
         if len(atoms.calc.check_state(atoms)) == 0:
             for prop in all_properties:
                 try:
@@ -73,32 +77,31 @@ class AtomsRow:
     def __init__(self, dct):
         if isinstance(dct, dict):
             dct = dct.copy()
-            if 'calculator_parameters' in dct:
+            if "calculator_parameters" in dct:
                 # Earlier version of ASE would encode the calculator
                 # parameter dict again and again and again ...
-                while isinstance(dct['calculator_parameters'], str):
-                    dct['calculator_parameters'] = decode(
-                        dct['calculator_parameters'])
+                while isinstance(dct["calculator_parameters"], str):
+                    dct["calculator_parameters"] = decode(dct["calculator_parameters"])
         else:
             dct = atoms2dict(dct)
-        assert 'numbers' in dct
-        self._constraints = dct.pop('constraints', [])
+        assert "numbers" in dct
+        self._constraints = dct.pop("constraints", [])
         self._constrained_forces = None
-        self._data = dct.pop('data', {})
-        kvp = dct.pop('key_value_pairs', {})
+        self._data = dct.pop("data", {})
+        kvp = dct.pop("key_value_pairs", {})
         self._keys = list(kvp.keys())
         self.__dict__.update(kvp)
         self.__dict__.update(dct)
-        if 'cell' not in dct:
+        if "cell" not in dct:
             self.cell = np.zeros((3, 3))
-        if 'pbc' not in dct:
+        if "pbc" not in dct:
             self.pbc = np.zeros(3, bool)
 
     def __contains__(self, key):
         return key in self.__dict__
 
     def __iter__(self):
-        return (key for key in self.__dict__ if key[0] != '_')
+        return (key for key in self.__dict__ if key[0] != "_")
 
     def get(self, key, default=None):
         """Return value of key if present or default if not."""
@@ -126,8 +129,9 @@ class AtomsRow:
         setattr(self, key, value)
 
     def __str__(self):
-        return '<AtomsRow: formula={0}, keys={1}>'.format(
-            self.formula, ','.join(self._keys))
+        return "<AtomsRow: formula={0}, keys={1}>".format(
+            self.formula, ",".join(self._keys)
+        )
 
     @property
     def constraints(self):
@@ -138,11 +142,11 @@ class AtomsRow:
             self._constraints = []
             for c in cs:
                 # Convert to new format:
-                name = c.pop('__name__', None)
+                name = c.pop("__name__", None)
                 if name:
-                    c = {'name': name, 'kwargs': c}
-                if c['name'].startswith('ase'):
-                    c['name'] = c['name'].rsplit('.', 1)[1]
+                    c = {"name": name, "kwargs": c}
+                if c["name"].startswith("ase"):
+                    c["name"] = c["name"].rsplit(".", 1)[1]
                 self._constraints.append(c)
         return [dict2constraint(d) for d in self._constraints]
 
@@ -153,6 +157,7 @@ class AtomsRow:
             self._data = decode(self._data)  # lazy decoding
         elif isinstance(self._data, bytes):
             from ase.db.core import bytes_to_object
+
             self._data = bytes_to_object(self._data)  # lazy decoding
         return FancyDict(self._data)
 
@@ -164,7 +169,7 @@ class AtomsRow:
     @property
     def formula(self):
         """Chemical formula string."""
-        return Formula('', _tree=[(self.symbols, 1)]).format('metal')
+        return Formula("", _tree=[(self.symbols, 1)]).format("metal")
 
     @property
     def symbols(self):
@@ -175,7 +180,7 @@ class AtomsRow:
     def fmax(self):
         """Maximum atomic force."""
         forces = self.constrained_forces
-        return (forces**2).sum(1).max()**0.5
+        return (forces**2).sum(1).max() ** 0.5
 
     @property
     def constrained_forces(self):
@@ -196,12 +201,12 @@ class AtomsRow:
     @property
     def smax(self):
         """Maximum stress tensor component."""
-        return (self.stress**2).max()**0.5
+        return (self.stress**2).max() ** 0.5
 
     @property
     def mass(self):
         """Total mass."""
-        if 'masses' in self:
+        if "masses" in self:
             return self.masses.sum()
         return atomic_masses[self.numbers].sum()
 
@@ -218,24 +223,25 @@ class AtomsRow:
     @property
     def charge(self):
         """Total charge."""
-        charges = self.get('initial_charges')
+        charges = self.get("initial_charges")
         if charges is None:
             return 0.0
         return charges.sum()
 
-    def toatoms(self,
-                add_additional_information=False):
+    def toatoms(self, add_additional_information=False):
         """Create Atoms object."""
-        atoms = Atoms(self.numbers,
-                      self.positions,
-                      cell=self.cell,
-                      pbc=self.pbc,
-                      magmoms=self.get('initial_magmoms'),
-                      charges=self.get('initial_charges'),
-                      tags=self.get('tags'),
-                      masses=self.get('masses'),
-                      momenta=self.get('momenta'),
-                      constraint=self.constraints)
+        atoms = Atoms(
+            self.numbers,
+            self.positions,
+            cell=self.cell,
+            pbc=self.pbc,
+            magmoms=self.get("initial_magmoms"),
+            charges=self.get("initial_charges"),
+            tags=self.get("tags"),
+            masses=self.get("masses"),
+            momenta=self.get("momenta"),
+            constraint=self.constraints,
+        )
 
         results = {}
         for prop in all_properties:
@@ -243,16 +249,16 @@ class AtomsRow:
                 results[prop] = self[prop]
         if results:
             atoms.calc = SinglePointCalculator(atoms, **results)
-            atoms.calc.name = self.get('calculator', 'unknown')
+            atoms.calc.name = self.get("calculator", "unknown")
 
         if add_additional_information:
             atoms.info = {}
-            atoms.info['unique_id'] = self.unique_id
+            atoms.info["unique_id"] = self.unique_id
             if self._keys:
-                atoms.info['key_value_pairs'] = self.key_value_pairs
-            data = self.get('data')
+                atoms.info["key_value_pairs"] = self.key_value_pairs
+            data = self.get("data")
             if data:
-                atoms.info['data'] = data
+                atoms.info["data"] = data
 
         return atoms
 
@@ -265,57 +271,57 @@ def row2dct(row, key_descriptions) -> Dict[str, Any]:
     dct = {}
 
     atoms = Atoms(cell=row.cell, pbc=row.pbc)
-    dct['size'] = kptdensity2monkhorstpack(atoms,
-                                           kptdensity=1.8,
-                                           even=False)
+    dct["size"] = kptdensity2monkhorstpack(atoms, kptdensity=1.8, even=False)
 
-    dct['cell'] = [['{:.3f}'.format(a) for a in axis] for axis in row.cell]
-    par = ['{:.3f}'.format(x) for x in cell_to_cellpar(row.cell)]
-    dct['lengths'] = par[:3]
-    dct['angles'] = par[3:]
+    dct["cell"] = [["{:.3f}".format(a) for a in axis] for axis in row.cell]
+    par = ["{:.3f}".format(x) for x in cell_to_cellpar(row.cell)]
+    dct["lengths"] = par[:3]
+    dct["angles"] = par[3:]
 
-    stress = row.get('stress')
+    stress = row.get("stress")
     if stress is not None:
-        dct['stress'] = ', '.join('{0:.3f}'.format(s) for s in stress)
+        dct["stress"] = ", ".join("{0:.3f}".format(s) for s in stress)
 
-    dct['formula'] = Formula(row.formula).format('abc')
+    dct["formula"] = Formula(row.formula).format("abc")
 
-    dipole = row.get('dipole')
+    dipole = row.get("dipole")
     if dipole is not None:
-        dct['dipole'] = ', '.join('{0:.3f}'.format(d) for d in dipole)
+        dct["dipole"] = ", ".join("{0:.3f}".format(d) for d in dipole)
 
-    data = row.get('data')
+    data = row.get("data")
     if data:
-        dct['data'] = ', '.join(data.keys())
+        dct["data"] = ", ".join(data.keys())
 
-    constraints = row.get('constraints')
+    constraints = row.get("constraints")
     if constraints:
-        dct['constraints'] = ', '.join(c.__class__.__name__
-                                       for c in constraints)
+        dct["constraints"] = ", ".join(c.__class__.__name__ for c in constraints)
 
-    keys = ({'id', 'energy', 'fmax', 'smax', 'mass', 'age'} |
-            set(key_descriptions) |
-            set(row.key_value_pairs))
-    dct['table'] = []
+    keys = (
+        {"id", "energy", "fmax", "smax", "mass", "age"}
+        | set(key_descriptions)
+        | set(row.key_value_pairs)
+    )
+    dct["table"] = []
 
     from ase.db.project import KeyDescription
+
     for key in keys:
-        if key == 'age':
+        if key == "age":
             age = float_to_time_string(now() - row.ctime, True)
-            dct['table'].append(('ctime', 'Age', age))
+            dct["table"].append(("ctime", "Age", age))
             continue
         value = row.get(key)
         if value is not None:
             if isinstance(value, float):
-                value = '{:.3f}'.format(value)
+                value = "{:.3f}".format(value)
             elif not isinstance(value, str):
                 value = str(value)
 
-            nokeydesc = KeyDescription(key, '', '', '')
+            nokeydesc = KeyDescription(key, "", "", "")
             keydesc = key_descriptions.get(key, nokeydesc)
             unit = keydesc.unit
             if unit:
-                value += ' ' + unit
-            dct['table'].append((key, keydesc.longdesc, value))
+                value += " " + unit
+            dct["table"].append((key, keydesc.longdesc, value))
 
     return dct

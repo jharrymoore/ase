@@ -9,24 +9,26 @@ calc = pytest.mark.calculator
 @pytest.fixture
 def calc_settings():
     """Some simple fast calculation settings"""
-    return dict(xc='lda',
-                prec='Low',
-                algo='Fast',
-                setups='minimal',
-                ismear=0,
-                nelm=1,
-                sigma=0.1,
-                istart=0,
-                ibrion=5,
-                nfree=2,
-                potim=0.05,
-                gamma=True,
-                txt="-",
-                lwave=False,
-                lcharg=False)
+    return dict(
+        xc="lda",
+        prec="Low",
+        algo="Fast",
+        setups="minimal",
+        ismear=0,
+        nelm=1,
+        sigma=0.1,
+        istart=0,
+        ibrion=5,
+        nfree=2,
+        potim=0.05,
+        gamma=True,
+        txt="-",
+        lwave=False,
+        lcharg=False,
+    )
 
 
-@calc('vasp')
+@calc("vasp")
 def test_vasp_freq(factory, atoms_nh3, calc_settings):
     """
     Run some VASP tests to ensure that the frequency aspects of the
@@ -38,7 +40,7 @@ def test_vasp_freq(factory, atoms_nh3, calc_settings):
     calc = factory.calc(**calc_settings)
     mol = atoms_nh3
     # one constraint
-    c = FixAtoms(indices=[atom.index for atom in mol if atom.symbol == 'N'])
+    c = FixAtoms(indices=[atom.index for atom in mol if atom.symbol == "N"])
     mol.set_constraint(c)
     mol.calc = calc
     en = mol.get_potential_energy()

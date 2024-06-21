@@ -15,8 +15,7 @@ class CalculatorInputs:
 
     def __repr__(self):
         cls = type(self)
-        return '{}({}, {})'.format(cls.__name__,
-                                   self.name, self.parameters)
+        return "{}({}, {})".format(cls.__name__, self.name, self.parameters)
 
     def calc(self):
         cls = get_calculator_class(self.name)
@@ -30,7 +29,7 @@ def inputs(name, **parameters):
 def _calculate(code, name):
     atoms = molecule(name)
     atoms.center(vacuum=3.5)
-    with workdir('test-{}'.format(name), mkdir=True):
+    with workdir("test-{}".format(name), mkdir=True):
         atoms.calc = code.calc()
         return atoms.get_potential_energy()
 
@@ -38,17 +37,18 @@ def _calculate(code, name):
 @pytest.mark.parametrize(
     "spec",
     [
-        inputs('gamess_us', label='ch4'),
-        inputs('gaussian', xc='lda', basis='3-21G'),
+        inputs("gamess_us", label="ch4"),
+        inputs("gaussian", xc="lda", basis="3-21G"),
     ],
-    ids=lambda spec: spec.name)
+    ids=lambda spec: spec.name,
+)
 def test_ch4(tmp_path, spec):
     # XXX Convert to string since pytest can sometimes gives us tmp_path
     # as a pathlib2 path.
     with workdir(str(tmp_path), mkdir=True):
-        e_ch4 = _calculate(spec, 'CH4')
-        e_c2h2 = _calculate(spec, 'C2H2')
-        e_h2 = _calculate(spec, 'H2')
+        e_ch4 = _calculate(spec, "CH4")
+        e_c2h2 = _calculate(spec, "C2H2")
+        e_h2 = _calculate(spec, "H2")
         energy = e_ch4 - 0.5 * e_c2h2 - 1.5 * e_h2
         print(energy)
         ref_energy = -2.8
@@ -60,22 +60,35 @@ filterwarnings = pytest.mark.filterwarnings
 
 
 @pytest.mark.calculator_lite
-@calc('abinit', ecut=300, chksymbreak=0, toldfe=1e-4)
-@calc('aims')
-@calc('cp2k')
-@calc('espresso', ecutwfc=300 / Ry)
-@calc('gpaw', symmetry='off', mode='pw', txt='gpaw.txt', mixer={'beta': 0.6},
-      marks=[filterwarnings('ignore:.*?ignore_bad_restart_file'),
-             filterwarnings('ignore:convert_string_to_fd')])
-@calc('nwchem')
-@calc('octopus', Spacing='0.25 * angstrom', BoxShape='minimum',
-      convreldens=1e-3, Radius='3.5 * angstrom')
-@calc('openmx')
-@calc('siesta', marks=pytest.mark.xfail)
+@calc("abinit", ecut=300, chksymbreak=0, toldfe=1e-4)
+@calc("aims")
+@calc("cp2k")
+@calc("espresso", ecutwfc=300 / Ry)
+@calc(
+    "gpaw",
+    symmetry="off",
+    mode="pw",
+    txt="gpaw.txt",
+    mixer={"beta": 0.6},
+    marks=[
+        filterwarnings("ignore:.*?ignore_bad_restart_file"),
+        filterwarnings("ignore:convert_string_to_fd"),
+    ],
+)
+@calc("nwchem")
+@calc(
+    "octopus",
+    Spacing="0.25 * angstrom",
+    BoxShape="minimum",
+    convreldens=1e-3,
+    Radius="3.5 * angstrom",
+)
+@calc("openmx")
+@calc("siesta", marks=pytest.mark.xfail)
 def test_ch4_reaction(factory):
-    e_ch4 = _calculate(factory, 'CH4')
-    e_c2h2 = _calculate(factory, 'C2H2')
-    e_h2 = _calculate(factory, 'H2')
+    e_ch4 = _calculate(factory, "CH4")
+    e_c2h2 = _calculate(factory, "C2H2")
+    e_h2 = _calculate(factory, "H2")
     energy = e_ch4 - 0.5 * e_c2h2 - 1.5 * e_h2
     print(energy)
     ref_energy = -2.8

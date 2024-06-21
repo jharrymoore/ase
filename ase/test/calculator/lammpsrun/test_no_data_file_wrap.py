@@ -3,7 +3,7 @@ import pytest
 
 
 @pytest.mark.calculator_lite
-@pytest.mark.calculator('lammpsrun')
+@pytest.mark.calculator("lammpsrun")
 def test_no_data_file_wrap(factory):
     """
     If 'create_atoms' hasn't been given the appropriate 'remap yes' option,
@@ -20,8 +20,7 @@ def test_no_data_file_wrap(factory):
 
     # Make a periodic box and put one atom outside of it
     pos = [[0.0, 0.0, 0.0], [-2.0, 0.0, 0.0]]
-    atoms = Atoms(symbols=["Ar"] * 2, positions=pos, cell=[10.0, 10.0, 10.0],
-                  pbc=True)
+    atoms = Atoms(symbols=["Ar"] * 2, positions=pos, cell=[10.0, 10.0, 10.0], pbc=True)
 
     # Set parameters for calculator
     params = {}

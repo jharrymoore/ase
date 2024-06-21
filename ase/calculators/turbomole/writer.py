@@ -7,18 +7,18 @@ def add_data_group(data_group, string=None, raw=False):
     if raw:
         data = data_group
     else:
-        data = '$' + data_group
+        data = "$" + data_group
         if string:
-            data += ' ' + string
-        data += '\n'
-    with open('control', 'r+') as contr:
+            data += " " + string
+        data += "\n"
+    with open("control", "r+") as contr:
         lines = contr.readlines()
         contr.seek(0)
         contr.truncate()
         lines.insert(2, data)
-        contr.write(''.join(lines))
+        contr.write("".join(lines))
 
 
 def delete_data_group(data_group):
     """delete a turbomole data group from control file"""
-    subprocess.run(['kdg', data_group], check=True)
+    subprocess.run(["kdg", data_group], check=True)

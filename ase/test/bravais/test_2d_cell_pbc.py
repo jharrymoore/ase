@@ -4,9 +4,7 @@ from ase.cell import Cell
 
 @pytest.fixture
 def cell():
-    return Cell([[1., 0., 0.],
-                 [.1, 1., 0.],
-                 [0., 0., 0.]])
+    return Cell([[1.0, 0.0, 0.0], [0.1, 1.0, 0.0], [0.0, 0.0, 0.0]])
 
 
 def test_obl(cell):
@@ -14,17 +12,17 @@ def test_obl(cell):
     lat = cell.get_bravais_lattice()
     print(cell.cellpar())
     print(lat)
-    assert lat.name == 'OBL'
+    assert lat.name == "OBL"
 
 
 def test_mcl_obl(cell):
     cell[2, 2] = 7
     lat3d = cell.get_bravais_lattice()
     print(lat3d)
-    assert lat3d.name == 'MCL'
+    assert lat3d.name == "MCL"
     lat2d_pbc = cell.get_bravais_lattice(pbc=[1, 1, 0])
     print(lat2d_pbc)
-    assert lat2d_pbc.name == 'OBL'
+    assert lat2d_pbc.name == "OBL"
 
     path = cell.bandpath()
     print(path)
@@ -32,4 +30,4 @@ def test_mcl_obl(cell):
     path2d = cell.bandpath(pbc=[1, 1, 0])
     print(path2d)
     assert path2d.cell.rank == 2
-    assert path2d.cell.get_bravais_lattice().name == 'OBL'
+    assert path2d.cell.get_bravais_lattice().name == "OBL"

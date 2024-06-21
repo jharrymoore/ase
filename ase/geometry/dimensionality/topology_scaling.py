@@ -19,7 +19,6 @@ from ase.geometry.dimensionality.disjoint_set import DisjointSet
 
 
 class TSA:
-
     def __init__(self, num_atoms, n=2):
         """Initializes the TSA class.
 
@@ -84,7 +83,7 @@ class TSA:
         cdim = self._get_component_dimensionalities()
         hist = np.zeros(4).astype(int)
         bc = np.bincount(list(cdim.values()))
-        hist[:len(bc)] = bc
+        hist[: len(bc)] = bc
         return tuple(hist)
 
     def get_components(self):

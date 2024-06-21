@@ -7,7 +7,7 @@ import pytest
 
 
 def setup_atoms():
-    atoms = molecule('CH3CH2OH', vacuum=5.0)
+    atoms = molecule("CH3CH2OH", vacuum=5.0)
     atoms.rattle(stdev=0.3)
     return atoms
 
@@ -33,48 +33,66 @@ def setup_fixinternals():
     target_dihedral = atoms.get_dihedral(*dihedral_def)
 
     # Initialize constraint
-    constr = FixInternals(bonds=[(target_bond, bond_def)],
-                          angles_deg=[(target_angle, angle_def)],
-                          dihedrals_deg=[(target_dihedral, dihedral_def)],
-                          epsilon=1e-10)
-    return (atoms, constr, bond_def, target_bond, angle_def, target_angle,
-            dihedral_def, target_dihedral)
+    constr = FixInternals(
+        bonds=[(target_bond, bond_def)],
+        angles_deg=[(target_angle, angle_def)],
+        dihedrals_deg=[(target_dihedral, dihedral_def)],
+        epsilon=1e-10,
+    )
+    return (
+        atoms,
+        constr,
+        bond_def,
+        target_bond,
+        angle_def,
+        target_angle,
+        dihedral_def,
+        target_dihedral,
+    )
 
 
 def test_fixinternals():
-    (atoms, constr, bond_def, target_bond, angle_def, target_angle,
-     dihedral_def, target_dihedral) = setup_fixinternals()
+    (
+        atoms,
+        constr,
+        bond_def,
+        target_bond,
+        angle_def,
+        target_angle,
+        dihedral_def,
+        target_dihedral,
+    ) = setup_fixinternals()
 
     opt = BFGS(atoms)
 
     previous_angle = atoms.get_angle(*angle_def)
     previous_dihedral = atoms.get_dihedral(*dihedral_def)
 
-    print('angle before', previous_angle)
-    print('dihedral before', previous_dihedral)
-    print('bond length before', atoms.get_distance(*bond_def))
-    print('target bondlength', target_bond)
+    print("angle before", previous_angle)
+    print("dihedral before", previous_dihedral)
+    print("bond length before", atoms.get_distance(*bond_def))
+    print("target bondlength", target_bond)
 
     atoms.calc = EMT()
     atoms.set_constraint(constr)
-    print('-----Optimization-----')
+    print("-----Optimization-----")
     opt.run(fmax=0.01)
 
     new_angle = atoms.get_angle(*angle_def)
     new_dihedral = atoms.get_dihedral(*dihedral_def)
     new_bondlength = atoms.get_distance(*bond_def)
 
-    print('angle after', new_angle)
-    print('dihedral after', new_dihedral)
-    print('bondlength after', new_bondlength)
+    print("angle after", new_angle)
+    print("dihedral after", new_dihedral)
+    print("bondlength after", new_bondlength)
 
     err1 = new_angle - previous_angle
     err2 = new_dihedral - previous_dihedral
     err3 = new_bondlength - target_bond
 
-    print('error in angle', repr(err1))
-    print('error in dihedral', repr(err2))
-    print('error in bondlength', repr(err3))
+    print("error in angle", repr(err1))
+    print("error in dihedral", repr(err2))
+    print("error in bondlength", repr(err3))
 
     for err in [err1, err2, err3]:
         assert abs(err) < 1e-11
@@ -92,7 +110,12 @@ def setup_combos():
 
     # Initialize constraint; 'None' value should be converted to current value
     constr = FixInternals(bondcombos=[(None, bondcombo_def)], epsilon=1e-10)
-    return atoms, constr, bondcombo_def, target_bondcombo,
+    return (
+        atoms,
+        constr,
+        bondcombo_def,
+        target_bondcombo,
+    )
 
 
 def test_combos():
@@ -107,7 +130,7 @@ def test_combos():
     atoms2.set_positions(atoms2.get_positions())
     checked_bondcombo = False
     for subconstr in atoms2.constraints[0].constraints:
-        if repr(subconstr).startswith('FixBondCombo'):
+        if repr(subconstr).startswith("FixBondCombo"):
             assert subconstr.targetvalue == target_bondcombo
             checked_bondcombo = True
     assert checked_bondcombo
@@ -118,13 +141,21 @@ def test_combos():
     new_bondcombo = FixInternals.get_bondcombo(atoms, bondcombo_def)
     err_bondcombo = new_bondcombo - ref_bondcombo
 
-    print('error in bondcombo:', repr(err_bondcombo))
+    print("error in bondcombo:", repr(err_bondcombo))
     assert abs(err_bondcombo) < 1e-11
 
 
 def test_index_shuffle():
-    (atoms, constr, bond_def, target_bond, angle_def, target_angle,
-     dihedral_def, target_dihedral) = setup_fixinternals()
+    (
+        atoms,
+        constr,
+        bond_def,
+        target_bond,
+        angle_def,
+        target_angle,
+        dihedral_def,
+        target_dihedral,
+    ) = setup_fixinternals()
 
     constr2 = copy.deepcopy(constr)
 
@@ -155,8 +186,7 @@ def test_combo_index_shuffle():
 
 
 def test_zero_distance_error():
-    """Zero distances cannot be fixed due to a singularity in the derivative.
-    """
+    """Zero distances cannot be fixed due to a singularity in the derivative."""
     atoms = setup_atoms()
     constr = FixInternals(bonds=[(0.0, [1, 2])])
     atoms.calc = EMT()
@@ -169,7 +199,7 @@ def test_zero_distance_error():
 
 def test_planar_angle_error():
     """Support for planar angles could be added in the future using
-       dummy/ghost atoms. See issue #868."""
+    dummy/ghost atoms. See issue #868."""
     atoms = setup_atoms()
     constr = FixInternals(angles_deg=[(180, [6, 0, 1])])
     atoms.calc = EMT()
@@ -186,7 +216,7 @@ def test_undefined_dihedral_error():
     atoms.set_positions(pos)  # with undefined dihedral
     with pytest.raises(ZeroDivisionError):
         atoms.get_dihedral(6, 0, 1, 2)
-    constr = FixInternals(dihedrals_deg=[(20., [6, 0, 1, 2])])
+    constr = FixInternals(dihedrals_deg=[(20.0, [6, 0, 1, 2])])
     atoms.calc = EMT()
     atoms.set_constraint(constr)
     opt = BFGS(atoms)

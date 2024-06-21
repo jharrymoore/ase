@@ -2,7 +2,7 @@ from ase import Atoms
 
 
 def test_noncollinear():
-    a = Atoms('H2')
+    a = Atoms("H2")
 
     a[0].magmom = 1
     m = a.get_initial_magnetic_moments()

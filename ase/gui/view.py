@@ -14,9 +14,9 @@ from ase.gui.colors import ColorWindow
 from ase.gui.utils import get_magmoms
 from ase.utils import rotate
 
-GREEN = '#74DF00'
-PURPLE = '#AC58FA'
-BLACKISH = '#151515'
+GREEN = "#74DF00"
+PURPLE = "#AC58FA"
+BLACKISH = "#151515"
 
 
 def get_cell_coordinates(cell, shifted=False):
@@ -55,8 +55,8 @@ def get_cell_coordinates(cell, shifted=False):
 
 def get_bonds(atoms, covalent_radii):
     from ase.neighborlist import NeighborList
-    nl = NeighborList(covalent_radii * 1.5,
-                      skin=0, self_interaction=False)
+
+    nl = NeighborList(covalent_radii * 1.5, skin=0, self_interaction=False)
     nl.update(atoms)
     nbonds = nl.nneighbors + nl.npbcneighbors
 
@@ -83,28 +83,29 @@ def get_bonds(atoms, covalent_radii):
 
 class View:
     def __init__(self, rotations):
-        self.colormode = 'jmol'  # The default colors
+        self.colormode = "jmol"  # The default colors
         self.labels = None
         self.axes = rotate(rotations)
         self.configured = False
         self.frame = None
 
         # XXX
-        self.colormode = 'jmol'
+        self.colormode = "jmol"
         self.colors = {}
 
         for i, rgb in enumerate(jmol_colors):
-            self.colors[i] = ('#{0:02X}{1:02X}{2:02X}'
-                              .format(*(int(x * 255) for x in rgb)))
+            self.colors[i] = "#{0:02X}{1:02X}{2:02X}".format(
+                *(int(x * 255) for x in rgb)
+            )
 
         # scaling factors for vectors
-        self.force_vector_scale = self.config['force_vector_scale']
-        self.velocity_vector_scale = self.config['velocity_vector_scale']
+        self.force_vector_scale = self.config["force_vector_scale"]
+        self.velocity_vector_scale = self.config["velocity_vector_scale"]
 
         # buttons
         self.b1 = 1  # left
         self.b3 = 3  # right
-        if self.config['swap_mouse']:
+        if self.config["swap_mouse"]:
             self.b1 = 3
             self.b3 = 1
 
@@ -121,7 +122,7 @@ class View:
 
         fname = self.images.filenames[frame]
         if fname is None:
-            title = 'ase.gui'
+            title = "ase.gui"
         else:
             title = basename(fname)
 
@@ -138,8 +139,7 @@ class View:
         natoms = len(atoms)
 
         if self.showing_cell():
-            B1, B2 = get_cell_coordinates(atoms.cell,
-                                          self.config['shift_cell'])
+            B1, B2 = get_cell_coordinates(atoms.cell, self.config["shift_cell"])
         else:
             B1 = B2 = np.zeros((0, 3))
 
@@ -160,8 +160,8 @@ class View:
         self.X = np.empty((natoms + len(B1) + len(bonds), 3))
         self.X_pos = self.X[:natoms]
         self.X_pos[:] = atoms.positions
-        self.X_cell = self.X[natoms:natoms + len(B1)]
-        self.X_bonds = self.X[natoms + len(B1):]
+        self.X_cell = self.X[natoms : natoms + len(B1)]
+        self.X_bonds = self.X[natoms + len(B1) :]
 
         if 1:  # if init or frame != self.frame:
             cell = atoms.cell
@@ -178,7 +178,7 @@ class View:
                 Af = self.images.repeat[:, np.newaxis] * cell
                 a = P[bonds[:, 0]]
                 b = P[bonds[:, 1]] + np.dot(bonds[:, 2:], Af) - a
-                d = (b**2).sum(1)**0.5
+                d = (b**2).sum(1) ** 0.5
                 r = 0.65 * self.get_covalent_radii()
                 x0 = (r[bonds[:, 0]] / d).reshape((-1, 1))
                 x1 = (r[bonds[:, 1]] / d).reshape((-1, 1))
@@ -188,16 +188,16 @@ class View:
                 self.B[ncellparts:] = self.X_bonds + b
 
     def showing_bonds(self):
-        return self.window['toggle-show-bonds']
+        return self.window["toggle-show-bonds"]
 
     def showing_cell(self):
-        return self.window['toggle-show-unit-cell']
+        return self.window["toggle-show-unit-cell"]
 
     def toggle_show_unit_cell(self, key=None):
         self.set_frame()
 
     def update_labels(self):
-        index = self.window['show-labels']
+        index = self.window["show-labels"]
         if index == 0:
             self.labels = None
         elif index == 1:
@@ -206,7 +206,7 @@ class View:
             self.labels = list(get_magmoms(self.atoms))
         elif index == 4:
             Q = self.atoms.get_initial_charges()
-            self.labels = ['{0:.4g}'.format(q) for q in Q]
+            self.labels = ["{0:.4g}".format(q) for q in Q]
         else:
             self.labels = self.atoms.get_chemical_symbols()
 
@@ -254,9 +254,8 @@ class View:
         return win
 
     def focus(self, x=None):
-        cell = (self.window['toggle-show-unit-cell'] and
-                self.images[0].cell.any())
-        if (len(self.atoms) == 0 and not cell):
+        cell = self.window["toggle-show-unit-cell"] and self.images[0].cell.any()
+        if len(self.atoms) == 0 and not cell:
             self.scale = 20.0
             self.center = np.zeros(3)
             self.draw()
@@ -285,35 +284,35 @@ class View:
         self.draw()
 
     def reset_view(self, menuitem):
-        self.axes = rotate('0.0x,0.0y,0.0z')
+        self.axes = rotate("0.0x,0.0y,0.0z")
         self.set_frame()
         self.focus(self)
 
     def set_view(self, key):
-        if key == 'Z':
-            self.axes = rotate('0.0x,0.0y,0.0z')
-        elif key == 'X':
-            self.axes = rotate('-90.0x,-90.0y,0.0z')
-        elif key == 'Y':
-            self.axes = rotate('90.0x,0.0y,90.0z')
-        elif key == 'Alt+Z':
-            self.axes = rotate('180.0x,0.0y,90.0z')
-        elif key == 'Alt+X':
-            self.axes = rotate('0.0x,90.0y,0.0z')
-        elif key == 'Alt+Y':
-            self.axes = rotate('-90.0x,0.0y,0.0z')
+        if key == "Z":
+            self.axes = rotate("0.0x,0.0y,0.0z")
+        elif key == "X":
+            self.axes = rotate("-90.0x,-90.0y,0.0z")
+        elif key == "Y":
+            self.axes = rotate("90.0x,0.0y,90.0z")
+        elif key == "Alt+Z":
+            self.axes = rotate("180.0x,0.0y,90.0z")
+        elif key == "Alt+X":
+            self.axes = rotate("0.0x,90.0y,0.0z")
+        elif key == "Alt+Y":
+            self.axes = rotate("-90.0x,0.0y,0.0z")
         else:
-            if key == '3':
+            if key == "3":
                 i, j = 0, 1
-            elif key == '1':
+            elif key == "1":
                 i, j = 1, 2
-            elif key == '2':
+            elif key == "2":
                 i, j = 2, 0
-            elif key == 'Alt+3':
+            elif key == "Alt+3":
                 i, j = 1, 0
-            elif key == 'Alt+1':
+            elif key == "Alt+1":
                 i, j = 2, 1
-            elif key == 'Alt+2':
+            elif key == "Alt+2":
                 i, j = 0, 2
 
             A = complete_cell(self.atoms.cell)
@@ -333,50 +332,55 @@ class View:
 
     def get_colors(self, rgb=False):
         if rgb:
-            return [tuple(int(_rgb[i:i + 2], 16) / 255 for i in range(1, 7, 2))
-                    for _rgb in self.get_colors()]
+            return [
+                tuple(int(_rgb[i : i + 2], 16) / 255 for i in range(1, 7, 2))
+                for _rgb in self.get_colors()
+            ]
 
-        if self.colormode == 'jmol':
+        if self.colormode == "jmol":
             return [self.colors.get(Z, BLACKISH) for Z in self.atoms.numbers]
 
-        if self.colormode == 'neighbors':
-            return [self.colors.get(Z, BLACKISH)
-                    for Z in self.get_color_scalars()]
+        if self.colormode == "neighbors":
+            return [self.colors.get(Z, BLACKISH) for Z in self.get_color_scalars()]
 
         colorscale, cmin, cmax = self.colormode_data
         N = len(colorscale)
-        colorswhite = colorscale + ['#ffffff']
+        colorswhite = colorscale + ["#ffffff"]
         if cmin == cmax:
             indices = [N // 2] * len(self.atoms)
         else:
             scalars = np.ma.array(self.get_color_scalars())
-            indices = np.clip(((scalars - cmin) / (cmax - cmin) * N +
-                               0.5).astype(int),
-                              0, N - 1)
+            indices = np.clip(
+                ((scalars - cmin) / (cmax - cmin) * N + 0.5).astype(int), 0, N - 1
+            )
         return [colorswhite[i] for i in indices.filled(N)]
 
     def get_color_scalars(self, frame=None):
-        if self.colormode == 'tag':
+        if self.colormode == "tag":
             return self.atoms.get_tags()
-        if self.colormode == 'force':
-            f = (self.get_forces()**2).sum(1)**0.5
+        if self.colormode == "force":
+            f = (self.get_forces() ** 2).sum(1) ** 0.5
             return f * self.images.get_dynamic(self.atoms)
-        elif self.colormode == 'velocity':
-            return (self.atoms.get_velocities()**2).sum(1)**0.5
-        elif self.colormode == 'initial charge':
+        elif self.colormode == "velocity":
+            return (self.atoms.get_velocities() ** 2).sum(1) ** 0.5
+        elif self.colormode == "initial charge":
             return self.atoms.get_initial_charges()
-        elif self.colormode == 'magmom':
+        elif self.colormode == "magmom":
             return get_magmoms(self.atoms)
-        elif self.colormode == 'neighbors':
+        elif self.colormode == "neighbors":
             from ase.neighborlist import NeighborList
+
             n = len(self.atoms)
-            nl = NeighborList(self.get_covalent_radii(self.atoms) * 1.5,
-                              skin=0, self_interaction=False, bothways=True)
+            nl = NeighborList(
+                self.get_covalent_radii(self.atoms) * 1.5,
+                skin=0,
+                self_interaction=False,
+                bothways=True,
+            )
             nl.update(self.atoms)
             return [len(nl.get_neighbors(i)[0]) for i in range(n)]
         else:
-            scalars = np.array(self.atoms.get_array(self.colormode),
-                               dtype=float)
+            scalars = np.array(self.atoms.get_array(self.colormode), dtype=float)
             return np.ma.array(scalars, mask=np.isnan(scalars))
 
     def get_covalent_radii(self, atoms=None):
@@ -395,23 +399,24 @@ class View:
         # The indices enumerate drawable objects in z order:
         self.indices = X[:, 2].argsort()
         r = self.get_covalent_radii() * self.scale
-        if self.window['toggle-show-bonds']:
+        if self.window["toggle-show-bonds"]:
             r *= 0.65
         P = self.P = X[:n, :2]
         A = (P - r[:, None]).round().astype(int)
         X1 = X[n:, :2].round().astype(int)
         X2 = (np.dot(self.B, axes) - offset).round().astype(int)
-        disp = (np.dot(self.atoms.get_celldisp().reshape((3,)),
-                       axes)).round().astype(int)
+        disp = (
+            (np.dot(self.atoms.get_celldisp().reshape((3,)), axes)).round().astype(int)
+        )
         d = (2 * r).round().astype(int)
 
         vector_arrays = []
-        if self.window['toggle-show-velocities']:
+        if self.window["toggle-show-velocities"]:
             # Scale ugly?
             v = self.atoms.get_velocities()
             if v is not None:
                 vector_arrays.append(v * 10.0 * self.velocity_vector_scale)
-        if self.window['toggle-show-forces']:
+        if self.window["toggle-show-forces"]:
             f = self.get_forces()
             vector_arrays.append(f * self.force_vector_scale)
 
@@ -441,76 +446,106 @@ class View:
                 ra = d[a]
                 if visible[a]:
                     try:
-                        kinds = self.atoms.arrays['spacegroup_kinds']
-                        site_occ = self.atoms.info['occupancy'][str(kinds[a])]
+                        kinds = self.atoms.arrays["spacegroup_kinds"]
+                        site_occ = self.atoms.info["occupancy"][str(kinds[a])]
                         # first an empty circle if a site is not fully occupied
                         if (np.sum([v for v in site_occ.values()])) < 1.0:
-                            fill = '#ffffff'
-                            circle(fill, selected[a],
-                                   A[a, 0], A[a, 1],
-                                   A[a, 0] + ra, A[a, 1] + ra)
+                            fill = "#ffffff"
+                            circle(
+                                fill,
+                                selected[a],
+                                A[a, 0],
+                                A[a, 1],
+                                A[a, 0] + ra,
+                                A[a, 1] + ra,
+                            )
                         start = 0
                         # start with the dominant species
-                        for sym, occ in sorted(site_occ.items(),
-                                               key=lambda x: x[1],
-                                               reverse=True):
+                        for sym, occ in sorted(
+                            site_occ.items(), key=lambda x: x[1], reverse=True
+                        ):
                             if np.round(occ, decimals=4) == 1.0:
-                                circle(colors[a], selected[a],
-                                       A[a, 0], A[a, 1],
-                                       A[a, 0] + ra, A[a, 1] + ra)
+                                circle(
+                                    colors[a],
+                                    selected[a],
+                                    A[a, 0],
+                                    A[a, 1],
+                                    A[a, 0] + ra,
+                                    A[a, 1] + ra,
+                                )
                             else:
                                 # jmol colors for the moment
-                                extent = 360. * occ
-                                arc(self.colors[atomic_numbers[sym]],
+                                extent = 360.0 * occ
+                                arc(
+                                    self.colors[atomic_numbers[sym]],
                                     selected[a],
-                                    start, extent,
-                                    A[a, 0], A[a, 1],
-                                    A[a, 0] + ra, A[a, 1] + ra)
+                                    start,
+                                    extent,
+                                    A[a, 0],
+                                    A[a, 1],
+                                    A[a, 0] + ra,
+                                    A[a, 1] + ra,
+                                )
                                 start += extent
                     except KeyError:
                         # legacy behavior
                         # Draw the atoms
-                        if (self.moving and a < len(self.move_atoms_mask)
-                                and self.move_atoms_mask[a]):
-                            circle(movecolor, False,
-                                   A[a, 0] - 4, A[a, 1] - 4,
-                                   A[a, 0] + ra + 4, A[a, 1] + ra + 4)
+                        if (
+                            self.moving
+                            and a < len(self.move_atoms_mask)
+                            and self.move_atoms_mask[a]
+                        ):
+                            circle(
+                                movecolor,
+                                False,
+                                A[a, 0] - 4,
+                                A[a, 1] - 4,
+                                A[a, 0] + ra + 4,
+                                A[a, 1] + ra + 4,
+                            )
 
-                        circle(colors[a], selected[a],
-                               A[a, 0], A[a, 1], A[a, 0] + ra, A[a, 1] + ra)
+                        circle(
+                            colors[a],
+                            selected[a],
+                            A[a, 0],
+                            A[a, 1],
+                            A[a, 0] + ra,
+                            A[a, 1] + ra,
+                        )
 
                     # Draw labels on the atoms
                     if self.labels is not None:
-                        self.window.text(A[a, 0] + ra / 2,
-                                         A[a, 1] + ra / 2,
-                                         str(self.labels[a]))
+                        self.window.text(
+                            A[a, 0] + ra / 2, A[a, 1] + ra / 2, str(self.labels[a])
+                        )
 
                     # Draw cross on constrained atoms
                     if constrained[a]:
                         R1 = int(0.14644 * ra)
                         R2 = int(0.85355 * ra)
-                        line((A[a, 0] + R1, A[a, 1] + R1,
-                              A[a, 0] + R2, A[a, 1] + R2))
-                        line((A[a, 0] + R2, A[a, 1] + R1,
-                              A[a, 0] + R1, A[a, 1] + R2))
+                        line((A[a, 0] + R1, A[a, 1] + R1, A[a, 0] + R2, A[a, 1] + R2))
+                        line((A[a, 0] + R2, A[a, 1] + R1, A[a, 0] + R1, A[a, 1] + R2))
 
                     # Draw velocities and/or forces
                     for v in vector_arrays:
                         assert not np.isnan(v).any()
-                        self.arrow((X[a, 0], X[a, 1], v[a, 0], v[a, 1]),
-                                   width=2)
+                        self.arrow((X[a, 0], X[a, 1], v[a, 0], v[a, 1]), width=2)
             else:
                 # Draw unit cell and/or bonds:
                 a -= n
                 if a < ncell:
-                    line((X1[a, 0] + disp[0], X1[a, 1] + disp[1],
-                          X2[a, 0] + disp[0], X2[a, 1] + disp[1]))
+                    line(
+                        (
+                            X1[a, 0] + disp[0],
+                            X1[a, 1] + disp[1],
+                            X2[a, 0] + disp[0],
+                            X2[a, 1] + disp[1],
+                        )
+                    )
                 else:
-                    line((X1[a, 0], X1[a, 1],
-                          X2[a, 0], X2[a, 1]),
-                         width=bond_linewidth)
+                    line((X1[a, 0], X1[a, 1], X2[a, 0], X2[a, 1]), width=bond_linewidth)
 
-        if self.window['toggle-show-axes']:
+        if self.window["toggle-show-axes"]:
             self.draw_axes()
 
         if len(self.images) > 1:
@@ -528,7 +563,7 @@ class View:
         line(coords, width)
 
         vec = end - begin
-        length = np.sqrt((vec[:2]**2).sum())
+        length = np.sqrt((vec[:2] ** 2).sum())
         length = min(length, 0.3 * self.scale)
 
         angle = np.arctan2(end[1] - begin[1], end[0] - begin[0]) + np.pi
@@ -542,7 +577,7 @@ class View:
     def draw_axes(self):
         axes_length = 15
 
-        rgb = ['red', 'green', 'blue']
+        rgb = ["red", "green", "blue"]
 
         for i in self.axes[:, 2].argsort():
             a = 20
@@ -550,13 +585,13 @@ class View:
             c = int(self.axes[i][0] * axes_length + a)
             d = int(-self.axes[i][1] * axes_length + b)
             self.window.line((a, b, c, d))
-            self.window.text(c, d, 'XYZ'[i], color=rgb[i])
+            self.window.text(c, d, "XYZ"[i], color=rgb[i])
 
     def draw_frame_number(self):
         x, y = self.window.size
-        self.window.text(x, y, '{0}/{1}'.format(self.frame + 1,
-                                                len(self.images)),
-                         anchor='SE')
+        self.window.text(
+            x, y, "{0}/{1}".format(self.frame + 1, len(self.images)), anchor="SE"
+        )
 
     def release(self, event):
         if event.button in [4, 5]:
@@ -572,10 +607,10 @@ class View:
         if event.time < self.t0 + 200:  # 200 ms
             d = self.P - self.xy
             r = self.get_covalent_radii()
-            hit = np.less((d**2).sum(1), (self.scale * r)**2)
+            hit = np.less((d**2).sum(1), (self.scale * r) ** 2)
             for a in self.indices[::-1]:
                 if a < len(self.atoms) and hit[a]:
-                    if event.modifier == 'ctrl':
+                    if event.modifier == "ctrl":
                         selected[a] = not selected[a]
                         if selected[a]:
                             selected_ordered += [a]
@@ -599,11 +634,10 @@ class View:
             C2 = np.maximum(A, self.xy)
             hit = np.logical_and(self.P > C1, self.P < C2)
             indices = np.compress(hit.prod(1), np.arange(len(hit)))
-            if event.modifier != 'ctrl':
+            if event.modifier != "ctrl":
                 selected[:] = False
             selected[indices] = True
-            if (len(indices) == 1 and
-                    indices[0] not in self.images.selected_ordered):
+            if len(indices) == 1 and indices[0] not in self.images.selected_ordered:
                 selected_ordered += [indices[0]]
             elif len(indices) > 1:
                 selected_ordered = []
@@ -634,9 +668,10 @@ class View:
             self.window.canvas.create_rectangle((x, y, x0, y0))
             return
 
-        if event.modifier == 'shift':
-            self.center = (self.center0 -
-                           np.dot(self.axes, (x - x0, y0 - y, 0)) / self.scale)
+        if event.modifier == "shift":
+            self.center = (
+                self.center0 - np.dot(self.axes, (x - x0, y0 - y, 0)) / self.scale
+            )
         else:
             # Snap mode: the a-b angle and t should multipla of 15 degrees ???
             a = x - x0
@@ -650,16 +685,21 @@ class View:
                 b = 0.0
             c = cos(0.01 * t)
             s = -sin(0.01 * t)
-            rotation = np.array([(c * a * a + b * b, (c - 1) * b * a, s * a),
-                                 ((c - 1) * a * b, c * b * b + a * a, s * b),
-                                 (-s * a, -s * b, c)])
+            rotation = np.array(
+                [
+                    (c * a * a + b * b, (c - 1) * b * a, s * a),
+                    ((c - 1) * a * b, c * b * b + a * a, s * b),
+                    (-s * a, -s * b, c),
+                ]
+            )
             self.axes = np.dot(self.axes0, rotation)
             if len(self.atoms) > 0:
                 com = self.X_pos.mean(0)
             else:
                 com = self.atoms.cell.mean(0)
-            self.center = com - np.dot(com - self.center0,
-                                       np.dot(self.axes0, self.axes.T))
+            self.center = com - np.dot(
+                com - self.center0, np.dot(self.axes0, self.axes.T)
+            )
         self.draw(status=False)
 
     def render_window(self):
@@ -667,6 +707,6 @@ class View:
 
     def resize(self, event):
         w, h = self.window.size
-        self.scale *= (event.width * event.height / (w * h))**0.5
+        self.scale *= (event.width * event.height / (w * h)) ** 0.5
         self.window.size[:] = [event.width, event.height]
         self.draw()

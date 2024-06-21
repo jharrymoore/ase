@@ -16,13 +16,13 @@ from numpy.linalg import norm
 
 def unit_vector(x):
     """Return a unit vector in the same direction as x."""
-    y = np.array(x, dtype='float')
+    y = np.array(x, dtype="float")
     return y / norm(y)
 
 
 def angle(x, y):
     """Return the angle between vectors a and b in degrees."""
-    return arccos(dot(x, y) / (norm(x) * norm(y))) * 180. / pi
+    return arccos(dot(x, y) / (norm(x) * norm(y))) * 180.0 / pi
 
 
 def cell_to_cellpar(cell, radians=False):
@@ -87,7 +87,7 @@ def cellpar_to_cell(cellpar, ab_normal=(0, 0, 1), a_direction=None):
     Y = np.cross(Z, X)
 
     # Express va, vb and vc in the X,Y,Z-system
-    alpha, beta, gamma = 90., 90., 90.
+    alpha, beta, gamma = 90.0, 90.0, 90.0
     if isinstance(cellpar, (int, float)):
         a = b = c = cellpar
     elif len(cellpar) == 1:
@@ -125,7 +125,7 @@ def cellpar_to_cell(cellpar, ab_normal=(0, 0, 1), a_direction=None):
     vb = b * np.array([cos_gamma, sin_gamma, 0])
     cx = cos_beta
     cy = (cos_alpha - cos_beta * cos_gamma) / sin_gamma
-    cz_sqr = 1. - cx * cx - cy * cy
+    cz_sqr = 1.0 - cx * cx - cy * cy
     assert cz_sqr >= 0
     cz = sqrt(cz_sqr)
     vc = c * np.array([cx, cy, cz])
@@ -179,7 +179,7 @@ def is_orthorhombic(cell):
 def orthorhombic(cell):
     """Return cell as three box dimensions or raise ValueError."""
     if not is_orthorhombic(cell):
-        raise ValueError('Not orthorhombic')
+        raise ValueError("Not orthorhombic")
     return cell.diagonal().copy()
 
 

@@ -3,8 +3,9 @@ from ase.calculators.crystal import CRYSTAL
 
 
 def test_bulk(testdir):
-    with open('basis', 'w') as fd:
-        fd.write("""6 4
+    with open("basis", "w") as fd:
+        fd.write(
+            """6 4
     0 0 6 2.0 1.0
      3048.0 0.001826
      456.4 0.01406
@@ -19,28 +20,29 @@ def test_bulk(testdir):
      0.26 1.0 1.0
     0 3 1 0.0 1.0
      0.8 1.0
-    """)
+    """
+        )
 
     a0 = 5.43
-    bulk = Atoms('Si2', [(0, 0, 0),
-                         (0.25, 0.25, 0.25)],
-                 pbc=True)
+    bulk = Atoms("Si2", [(0, 0, 0), (0.25, 0.25, 0.25)], pbc=True)
     b = a0 / 2
-    bulk.set_cell([(0, b, b),
-                   (b, 0, b),
-                   (b, b, 0)], scale_atoms=True)
+    bulk.set_cell([(0, b, b), (b, 0, b), (b, b, 0)], scale_atoms=True)
 
     bulk.calc = CRYSTAL(
-        label='Si2',
+        label="Si2",
         guess=True,
-        basis='sto-3g',
-        xc='PBE',
+        basis="sto-3g",
+        xc="PBE",
         kpts=(2, 2, 2),
-        otherkeys=['scfdir', 'anderson',
-                   ['maxcycles', '500'],
-                   ['toldee', '6'],
-                   ['tolinteg', '7 7 7 7 14'],
-                   ['fmixing', '50']])
+        otherkeys=[
+            "scfdir",
+            "anderson",
+            ["maxcycles", "500"],
+            ["toldee", "6"],
+            ["tolinteg", "7 7 7 7 14"],
+            ["fmixing", "50"],
+        ],
+    )
 
     final_energy = bulk.get_potential_energy()
     assert abs(final_energy + 15564.787949) < 1.0

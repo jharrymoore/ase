@@ -4,8 +4,7 @@ import numpy as np
 
 from ase import Atoms
 from ase.units import Hartree, Bohr
-from ase.calculators.singlepoint import (SinglePointDFTCalculator,
-                                         SinglePointKPoint)
+from ase.calculators.singlepoint import SinglePointDFTCalculator, SinglePointKPoint
 from .parser import _define_pattern
 
 # Note to the reader of this code: Here and below we use the function
@@ -17,15 +16,15 @@ from .parser import _define_pattern
 
 # Matches the beginning of a GTO calculation
 _gauss_block = _define_pattern(
-    r'^[\s]+NWChem (?:SCF|DFT) Module\n$',
+    r"^[\s]+NWChem (?:SCF|DFT) Module\n$",
     "                                 NWChem SCF Module\n",
 )
 
 
 # Matches the beginning of a plane wave calculation
 _pw_block = _define_pattern(
-    r'^[\s]+\*[\s]+NWPW (?:PSPW|BAND|PAW|Band Structure) Calculation'
-    r'[\s]+\*[\s]*\n$',
+    r"^[\s]+\*[\s]+NWPW (?:PSPW|BAND|PAW|Band Structure) Calculation"
+    r"[\s]+\*[\s]*\n$",
     "          *               NWPW PSPW Calculation              *\n",
 )
 
@@ -39,12 +38,13 @@ def read_nwchem_out(fobj, index=-1):
     if index == slice(-1, None, None):
         for line in lines:
             if _gauss_block.match(line):
-                return [parse_gto_chunk(''.join(lines))]
+                return [parse_gto_chunk("".join(lines))]
             if _pw_block.match(line):
-                return [parse_pw_chunk(''.join(lines))]
+                return [parse_pw_chunk("".join(lines))]
         else:
-            raise ValueError('This does not appear to be a valid NWChem '
-                             'output file.')
+            raise ValueError(
+                "This does not appear to be a valid NWChem " "output file."
+            )
 
     # First, find each SCF block
     group = []
@@ -65,9 +65,9 @@ def read_nwchem_out(fobj, index=-1):
         if header:
             header = False
         else:
-            atoms = parser(''.join(group))
+            atoms = parser("".join(group))
             if atoms is None and parser is lastparser:
-                atoms = parser(''.join(lastgroup + group))
+                atoms = parser("".join(lastgroup + group))
                 if atoms is not None:
                     atomslist[-1] = atoms
                     lastgroup += group
@@ -79,7 +79,7 @@ def read_nwchem_out(fobj, index=-1):
         parser = next_parser
     else:
         if not header:
-            atoms = parser(''.join(group))
+            atoms = parser("".join(group))
             if atoms is not None:
                 atomslist.append(atoms)
 
@@ -88,12 +88,12 @@ def read_nwchem_out(fobj, index=-1):
 
 # Matches a geometry block and returns the geometry specification lines
 _geom = _define_pattern(
-    r'\n[ \t]+Geometry \"[ \t\S]+\" -> \"[ \t\S]*\"[ \t]*\n'
-    r'^[ \t-]+\n'
-    r'(?:^[ \t\S]*\n){3}'
-    r'^[ \t]+No\.[ \t]+Tag[ \t]+Charge[ \t]+X[ \t]+Y[ \t]+Z\n'
-    r'^[ \t-]+\n'
-    r'((?:^(?:[ \t]+[\S]+){6}[ \t]*\n)+)',
+    r"\n[ \t]+Geometry \"[ \t\S]+\" -> \"[ \t\S]*\"[ \t]*\n"
+    r"^[ \t-]+\n"
+    r"(?:^[ \t\S]*\n){3}"
+    r"^[ \t]+No\.[ \t]+Tag[ \t]+Charge[ \t]+X[ \t]+Y[ \t]+Z\n"
+    r"^[ \t-]+\n"
+    r"((?:^(?:[ \t]+[\S]+){6}[ \t]*\n)+)",
     """\
 
                              Geometry "geometry" -> ""
@@ -107,13 +107,16 @@ _geom = _define_pattern(
     2 H                    1.0000     0.62911800     0.62911800     0.62911800
     3 H                    1.0000    -0.62911800    -0.62911800     0.62911800
     4 H                    1.0000     0.62911800    -0.62911800    -0.62911800
-""", re.M)
+""",
+    re.M,
+)
 
 # Unit cell parser
-_cell_block = _define_pattern(r'^[ \t]+Lattice Parameters[ \t]*\n'
-                              r'^(?:[ \t\S]*\n){4}'
-                              r'((?:^(?:[ \t]+[\S]+){5}\n){3})',
-                              """\
+_cell_block = _define_pattern(
+    r"^[ \t]+Lattice Parameters[ \t]*\n"
+    r"^(?:[ \t\S]*\n){4}"
+    r"((?:^(?:[ \t]+[\S]+){5}\n){3})",
+    """\
       Lattice Parameters
       ------------------
 
@@ -125,7 +128,9 @@ _cell_block = _define_pattern(r'^[ \t]+Lattice Parameters[ \t]*\n'
       a=       4.000 b=      5.526 c=       4.596
       alpha=  90.000 beta=  90.000 gamma=  90.000
       omega=   101.6
-""", re.M)
+""",
+    re.M,
+)
 
 
 # Parses the geometry and returns the corresponding Atoms object
@@ -133,7 +138,7 @@ def _parse_geomblock(chunk):
     geomblocks = _geom.findall(chunk)
     if not geomblocks:
         return None
-    geomblock = geomblocks[-1].strip().split('\n')
+    geomblock = geomblocks[-1].strip().split("\n")
     natoms = len(geomblock)
     symbols = []
     pos = np.zeros((natoms, 3))
@@ -144,7 +149,7 @@ def _parse_geomblock(chunk):
 
     cellblocks = _cell_block.findall(chunk)
     if cellblocks:
-        cellblock = cellblocks[-1].strip().split('\n')
+        cellblock = cellblocks[-1].strip().split("\n")
         cell = np.zeros((3, 3))
         for i, line in enumerate(cellblock):
             line = line.strip().split()
@@ -158,10 +163,10 @@ def _parse_geomblock(chunk):
 
 # Matches gradient block from a GTO calculation
 _gto_grad = _define_pattern(
-    r'^[ \t]+[\S]+[ \t]+ENERGY GRADIENTS[ \t]*[\n]+'
-    r'^[ \t]+atom[ \t]+coordinates[ \t]+gradient[ \t]*\n'
-    r'^(?:[ \t]+x[ \t]+y[ \t]+z){2}[ \t]*\n'
-    r'((?:^(?:[ \t]+[\S]+){8}\n)+)[ \t]*\n',
+    r"^[ \t]+[\S]+[ \t]+ENERGY GRADIENTS[ \t]*[\n]+"
+    r"^[ \t]+atom[ \t]+coordinates[ \t]+gradient[ \t]*\n"
+    r"^(?:[ \t]+x[ \t]+y[ \t]+z){2}[ \t]*\n"
+    r"((?:^(?:[ \t]+[\S]+){8}\n)+)[ \t]*\n",
     """\
                          UHF ENERGY GRADIENTS
 
@@ -172,33 +177,34 @@ _gto_grad = _define_pattern(
    3 H      -1.355351  -1.125380   1.125380   -0.000089  -0.000086   0.000086
    4 H       1.125380  -1.125380  -1.355351    0.000086  -0.000086  -0.000089
 
-""", re.M)
+""",
+    re.M,
+)
 
 # Energy parsers for a variety of different GTO calculations
 _e_gto = OrderedDict()
-_e_gto['tce'] = _define_pattern(
-    r'^[\s]+[\S]+[\s]+total energy \/ hartree[\s]+'
-    r'=[\s]+([\S]+)[\s]*\n',
-    " CCD total energy / hartree       "
-    "=       -75.715332545665888\n", re.M,
+_e_gto["tce"] = _define_pattern(
+    r"^[\s]+[\S]+[\s]+total energy \/ hartree[\s]+" r"=[\s]+([\S]+)[\s]*\n",
+    " CCD total energy / hartree       " "=       -75.715332545665888\n",
+    re.M,
 )
-_e_gto['ccsd'] = _define_pattern(
-    r'^[\s]+Total CCSD energy:[\s]+([\S]+)[\s]*\n',
+_e_gto["ccsd"] = _define_pattern(
+    r"^[\s]+Total CCSD energy:[\s]+([\S]+)[\s]*\n",
     " Total CCSD energy:            -75.716168566598569\n",
     re.M,
 )
-_e_gto['tddft'] = _define_pattern(
-    r'^[\s]+Excited state energy =[\s]+([\S]+)[\s]*\n',
+_e_gto["tddft"] = _define_pattern(
+    r"^[\s]+Excited state energy =[\s]+([\S]+)[\s]*\n",
     "     Excited state energy =    -75.130134499965\n",
     re.M,
 )
-_e_gto['mp2'] = _define_pattern(
-    r'^[\s]+Total MP2 energy[\s]+([\S]+)[\s]*\n',
+_e_gto["mp2"] = _define_pattern(
+    r"^[\s]+Total MP2 energy[\s]+([\S]+)[\s]*\n",
     "          Total MP2 energy           -75.708800087578\n",
     re.M,
 )
-_e_gto['mf'] = _define_pattern(
-    r'^[\s]+Total (?:DFT|SCF) energy =[\s]+([\S]+)[\s]*\n',
+_e_gto["mf"] = _define_pattern(
+    r"^[\s]+Total (?:DFT|SCF) energy =[\s]+([\S]+)[\s]*\n",
     "         Total SCF energy =    -75.585555997789\n",
     re.M,
 )
@@ -214,12 +220,12 @@ def parse_gto_chunk(chunk):
     for theory, pattern in _e_gto.items():
         matches = pattern.findall(chunk)
         if matches:
-            energy = float(matches[-1].replace('D', 'E')) * Hartree
+            energy = float(matches[-1].replace("D", "E")) * Hartree
             break
 
     gradblocks = _gto_grad.findall(chunk)
     if gradblocks:
-        gradblock = gradblocks[-1].strip().split('\n')
+        gradblock = gradblocks[-1].strip().split("\n")
         natoms = len(gradblock)
         symbols = []
         pos = np.zeros((natoms, 3))
@@ -244,13 +250,14 @@ def parse_gto_chunk(chunk):
         return
 
     # SinglePointDFTCalculator doesn't support quadrupole moment currently
-    calc = SinglePointDFTCalculator(atoms=atoms,
-                                    energy=energy,
-                                    free_energy=energy,  # XXX Is this right?
-                                    forces=forces,
-                                    dipole=dipole,
-                                    # quadrupole=quadrupole,
-                                    )
+    calc = SinglePointDFTCalculator(
+        atoms=atoms,
+        energy=energy,
+        free_energy=energy,  # XXX Is this right?
+        forces=forces,
+        dipole=dipole,
+        # quadrupole=quadrupole,
+    )
     calc.kpts = kpts
     atoms.calc = calc
     return atoms
@@ -258,9 +265,9 @@ def parse_gto_chunk(chunk):
 
 # Extracts dipole and quadrupole moment for a GTO calculation
 _multipole = _define_pattern(
-    r'^[ \t]+Multipole analysis of the density[ \t\S]*\n'
-    r'^[ \t-]+\n\n^[ \t\S]+\n^[ \t-]+\n'
-    r'((?:(?:(?:[ \t]+[\S]+){7,8}\n)|[ \t]*\n){12})',
+    r"^[ \t]+Multipole analysis of the density[ \t\S]*\n"
+    r"^[ \t-]+\n\n^[ \t\S]+\n^[ \t-]+\n"
+    r"((?:(?:(?:[ \t]+[\S]+){7,8}\n)|[ \t]*\n){12})",
     """\
      Multipole analysis of the density
      ---------------------------------
@@ -279,7 +286,9 @@ _multipole = _define_pattern(
      2   0 2 0     -3.153324     -3.807308     -3.807308      4.461291
      2   0 1 1      0.000001     -0.000009     -0.000009      0.000020
      2   0 0 2     -4.384288     -3.296205     -3.296205      2.208122
-""", re.M)
+""",
+    re.M,
+)
 
 
 # Parses the dipole and quadrupole moment from a GTO calculation
@@ -289,7 +298,7 @@ def _get_multipole(chunk):
         return None, None
     # This pulls the 5th column out of the multipole moments block;
     # this column contains the actual moments.
-    moments = [float(x.split()[4]) for x in matches[-1].split('\n') if x]
+    moments = [float(x.split()[4]) for x in matches[-1].split("\n") if x]
     dipole = np.array(moments[1:4]) * Bohr
     quadrupole = np.zeros(9)
     quadrupole[[0, 1, 2, 4, 5, 8]] = [moments[4:]]
@@ -299,10 +308,10 @@ def _get_multipole(chunk):
 
 # MO eigenvalue and occupancy parser for GTO calculations
 _eval_block = _define_pattern(
-    r'^[ \t]+[\S]+ Final (?:Alpha |Beta )?Molecular Orbital Analysis[ \t]*'
-    r'\n^[ \t-]+\n\n'
-    r'(?:^[ \t]+Vector [ \t\S]+\n(?:^[ \t\S]+\n){3}'
-    r'(?:^(?:(?:[ \t]+[\S]+){5}){1,2}[ \t]*\n)+\n)+',
+    r"^[ \t]+[\S]+ Final (?:Alpha |Beta )?Molecular Orbital Analysis[ \t]*"
+    r"\n^[ \t-]+\n\n"
+    r"(?:^[ \t]+Vector [ \t\S]+\n(?:^[ \t\S]+\n){3}"
+    r"(?:^(?:(?:[ \t]+[\S]+){5}){1,2}[ \t]*\n)+\n)+",
     """\
                        ROHF Final Molecular Orbital Analysis
                        -------------------------------------
@@ -319,7 +328,9 @@ _eval_block = _define_pattern(
   ----- ------------  ---------------      ----- ------------  ---------------
      6      0.708998  1 O  s                  1     -0.229426  1 O  s          
      2      0.217752  1 O  s          
-     """, re.M)  # noqa: W291
+     """,
+    re.M,
+)  # noqa: W291
 
 
 # Parses the eigenvalues and occupations from a GTO calculation
@@ -337,31 +348,32 @@ def _get_gto_kpts(chunk):
 
 # Extracts MO eigenvalue and occupancy for a GTO calculation
 _extract_vector = _define_pattern(
-    r'^[ \t]+Vector[ \t]+([\S])+[ \t]+Occ=([\S]+)[ \t]+E=[ \t]*([\S]+)[ \t]*\n',
-    " Vector    1  Occ=2.000000D+00  E=-2.043101D+01\n", re.M,
+    r"^[ \t]+Vector[ \t]+([\S])+[ \t]+Occ=([\S]+)[ \t]+E=[ \t]*([\S]+)[ \t]*\n",
+    " Vector    1  Occ=2.000000D+00  E=-2.043101D+01\n",
+    re.M,
 )
 
 
 # Extracts the eigenvalues and occupations from a GTO calculation
 def _get_gto_evals(chunk):
-    spin = 1 if re.match(r'[ \t\S]+Beta', chunk) else 0
+    spin = 1 if re.match(r"[ \t\S]+Beta", chunk) else 0
     data = []
     for vector in _extract_vector.finditer(chunk):
-        data.append([float(x.replace('D', 'E')) for x in vector.groups()[1:]])
+        data.append([float(x.replace("D", "E")) for x in vector.groups()[1:]])
     data = np.array(data)
     occ = data[:, 0]
     energies = data[:, 1] * Hartree
 
-    return SinglePointKPoint(1., spin, 0, energies, occ)
+    return SinglePointKPoint(1.0, spin, 0, energies, occ)
 
 
 # Plane wave specific parsing stuff
 
 # Matches the gradient block from a plane wave calculation
 _nwpw_grad = _define_pattern(
-    r'^[ \t]+[=]+[ \t]+Ion Gradients[ \t]+[=]+[ \t]*\n'
-    r'^[ \t]+Ion Forces:[ \t]*\n'
-    r'((?:^(?:[ \t]+[\S]+){7}\n)+)',
+    r"^[ \t]+[=]+[ \t]+Ion Gradients[ \t]+[=]+[ \t]*\n"
+    r"^[ \t]+Ion Forces:[ \t]*\n"
+    r"((?:^(?:[ \t]+[\S]+){7}\n)+)",
     """\
           =============  Ion Gradients =================
  Ion Forces:
@@ -370,15 +382,17 @@ _nwpw_grad = _define_pattern(
         3 H    (    0.000047    0.012863    0.020786 )
         C.O.M. (   -0.000000   -0.000000   -0.000000 )
           ===============================================
-""", re.M)
+""",
+    re.M,
+)
 
 # Matches the gradient block from a PAW calculation
 _paw_grad = _define_pattern(
-    r'^[ \t]+[=]+[ \t]+Ion Gradients[ \t]+[=]+[ \t]*\n'
-    r'^[ \t]+Ion Positions:[ \t]*\n'
-    r'((?:^(?:[ \t]+[\S]+){7}\n)+)'
-    r'^[ \t]+Ion Forces:[ \t]*\n'
-    r'((?:^(?:[ \t]+[\S]+){7}\n)+)',
+    r"^[ \t]+[=]+[ \t]+Ion Gradients[ \t]+[=]+[ \t]*\n"
+    r"^[ \t]+Ion Positions:[ \t]*\n"
+    r"((?:^(?:[ \t]+[\S]+){7}\n)+)"
+    r"^[ \t]+Ion Forces:[ \t]*\n"
+    r"((?:^(?:[ \t]+[\S]+){7}\n)+)",
     """\
           =============  Ion Gradients =================
  Ion Positions:
@@ -391,20 +405,22 @@ _paw_grad = _define_pattern(
         3 H    (    0.00005    0.00030   -0.00322 )
         C.O.M. (   -0.00000   -0.00000   -0.00000 )
           ===============================================
-""", re.M)
+""",
+    re.M,
+)
 
 # Energy parser for plane wave calculations
 _nwpw_energy = _define_pattern(
-    r'^[\s]+Total (?:PSPW|BAND|PAW) energy'
-    r'[\s]+:[\s]+([\S]+)[\s]*\n',
+    r"^[\s]+Total (?:PSPW|BAND|PAW) energy" r"[\s]+:[\s]+([\S]+)[\s]*\n",
     " Total PSPW energy     :  -0.1709317826E+02\n",
     re.M,
 )
 
 # Parser for the fermi energy in a plane wave calculation
 _fermi_energy = _define_pattern(
-    r'^[ \t]+Fermi energy =[ \t]+([\S]+) \([ \t]+[\S]+[ \t]*\n',
-    "  Fermi energy =    -0.5585062E-01 (  -1.520eV)\n", re.M,
+    r"^[ \t]+Fermi energy =[ \t]+([\S]+) \([ \t]+[\S]+[ \t]*\n",
+    "  Fermi energy =    -0.5585062E-01 (  -1.520eV)\n",
+    re.M,
 )
 
 
@@ -421,17 +437,17 @@ def parse_pw_chunk(chunk):
 
     matches = _nwpw_energy.findall(chunk)
     if matches:
-        energy = float(matches[-1].replace('D', 'E')) * Hartree
+        energy = float(matches[-1].replace("D", "E")) * Hartree
 
     matches = _fermi_energy.findall(chunk)
     if matches:
-        efermi = float(matches[-1].replace('D', 'E')) * Hartree
+        efermi = float(matches[-1].replace("D", "E")) * Hartree
 
     gradblocks = _nwpw_grad.findall(chunk)
     if not gradblocks:
         gradblocks = _paw_grad.findall(chunk)
     if gradblocks:
-        gradblock = gradblocks[-1].strip().split('\n')
+        gradblock = gradblocks[-1].strip().split("\n")
         natoms = len(gradblock)
         symbols = []
         forces = np.zeros((natoms, 3))
@@ -448,13 +464,15 @@ def parse_pw_chunk(chunk):
 
     # NWChem does not calculate an energy extrapolated to the 0K limit,
     # so right now, energy and free_energy will be the same.
-    calc = SinglePointDFTCalculator(atoms=atoms,
-                                    energy=energy,
-                                    efermi=efermi,
-                                    free_energy=energy,
-                                    forces=forces,
-                                    stress=stress,
-                                    ibzkpts=ibz_kpts)
+    calc = SinglePointDFTCalculator(
+        atoms=atoms,
+        energy=energy,
+        efermi=efermi,
+        free_energy=energy,
+        forces=forces,
+        stress=stress,
+        ibzkpts=ibz_kpts,
+    )
     calc.kpts = kpts
     atoms.calc = calc
     return atoms
@@ -462,15 +480,17 @@ def parse_pw_chunk(chunk):
 
 # Extracts stress tensor from a plane wave calculation
 _stress = _define_pattern(
-    r'[ \t]+[=]+[ \t]+(?:total gradient|E all FD)[ \t]+[=]+[ \t]*\n'
-    r'^[ \t]+S =((?:(?:[ \t]+[\S]+){5}\n){3})[ \t=]+\n',
+    r"[ \t]+[=]+[ \t]+(?:total gradient|E all FD)[ \t]+[=]+[ \t]*\n"
+    r"^[ \t]+S =((?:(?:[ \t]+[\S]+){5}\n){3})[ \t=]+\n",
     """\
           ============= total gradient ==============
       S =  (   -0.22668    0.27174    0.19134 )
            (    0.23150   -0.26760    0.23226 )
            (    0.19090    0.27206   -0.22700 )
           ===================================================
-""", re.M)
+""",
+    re.M,
+)
 
 
 # Extract stress tensor from a plane wave calculation
@@ -480,7 +500,7 @@ def _get_stress(chunk, cell):
         return None
     stress_block = stress_blocks[-1]
     stress = np.zeros((3, 3))
-    for i, row in enumerate(stress_block.strip().split('\n')):
+    for i, row in enumerate(stress_block.strip().split("\n")):
         stress[i] = [float(x) for x in row.split()[1:4]]
     stress = (stress @ cell) * Hartree / Bohr / cell.volume
     stress = 0.5 * (stress + stress.T)
@@ -490,10 +510,10 @@ def _get_stress(chunk, cell):
 
 # MO/band eigenvalue and occupancy parser for plane wave calculations
 _nwpw_eval_block = _define_pattern(
-    r'(?:(?:^[ \t]+Brillouin zone point:[ \t]+[\S]+[ \t]*\n'
-    r'(?:[ \t\S]*\n){3,4})?'
-    r'^[ \t]+(?:virtual )?orbital energies:\n'
-    r'(?:^(?:(?:[ \t]+[\S]+){3,4}){1,2}[ \t]*\n)+\n{,3})+',
+    r"(?:(?:^[ \t]+Brillouin zone point:[ \t]+[\S]+[ \t]*\n"
+    r"(?:[ \t\S]*\n){3,4})?"
+    r"^[ \t]+(?:virtual )?orbital energies:\n"
+    r"(?:^(?:(?:[ \t]+[\S]+){3,4}){1,2}[ \t]*\n)+\n{,3})+",
     """\
  Brillouin zone point:      1
     weight=  0.074074
@@ -520,35 +540,39 @@ _nwpw_eval_block = _define_pattern(
      0.3910472E+00 (  10.641eV) occ=1.000     0.4124238E+00 (  11.223eV) occ=1.000
      0.3153977E+00 (   8.582eV) occ=1.000     0.3379797E+00 (   9.197eV) occ=1.000
      0.2801606E+00 (   7.624eV) occ=1.000     0.3052478E+00 (   8.306eV) occ=1.000
-""", re.M)  # noqa: E501, W291
+""",
+    re.M,
+)  # noqa: E501, W291
 
 # Parser for kpoint weights for a plane wave calculation
 _kpt_weight = _define_pattern(
-    r'^[ \t]+Brillouin zone point:[ \t]+([\S]+)[ \t]*\n'
-    r'^[ \t]+weight=[ \t]+([\S]+)[ \t]*\n',
+    r"^[ \t]+Brillouin zone point:[ \t]+([\S]+)[ \t]*\n"
+    r"^[ \t]+weight=[ \t]+([\S]+)[ \t]*\n",
     """\
  Brillouin zone point:      1
     weight=  0.074074  
-""", re.M)  # noqa: W291
+""",
+    re.M,
+)  # noqa: W291
 
 
 # Parse eigenvalues and occupancies from a plane wave calculation
 def _get_pw_kpts(chunk):
     eval_blocks = []
     for block in _nwpw_eval_block.findall(chunk):
-        if 'pathlength' not in block:
+        if "pathlength" not in block:
             eval_blocks.append(block)
     if not eval_blocks:
         return []
-    if 'virtual' in eval_blocks[-1]:
+    if "virtual" in eval_blocks[-1]:
         occ_block = eval_blocks[-2]
         virt_block = eval_blocks[-1]
     else:
         occ_block = eval_blocks[-1]
-        virt_block = ''
+        virt_block = ""
     kpts = NWChemKpts()
-    _extract_pw_kpts(occ_block, kpts, 1.)
-    _extract_pw_kpts(virt_block, kpts, 0.)
+    _extract_pw_kpts(occ_block, kpts, 1.0)
+    _extract_pw_kpts(virt_block, kpts, 0.0)
     for match in _kpt_weight.finditer(occ_block):
         index, weight = match.groups()
         kpts.set_weight(index, float(weight))
@@ -564,7 +588,7 @@ class NWChemKpts:
         self.weights = dict()
 
     def add_ibz_kpt(self, index, raw_kpt):
-        kpt = np.array([float(x.strip('>')) for x in raw_kpt.split()[1:4]])
+        kpt = np.array([float(x.strip(">")) for x in raw_kpt.split()[1:4]])
         self.ibz_kpts[index] = kpt
 
     def add_eval(self, index, spin, energy, occ):
@@ -579,7 +603,7 @@ class NWChemKpts:
 
     def to_ibz_kpts(self):
         if not self.ibz_kpts:
-            return np.array([[0., 0., 0.]])
+            return np.array([[0.0, 0.0, 0.0]])
         sorted_kpts = sorted(list(self.ibz_kpts.items()), key=lambda x: x[0])
         return np.array(list(zip(*sorted_kpts))[1])
 
@@ -595,12 +619,12 @@ class NWChemKpts:
 
 # Extracts MO/band data from a pattern matched by _nwpw_eval_block above
 _kpt = _define_pattern(
-    r'^[ \t]+Brillouin zone point:[ \t]+([\S]+)[ \t]*\n'
-    r'^[ \t]+weight=[ \t]+([\S])+[ \t]*\n'
-    r'^[ \t]+k[ \t]+([ \t\S]+)\n'
-    r'(?:^[ \t\S]*\n){1,2}'
-    r'^[ \t]+(?:virtual )?orbital energies:\n'
-    r'((?:^(?:(?:[ \t]+[\S]+){3,4}){1,2}[ \t]*\n)+)',
+    r"^[ \t]+Brillouin zone point:[ \t]+([\S]+)[ \t]*\n"
+    r"^[ \t]+weight=[ \t]+([\S])+[ \t]*\n"
+    r"^[ \t]+k[ \t]+([ \t\S]+)\n"
+    r"(?:^[ \t\S]*\n){1,2}"
+    r"^[ \t]+(?:virtual )?orbital energies:\n"
+    r"((?:^(?:(?:[ \t]+[\S]+){3,4}){1,2}[ \t]*\n)+)",
     """\
  Brillouin zone point:      1
     weight=  0.074074
@@ -614,7 +638,9 @@ _kpt = _define_pattern(
      0.3544000E+00 (   9.644eV) occ=1.000     0.3782641E+00 (  10.293eV) occ=1.000
      0.3531137E+00 (   9.609eV) occ=1.000     0.3778819E+00 (  10.283eV) occ=1.000
      0.2596367E+00 (   7.065eV) occ=1.000     0.2820723E+00 (   7.676eV) occ=1.000
-""", re.M)  # noqa: E501, W291
+""",
+    re.M,
+)  # noqa: E501, W291
 
 
 # Extracts kpoints from a plane wave calculation
@@ -622,7 +648,7 @@ def _extract_pw_kpts(chunk, kpts, default_occ):
     for match in _kpt.finditer(chunk):
         point, weight, raw_kpt, orbitals = match.groups()
         index = int(point) - 1
-        for line in orbitals.split('\n'):
+        for line in orbitals.split("\n"):
             tokens = line.strip().split()
             if not tokens:
                 continue
@@ -631,7 +657,7 @@ def _extract_pw_kpts(chunk, kpts, default_occ):
             if ntokens % 3 == 0:
                 a_o = default_occ
             else:
-                a_o = float(tokens[3].split('=')[1])
+                a_o = float(tokens[3].split("=")[1])
             kpts.add_eval(index, 0, a_e, a_o)
 
             if ntokens <= 4:
@@ -641,7 +667,7 @@ def _extract_pw_kpts(chunk, kpts, default_occ):
                 b_o = default_occ
             elif ntokens == 8:
                 b_e = float(tokens[4]) * Hartree
-                b_o = float(tokens[7].split('=')[1])
+                b_o = float(tokens[7].split("=")[1])
             kpts.add_eval(index, 1, b_e, b_o)
         kpts.set_weight(index, float(weight))
         kpts.add_ibz_kpt(index, raw_kpt)

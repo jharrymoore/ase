@@ -44,8 +44,10 @@ def download_isotope_data():
     0.7372
     """
 
-    url = 'http://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl' \
-        '?ele=&ascii=ascii&isotype=all'
+    url = (
+        "http://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl"
+        "?ele=&ascii=ascii&isotype=all"
+    )
 
     with request.urlopen(url) as fd:
         txt = fd.read()
@@ -68,11 +70,11 @@ def parse_isotope_data(raw_data):
         for isotope_idx in range(idx1 + 1, idx2):
             mass_number = int(raw_data[isotope_idx][8:12])
             # drop uncertainty
-            mass = float(raw_data[isotope_idx][13:31].split('(')[0])
+            mass = float(raw_data[isotope_idx][13:31].split("(")[0])
             try:
-                composition = float(raw_data[isotope_idx][32:46].split('(')[0])
+                composition = float(raw_data[isotope_idx][32:46].split("(")[0])
             except ValueError:
                 composition = 0.0
-            dct[mass_number] = {'mass': mass, 'composition': composition}
+            dct[mass_number] = {"mass": mass, "composition": composition}
 
     return isotopes

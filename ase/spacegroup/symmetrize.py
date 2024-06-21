@@ -9,14 +9,20 @@ from ase.stress import voigt_6_to_full_3x3_stress, full_3x3_to_voigt_6_stress
 from ase.utils import atoms_to_spglib_cell
 
 
-__all__ = ['refine_symmetry', 'check_symmetry', 'FixSymmetry']
+__all__ = ["refine_symmetry", "check_symmetry", "FixSymmetry"]
 
 
 def print_symmetry(symprec, dataset):
-    print("ase.spacegroup.symmetrize: prec", symprec,
-          "got symmetry group number", dataset["number"],
-          ", international (Hermann-Mauguin)", dataset["international"],
-          ", Hall ", dataset["hall"])
+    print(
+        "ase.spacegroup.symmetrize: prec",
+        symprec,
+        "got symmetry group number",
+        dataset["number"],
+        ", international (Hermann-Mauguin)",
+        dataset["international"],
+        ", Hall ",
+        dataset["hall"],
+    )
 
 
 def refine_symmetry(atoms, symprec=0.01, verbose=False):
@@ -42,9 +48,9 @@ def refine_symmetry(atoms, symprec=0.01, verbose=False):
 
     # set actual cell to symmetrized cell vectors by copying
     # transformed and rotated standard cell
-    std_cell = dataset['std_lattice']
-    trans_std_cell = dataset['transformation_matrix'].T @ std_cell
-    rot_trans_std_cell = trans_std_cell @ dataset['std_rotation_matrix']
+    std_cell = dataset["std_lattice"]
+    trans_std_cell = dataset["transformation_matrix"].T @ std_cell
+    rot_trans_std_cell = trans_std_cell @ dataset["std_rotation_matrix"]
     atoms.set_cell(rot_trans_std_cell, True)
 
     # get new dataset and primitive cell
@@ -53,15 +59,17 @@ def refine_symmetry(atoms, symprec=0.01, verbose=False):
     prim_cell, prim_scaled_pos, prim_types = res
 
     # calculate offset between standard cell and actual cell
-    std_cell = dataset['std_lattice']
-    rot_std_cell = std_cell @ dataset['std_rotation_matrix']
-    rot_std_pos = dataset['std_positions'] @ rot_std_cell
+    std_cell = dataset["std_lattice"]
+    rot_std_cell = std_cell @ dataset["std_rotation_matrix"]
+    rot_std_pos = dataset["std_positions"] @ rot_std_cell
     pos = atoms.get_positions()
-    dp0 = (pos[list(dataset['mapping_to_primitive']).index(0)] - rot_std_pos[
-        list(dataset['std_mapping_to_primitive']).index(0)])
+    dp0 = (
+        pos[list(dataset["mapping_to_primitive"]).index(0)]
+        - rot_std_pos[list(dataset["std_mapping_to_primitive"]).index(0)]
+    )
 
     # create aligned set of standard cell positions to figure out mapping
-    rot_prim_cell = prim_cell @ dataset['std_rotation_matrix']
+    rot_prim_cell = prim_cell @ dataset["std_rotation_matrix"]
     inv_rot_prim_cell = np.linalg.inv(rot_prim_cell)
     aligned_std_pos = rot_std_pos + dp0
 
@@ -69,14 +77,14 @@ def refine_symmetry(atoms, symprec=0.01, verbose=False):
     #    integer_vec . primitive cell vectors
     # here we are assuming that primitive vectors returned by find_primitive
     #    are compatible with std_lattice returned by get_symmetry_dataset
-    mapping_to_primitive = list(dataset['mapping_to_primitive'])
-    std_mapping_to_primitive = list(dataset['std_mapping_to_primitive'])
+    mapping_to_primitive = list(dataset["mapping_to_primitive"])
+    std_mapping_to_primitive = list(dataset["std_mapping_to_primitive"])
     pos = atoms.get_positions()
     for i_at in range(len(atoms)):
         std_i_at = std_mapping_to_primitive.index(mapping_to_primitive[i_at])
         dp = aligned_std_pos[std_i_at] - pos[i_at]
         dp_s = dp @ inv_rot_prim_cell
-        pos[i_at] = (aligned_std_pos[std_i_at] - np.round(dp_s) @ rot_prim_cell)
+        pos[i_at] = aligned_std_pos[std_i_at] - np.round(dp_s) @ rot_prim_cell
     atoms.set_positions(pos)
 
     # test final config with tight tol
@@ -90,8 +98,8 @@ def check_symmetry(atoms, symprec=1.0e-6, verbose=False):
     Prints a summary and returns result of `spglib.get_symmetry_dataset()`
     """
     import spglib
-    dataset = spglib.get_symmetry_dataset(atoms_to_spglib_cell(atoms),
-                                          symprec=symprec)
+
+    dataset = spglib.get_symmetry_dataset(atoms_to_spglib_cell(atoms), symprec=symprec)
     if verbose:
         print_symmetry(symprec, dataset)
     return dataset
@@ -101,8 +109,8 @@ def is_subgroup(sup_data, sub_data, tol=1e-10):
     """
     Test if spglib dataset `sub_data` is a subgroup of dataset `sup_data`
     """
-    for rot1, trns1 in zip(sub_data['rotations'], sub_data['translations']):
-        for rot2, trns2 in zip(sup_data['rotations'], sup_data['translations']):
+    for rot1, trns1 in zip(sub_data["rotations"], sub_data["translations"]):
+        for rot2, trns2 in zip(sup_data["rotations"], sup_data["translations"]):
             if np.all(rot1 == rot2) and np.linalg.norm(trns1 - trns2) < tol:
                 break
         else:
@@ -118,12 +126,11 @@ def prep_symmetry(atoms, symprec=1.0e-6, verbose=False):
     """
     import spglib
 
-    dataset = spglib.get_symmetry_dataset(atoms_to_spglib_cell(atoms),
-                                          symprec=symprec)
+    dataset = spglib.get_symmetry_dataset(atoms_to_spglib_cell(atoms), symprec=symprec)
     if verbose:
         print_symmetry(symprec, dataset)
-    rotations = dataset['rotations'].copy()
-    translations = dataset['translations'].copy()
+    rotations = dataset["rotations"].copy()
+    translations = dataset["translations"].copy()
     symm_map = []
     scaled_pos = atoms.get_scaled_positions()
     for (rot, trans) in zip(rotations, translations):
@@ -182,8 +189,14 @@ class FixSymmetry(FixConstraint):
     Requires spglib package to be available.
     """
 
-    def __init__(self, atoms, symprec=0.01, adjust_positions=True,
-                 adjust_cell=True, verbose=False):
+    def __init__(
+        self,
+        atoms,
+        symprec=0.01,
+        adjust_positions=True,
+        adjust_cell=True,
+        verbose=False,
+    ):
         self.verbose = verbose
         refine_symmetry(atoms, symprec, self.verbose)  # refine initial symmetry
         sym = prep_symmetry(atoms, symprec, self.verbose)
@@ -210,53 +223,65 @@ class FixSymmetry(FixConstraint):
         # gradient
         max_delta_deform_grad = np.max(np.abs(delta_deform_grad))
         if max_delta_deform_grad > 0.25:
-            raise RuntimeError('FixSymmetry adjust_cell does not work properly'
-                               ' with large deformation gradient step {} > 0.25'
-                               .format(max_delta_deform_grad))
+            raise RuntimeError(
+                "FixSymmetry adjust_cell does not work properly"
+                " with large deformation gradient step {} > 0.25".format(
+                    max_delta_deform_grad
+                )
+            )
         elif max_delta_deform_grad > 0.15:
-            warnings.warn('FixSymmetry adjust_cell may be ill behaved with'
-                          ' large deformation gradient step {}'
-                          .format(max_delta_deform_grad))
+            warnings.warn(
+                "FixSymmetry adjust_cell may be ill behaved with"
+                " large deformation gradient step {}".format(max_delta_deform_grad)
+            )
 
-        symmetrized_delta_deform_grad = symmetrize_rank2(cur_cell, cur_cell_inv,
-                                                         delta_deform_grad,
-                                                         self.rotations)
-        cell[:] = np.dot(cur_cell,
-                         (symmetrized_delta_deform_grad + np.eye(3)).T)
+        symmetrized_delta_deform_grad = symmetrize_rank2(
+            cur_cell, cur_cell_inv, delta_deform_grad, self.rotations
+        )
+        cell[:] = np.dot(cur_cell, (symmetrized_delta_deform_grad + np.eye(3)).T)
 
     def adjust_positions(self, atoms, new):
         if not self.do_adjust_positions:
             return
         # symmetrize changes in position as rank 1 tensors
         step = new - atoms.positions
-        symmetrized_step = symmetrize_rank1(atoms.get_cell(),
-                                            atoms.cell.reciprocal().T, step,
-                                            self.rotations, self.translations,
-                                            self.symm_map)
+        symmetrized_step = symmetrize_rank1(
+            atoms.get_cell(),
+            atoms.cell.reciprocal().T,
+            step,
+            self.rotations,
+            self.translations,
+            self.symm_map,
+        )
         new[:] = atoms.positions + symmetrized_step
 
     def adjust_forces(self, atoms, forces):
         # symmetrize forces as rank 1 tensors
         # print('adjusting forces')
-        forces[:] = symmetrize_rank1(atoms.get_cell(),
-                                     atoms.cell.reciprocal().T, forces,
-                                     self.rotations, self.translations,
-                                     self.symm_map)
+        forces[:] = symmetrize_rank1(
+            atoms.get_cell(),
+            atoms.cell.reciprocal().T,
+            forces,
+            self.rotations,
+            self.translations,
+            self.symm_map,
+        )
 
     def adjust_stress(self, atoms, stress):
         # symmetrize stress as rank 2 tensor
         raw_stress = voigt_6_to_full_3x3_stress(stress)
-        symmetrized_stress = symmetrize_rank2(atoms.get_cell(),
-                                              atoms.cell.reciprocal().T,
-                                              raw_stress, self.rotations)
+        symmetrized_stress = symmetrize_rank2(
+            atoms.get_cell(), atoms.cell.reciprocal().T, raw_stress, self.rotations
+        )
         stress[:] = full_3x3_to_voigt_6_stress(symmetrized_stress)
 
     def index_shuffle(self, atoms, ind):
         if len(atoms) != len(ind) or len(set(ind)) != len(ind):
-            raise RuntimeError("FixSymmetry can only accomodate atom"
-                               " permutions, and len(Atoms) == {} "
-                               "!= len(ind) == {} or ind has duplicates"
-                               .format(len(atoms), len(ind)))
+            raise RuntimeError(
+                "FixSymmetry can only accomodate atom"
+                " permutions, and len(Atoms) == {} "
+                "!= len(ind) == {} or ind has duplicates".format(len(atoms), len(ind))
+            )
 
         ind_reversed = np.zeros((len(ind)), dtype=int)
         ind_reversed[ind] = range(len(ind))

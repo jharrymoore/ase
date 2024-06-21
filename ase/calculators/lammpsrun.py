@@ -52,68 +52,67 @@ __all__ = ["LAMMPS"]
 class LAMMPS(Calculator):
     """The LAMMPS calculators object
 
-    files: list
-        List of files typically containing relevant potentials for the
-        calculation
-    parameters: dict
-        Dictionary of settings to be passed into the input file for calculation.
-    specorder: list
-        Within LAAMPS, atoms are identified by an integer value starting from 1.
-        This variable allows the user to define the order of the indices
-        assigned to the atoms in the calculation, with the default
-        if not given being alphabetical
-    keep_tmp_files: bool
-        Retain any temporary files created. Mostly useful for debugging.
-    tmp_dir: str
-        path/dirname (default None -> create automatically).
-        Explicitly control where the calculator object should create
-        its files. Using this option implies 'keep_tmp_files'
-    no_data_file: bool
-        Controls whether an explicit data file will be used for feeding
-        atom coordinates into lammps. Enable it to lessen the pressure on
-        the (tmp) file system. THIS OPTION MIGHT BE UNRELIABLE FOR CERTAIN
-        CORNER CASES (however, if it fails, you will notice...).
-    keep_alive: bool
-        When using LAMMPS as a spawned subprocess, keep the subprocess
-        alive (but idling when unused) along with the calculator object.
-    always_triclinic: bool
-        Force use of a triclinic cell in LAMMPS, even if the cell is
-        a perfect parallelepiped.
+        files: list
+            List of files typically containing relevant potentials for the
+            calculation
+        parameters: dict
+            Dictionary of settings to be passed into the input file for calculation.
+        specorder: list
+            Within LAAMPS, atoms are identified by an integer value starting from 1.
+            This variable allows the user to define the order of the indices
+            assigned to the atoms in the calculation, with the default
+            if not given being alphabetical
+        keep_tmp_files: bool
+            Retain any temporary files created. Mostly useful for debugging.
+        tmp_dir: str
+            path/dirname (default None -> create automatically).
+            Explicitly control where the calculator object should create
+            its files. Using this option implies 'keep_tmp_files'
+        no_data_file: bool
+            Controls whether an explicit data file will be used for feeding
+            atom coordinates into lammps. Enable it to lessen the pressure on
+            the (tmp) file system. THIS OPTION MIGHT BE UNRELIABLE FOR CERTAIN
+            CORNER CASES (however, if it fails, you will notice...).
+        keep_alive: bool
+            When using LAMMPS as a spawned subprocess, keep the subprocess
+            alive (but idling when unused) along with the calculator object.
+        always_triclinic: bool
+            Force use of a triclinic cell in LAMMPS, even if the cell is
+            a perfect parallelepiped.
 
-        **Example**
+            **Example**
 
-Provided that the respective potential file is in the working directory, one
-can simply run (note that LAMMPS needs to be compiled to work with EAM
-potentials)
+    Provided that the respective potential file is in the working directory, one
+    can simply run (note that LAMMPS needs to be compiled to work with EAM
+    potentials)
 
-::
+    ::
 
-    from ase import Atom, Atoms
-    from ase.build import bulk
-    from ase.calculators.lammpsrun import LAMMPS
+        from ase import Atom, Atoms
+        from ase.build import bulk
+        from ase.calculators.lammpsrun import LAMMPS
 
-    parameters = {'pair_style': 'eam/alloy',
-                  'pair_coeff': ['* * NiAlH_jea.eam.alloy H Ni']}
+        parameters = {'pair_style': 'eam/alloy',
+                      'pair_coeff': ['* * NiAlH_jea.eam.alloy H Ni']}
 
-    files = ['NiAlH_jea.eam.alloy']
+        files = ['NiAlH_jea.eam.alloy']
 
-    Ni = bulk('Ni', cubic=True)
-    H = Atom('H', position=Ni.cell.diagonal()/2)
-    NiH = Ni + H
+        Ni = bulk('Ni', cubic=True)
+        H = Atom('H', position=Ni.cell.diagonal()/2)
+        NiH = Ni + H
 
-    lammps = LAMMPS(parameters=parameters, files=files)
+        lammps = LAMMPS(parameters=parameters, files=files)
 
-    NiH.calc = lammps
-    print("Energy ", NiH.get_potential_energy())
+        NiH.calc = lammps
+        print("Energy ", NiH.get_potential_energy())
 
-(Remember you also need to set the environment variable
-``$ASE_LAMMPSRUN_COMMAND``)
+    (Remember you also need to set the environment variable
+    ``$ASE_LAMMPSRUN_COMMAND``)
 
     """
 
     name = "lammpsrun"
-    implemented_properties = ["energy", "free_energy", "forces", "stress",
-                              "energies"]
+    implemented_properties = ["energy", "free_energy", "forces", "stress", "energies"]
 
     # parameters to choose options in LAMMPSRUN
     ase_parameters: Dict[str, Any] = dict(
@@ -128,18 +127,18 @@ potentials)
         verbose=False,
         write_velocities=False,
         binary_dump=True,  # bool - use binary dump files (full
-                           # precision but long long ids are casted to
-                           # double)
+        # precision but long long ids are casted to
+        # double)
         lammps_options="-echo log -screen none -log /dev/stdout",
         trajectory_out=None,  # file object, if is not None the
-                              # trajectory will be saved in it
+        # trajectory will be saved in it
     )
 
     # parameters forwarded to LAMMPS
     lammps_parameters = dict(
         boundary=None,  # bounadry conditions styles
         units="metal",  # str - Which units used; some potentials
-                        # require certain units
+        # require certain units
         atom_style="atomic",
         special_bonds=None,
         # potential informations
@@ -149,11 +148,38 @@ potentials)
         pair_modify=None,
         # variables controlling the output
         thermo_args=[
-            "step", "temp", "press", "cpu", "pxx", "pyy", "pzz",
-            "pxy", "pxz", "pyz", "ke", "pe", "etotal", "vol", "lx",
-            "ly", "lz", "atoms", ],
-        dump_properties=["id", "type", "x", "y", "z", "vx", "vy",
-                         "vz", "fx", "fy", "fz", ],
+            "step",
+            "temp",
+            "press",
+            "cpu",
+            "pxx",
+            "pyy",
+            "pzz",
+            "pxy",
+            "pxz",
+            "pyz",
+            "ke",
+            "pe",
+            "etotal",
+            "vol",
+            "lx",
+            "ly",
+            "lz",
+            "atoms",
+        ],
+        dump_properties=[
+            "id",
+            "type",
+            "x",
+            "y",
+            "z",
+            "vx",
+            "vy",
+            "vz",
+            "fx",
+            "fy",
+            "fz",
+        ],
         dump_period=1,  # period of system snapshot saving (in MD steps)
     )
 
@@ -223,23 +249,21 @@ potentials)
                 os.mkdir(self.parameters.tmp_dir, 0o755)
 
         for f in self.parameters.files:
-            shutil.copy(
-                f, os.path.join(self.parameters.tmp_dir, os.path.basename(f))
-            )
+            shutil.copy(f, os.path.join(self.parameters.tmp_dir, os.path.basename(f)))
 
     def get_lammps_command(self):
-        cmd = self.parameters.get('command')
+        cmd = self.parameters.get("command")
         if cmd is None:
-            envvar = 'ASE_{}_COMMAND'.format(self.name.upper())
+            envvar = "ASE_{}_COMMAND".format(self.name.upper())
             cmd = os.environ.get(envvar)
 
         if cmd is None:
-            cmd = 'lammps'
+            cmd = "lammps"
 
-        opts = self.parameters.get('lammps_options')
+        opts = self.parameters.get("lammps_options")
 
         if opts is not None:
-            cmd = '{} {}'.format(cmd, opts)
+            cmd = "{} {}".format(cmd, opts)
 
         return cmd
 
@@ -255,11 +279,7 @@ potentials)
         '__init__' functions.
         """
         # !TODO: remove and break somebody's code (e.g. the test examples)
-        if (
-                key == "parameters"
-                and value is not None
-                and self.parameters is not None
-        ):
+        if key == "parameters" and value is not None and self.parameters is not None:
             temp_dict = self.get_default_parameters()
             if self.parameters:
                 for l_key in self.legacy_parameters:
@@ -289,8 +309,7 @@ potentials)
             raise AttributeError("Setting unknown Attribute '{}'".format(key))
 
     def __getattr__(self, key):
-        """Corresponding getattribute-function to emulate legacy behavior.
-        """
+        """Corresponding getattribute-function to emulate legacy behavior."""
         if key in self.legacy_parameters and key != "parameters":
             return self.parameters[key]
         if key in self.legacy_parameters_map:
@@ -324,9 +343,7 @@ potentials)
     def _lmp_alive(self):
         # Return True if this calculator is currently handling a running
         # lammps process
-        return self._lmp_handle and not isinstance(
-            self._lmp_handle.poll(), int
-        )
+        return self._lmp_handle and not isinstance(self._lmp_handle.poll(), int)
 
     def _lmp_end(self):
         # Close lammps input and wait for lammps to end. Return process
@@ -343,8 +360,7 @@ potentials)
             return err
 
     def set_missing_parameters(self):
-        """Verify that all necessary variables are set.
-        """
+        """Verify that all necessary variables are set."""
         symbols = self.atoms.get_chemical_symbols()
         # If unspecified default to atom types in alphabetic order
         if not self.parameters.specorder:
@@ -355,9 +371,7 @@ potentials)
             self.parameters.masses = []
             for type_id, specie in enumerate(self.parameters.specorder):
                 mass = atomic_masses[chemical_symbols.index(specie)]
-                self.parameters.masses += [
-                    "{0:d} {1:f}".format(type_id + 1, mass)
-                ]
+                self.parameters.masses += ["{0:d} {1:f}".format(type_id + 1, mass)]
 
         # set boundary condtions
         if not self.parameters.boundary:
@@ -392,12 +406,8 @@ potentials)
 
         # setup file names for LAMMPS calculation
         label = "{0}{1:>06}".format(self.label, self.calls)
-        lammps_in = uns_mktemp(
-            prefix="in_" + label, dir=tempdir
-        )
-        lammps_log = uns_mktemp(
-            prefix="log_" + label, dir=tempdir
-        )
+        lammps_in = uns_mktemp(prefix="in_" + label, dir=tempdir)
+        lammps_log = uns_mktemp(prefix="log_" + label, dir=tempdir)
         lammps_trj_fd = NamedTemporaryFile(
             prefix="trj_" + label,
             suffix=(".bin" if self.parameters.binary_dump else ""),
@@ -412,8 +422,8 @@ potentials)
                 prefix="data_" + label,
                 dir=tempdir,
                 delete=(not self.parameters.keep_tmp_files),
-                mode='w',
-                encoding='ascii'
+                mode="w",
+                encoding="ascii",
             )
             write_lammps_data(
                 lammps_data_fd,
@@ -423,7 +433,7 @@ potentials)
                 velocities=self.parameters.write_velocities,
                 prismobj=self.prism,
                 units=self.parameters.units,
-                atom_style=self.parameters.atom_style
+                atom_style=self.parameters.atom_style,
             )
             lammps_data = lammps_data_fd.name
             lammps_data_fd.flush()
@@ -480,8 +490,7 @@ potentials)
         exitcode = lmp_handle.poll()
         if exitcode and exitcode != 0:
             raise RuntimeError(
-                "LAMMPS exited in {} with exit code: {}."
-                "".format(tempdir, exitcode)
+                "LAMMPS exited in {} with exit code: {}." "".format(tempdir, exitcode)
             )
 
         # A few sanity checks
@@ -515,24 +524,18 @@ potentials)
             tc["pe"], "energy", self.parameters["units"], "ASE"
         )
         self.results["free_energy"] = self.results["energy"]
-        self.results['forces'] = convert(self.forces.copy(),
-                                         'force',
-                                         self.parameters['units'],
-                                         'ASE')
-        stress = np.array(
-            [-tc[i] for i in ("pxx", "pyy", "pzz", "pyz", "pxz", "pxy")]
+        self.results["forces"] = convert(
+            self.forces.copy(), "force", self.parameters["units"], "ASE"
         )
+        stress = np.array([-tc[i] for i in ("pxx", "pyy", "pzz", "pyz", "pxz", "pxy")])
 
         # We need to apply the Lammps rotation stuff to the stress:
         xx, yy, zz, yz, xz, xy = stress
-        stress_tensor = np.array([[xx, xy, xz],
-                                  [xy, yy, yz],
-                                  [xz, yz, zz]])
+        stress_tensor = np.array([[xx, xy, xz], [xy, yy, yz], [xz, yz, zz]])
         R = self.prism.rot_mat
         stress_atoms = np.dot(R, stress_tensor)
         stress_atoms = np.dot(stress_atoms, R.T)
-        stress_atoms = stress_atoms[[0, 1, 2, 1, 0, 0],
-                                    [0, 1, 2, 2, 2, 1]]
+        stress_atoms = stress_atoms[[0, 1, 2, 1, 0, 0], [0, 1, 2, 2, 2, 1]]
         stress = stress_atoms
 
         self.results["stress"] = convert(
@@ -585,10 +588,10 @@ potentials)
         line = fileobj.readline().decode("utf-8")
         while line and line.strip() != CALCULATION_END_MARK:
             # check error
-            if 'ERROR:' in line:
+            if "ERROR:" in line:
                 if close_log_file:
                     fileobj.close()
-                raise RuntimeError(f'LAMMPS exits with error message: {line}')
+                raise RuntimeError(f"LAMMPS exits with error message: {line}")
 
             # get thermo output
             if _custom_thermo_mark.match(line):

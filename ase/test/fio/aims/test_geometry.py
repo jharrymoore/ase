@@ -26,8 +26,7 @@ def Si():
 
 @pytest.fixture
 def H2O():
-    return Atoms("H2O", [(0.9584, 0.0, 0.0),
-                 (-0.2400, 0.9279, 0.0), (0.0, 0.0, 0.0)])
+    return Atoms("H2O", [(0.9584, 0.0, 0.0), (-0.2400, 0.9279, 0.0), (0.0, 0.0, 0.0)])
 
 
 def test_cartesian_Si(Si):
@@ -139,7 +138,7 @@ def test_scaled_H2O(H2O):
     with pytest.raises(
         ValueError,
         match="Requesting scaled for a calculation where scaled=True, "
-            "but the system is not periodic",
+        "but the system is not periodic",
     ):
         H2O.write(file, format=format, scaled=True, wrap=False)
 

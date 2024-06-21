@@ -6,20 +6,20 @@ from ase.vibrations import Vibrations
 from ase.calculators.morse import MorsePotential, fcut, fcut_d
 from ase.build import bulk
 
-De = 5.
-Re = 3.
-rho0 = 2.
+De = 5.0
+Re = 3.0
+rho0 = 2.0
 
 
 def test_gs_minimum_energy():
-    atoms = Atoms('H2', positions=[[0, 0, 0], [0, 0, Re]])
+    atoms = Atoms("H2", positions=[[0, 0, 0], [0, 0, Re]])
     atoms.calc = MorsePotential(epsilon=De, r0=Re)
     assert atoms.get_potential_energy() == -De
 
 
 def test_gs_vibrations(testdir):
     # check ground state vibrations
-    atoms = Atoms('H2', positions=[[0, 0, 0], [0, 0, Re]])
+    atoms = Atoms("H2", positions=[[0, 0, 0], [0, 0, Re]])
     atoms.calc = MorsePotential(epsilon=De, r0=Re, rho0=rho0)
     vib = Vibrations(atoms)
     vib.run()
@@ -35,7 +35,7 @@ def test_cutoff():
 
 
 def test_forces():
-    atoms = bulk('Cu', cubic=True)
+    atoms = bulk("Cu", cubic=True)
     atoms.calc = MorsePotential(A=4.0, epsilon=1.0, r0=2.55)
     atoms.rattle(0.1)
     forces = atoms.get_forces()

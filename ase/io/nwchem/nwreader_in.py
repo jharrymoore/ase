@@ -8,9 +8,7 @@ from .parser import _define_pattern
 
 # Geometry block parser
 _geom = _define_pattern(
-    r'^[ \t]*geometry[ \t\S]*\n'
-    r'((?:^[ \t]*[\S]+[ \t\S]*\n)+)'
-    r'^[ \t]*end\n\n',
+    r"^[ \t]*geometry[ \t\S]*\n" r"((?:^[ \t]*[\S]+[ \t\S]*\n)+)" r"^[ \t]*end\n\n",
     """\
 geometry units angstrom nocenter noautosym noautoz
   system crystal units angstrom
@@ -24,13 +22,15 @@ geometry units angstrom nocenter noautosym noautoz
    H 5.0000000000000000e-01 3.6189413945011639e-01 4.3513175463181430e-01
 end
 
-""", re.M)
+""",
+    re.M,
+)
 
 # Finds crystal specification
 _crystal = _define_pattern(
-    r'^[ \t]*system crystal[ \t\S]*\n'
-    r'((?:[ \t]*[\S]+[ \t\S]*\n)+?)'
-    r'^[ \t]*end[ \t]*\n',
+    r"^[ \t]*system crystal[ \t\S]*\n"
+    r"((?:[ \t]*[\S]+[ \t\S]*\n)+?)"
+    r"^[ \t]*end[ \t]*\n",
     """\
   system crystal units angstrom
     lattice_vectors
@@ -38,28 +38,32 @@ _crystal = _define_pattern(
       0.0000000000000000e+00 5.5264780000000000e+00 0.0000000000000000e+00
       0.0000000000000000e+00 0.0000000000000000e+00 4.5963089999999998e+00
   end
-""", re.M)
+""",
+    re.M,
+)
 
 # Finds 3d-periodic unit cell
 _cell_3d = _define_pattern(
-    r'^[ \t]*lattice_vectors[ \t]*\n'
-    r'^((?:(?:[ \t]+[\S]+){3}\n){3})',
+    r"^[ \t]*lattice_vectors[ \t]*\n" r"^((?:(?:[ \t]+[\S]+){3}\n){3})",
     """\
     lattice_vectors
       4.0000000000000000e+00 0.0000000000000000e+00 0.0000000000000000e+00
       0.0000000000000000e+00 5.5264780000000000e+00 0.0000000000000000e+00
       0.0000000000000000e+00 0.0000000000000000e+00 4.5963089999999998e+00
-""", re.M)
+""",
+    re.M,
+)
 
 # Extracts chemical species from a geometry block
 _species = _define_pattern(
-    r'^[ \t]*[A-Z][a-z]?(?:[ \t]+[\S]+){3}\n',
-    "   O 0.0 0.0 0.0\n", re.M,
+    r"^[ \t]*[A-Z][a-z]?(?:[ \t]+[\S]+){3}\n",
+    "   O 0.0 0.0 0.0\n",
+    re.M,
 )
 
 
 def read_nwchem_in(fobj, index=-1):
-    text = ''.join(fobj.readlines())
+    text = "".join(fobj.readlines())
     atomslist = []
     for match in _geom.findall(text):
         symbols = []
@@ -90,19 +94,19 @@ def _get_cell(text):
     lattice = _cell_3d.findall(text)
     if lattice:
         pbc = [True, True, True]
-        for i, row in enumerate(lattice[0].strip().split('\n')):
+        for i, row in enumerate(lattice[0].strip().split("\n")):
             cell[i] = [float(x) for x in row.split()]
         return cell, pbc
     pbc = [False, False, False]
     lengths = [None, None, None]
     angles = [None, None, None]
-    for row in text.strip().split('\n'):
+    for row in text.strip().split("\n"):
         row = row.strip().lower()
-        for dim, vecname in enumerate(['a', 'b', 'c']):
-            if row.startswith('lat_{}'.format(vecname)):
+        for dim, vecname in enumerate(["a", "b", "c"]):
+            if row.startswith("lat_{}".format(vecname)):
                 pbc[dim] = True
                 lengths[dim] = float(row.split()[1])
-        for i, angle in enumerate(['alpha', 'beta', 'gamma']):
+        for i, angle in enumerate(["alpha", "beta", "gamma"]):
             if row.startswith(angle):
                 angles[i] = float(row.split()[1])
 

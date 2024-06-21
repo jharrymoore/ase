@@ -5,15 +5,18 @@ from contextlib import contextmanager
 
 import numpy as np
 
-from ase.calculators.calculator import (Calculator, all_changes,
-                                        PropertyNotImplementedError)
+from ase.calculators.calculator import (
+    Calculator,
+    all_changes,
+    PropertyNotImplementedError,
+)
 import ase.units as units
 from ase.utils import IOContext
 from ase.stress import full_3x3_to_voigt_6_stress
 
 
 def actualunixsocketname(name):
-    return '/tmp/ipi_{}'.format(name)
+    return "/tmp/ipi_{}".format(name)
 
 
 class SocketClosed(OSError):
@@ -27,18 +30,22 @@ class IPIProtocol:
         self.socket = socket
 
         if txt is None:
+
             def log(*args):
                 pass
+
         else:
+
             def log(*args):
-                print('Driver:', *args, file=txt)
+                print("Driver:", *args, file=txt)
                 txt.flush()
+
         self.log = log
 
     def sendmsg(self, msg):
-        self.log('  sendmsg', repr(msg))
+        self.log("  sendmsg", repr(msg))
         # assert msg in self.statements, msg
-        msg = msg.encode('ascii').ljust(12)
+        msg = msg.encode("ascii").ljust(12)
         self.socket.sendall(msg)
 
     def _recvall(self, nbytes):
@@ -54,7 +61,7 @@ class IPIProtocol:
                 raise SocketClosed()
             chunks.append(chunk)
             remaining -= len(chunk)
-        msg = b''.join(chunks)
+        msg = b"".join(chunks)
         assert len(msg) == nbytes and remaining == 0
         return msg
 
@@ -64,15 +71,15 @@ class IPIProtocol:
             raise SocketClosed()
 
         assert len(msg) == 12, msg
-        msg = msg.rstrip().decode('ascii')
+        msg = msg.rstrip().decode("ascii")
         # assert msg in self.responses, msg
-        self.log('  recvmsg', repr(msg))
+        self.log("  recvmsg", repr(msg))
         return msg
 
     def send(self, a, dtype):
         buf = np.asarray(a, dtype).tobytes()
         # self.log('  send {}'.format(np.array(a).ravel().tolist()))
-        self.log('  send {} bytes of {}'.format(len(buf), dtype))
+        self.log("  send {} bytes of {}".format(len(buf), dtype))
         self.socket.sendall(buf)
 
     def recv(self, shape, dtype):
@@ -80,7 +87,7 @@ class IPIProtocol:
         nbytes = np.dtype(dtype).itemsize * np.prod(shape)
         buf = self._recvall(nbytes)
         assert len(buf) == nbytes, (len(buf), nbytes)
-        self.log('  recv {} bytes of {}'.format(len(buf), dtype))
+        self.log("  recv {} bytes of {}".format(len(buf), dtype))
         # print(np.frombuffer(buf, dtype=dtype))
         a.flat[:] = np.frombuffer(buf, dtype=dtype)
         # self.log('  recv {}'.format(a.ravel().tolist()))
@@ -92,8 +99,8 @@ class IPIProtocol:
         assert icell.size == 9
         assert positions.size % 3 == 0
 
-        self.log(' sendposdata')
-        self.sendmsg('POSDATA')
+        self.log(" sendposdata")
+        self.sendmsg("POSDATA")
         self.send(cell.T / units.Bohr, np.float64)
         self.send(icell.T * units.Bohr, np.float64)
         self.send(len(positions), np.int32)
@@ -108,10 +115,10 @@ class IPIProtocol:
         return cell * units.Bohr, icell / units.Bohr, positions * units.Bohr
 
     def sendrecv_force(self):
-        self.log(' sendrecv_force')
-        self.sendmsg('GETFORCE')
+        self.log(" sendrecv_force")
+        self.sendmsg("GETFORCE")
         msg = self.recvmsg()
-        assert msg == 'FORCEREADY', msg
+        assert msg == "FORCEREADY", msg
         e = self.recv(1, np.float64)[0]
         natoms = self.recv(1, np.int32)
         assert natoms >= 0
@@ -120,17 +127,20 @@ class IPIProtocol:
         nmorebytes = self.recv(1, np.int32)
         nmorebytes = int(nmorebytes)
         morebytes = self.recv(nmorebytes, np.byte)
-        return (e * units.Ha, (units.Ha / units.Bohr) * forces,
-                units.Ha * virial, morebytes)
+        return (
+            e * units.Ha,
+            (units.Ha / units.Bohr) * forces,
+            units.Ha * virial,
+            morebytes,
+        )
 
-    def sendforce(self, energy, forces, virial,
-                  morebytes=np.zeros(1, dtype=np.byte)):
+    def sendforce(self, energy, forces, virial, morebytes=np.zeros(1, dtype=np.byte)):
         assert np.array([energy]).size == 1
         assert forces.shape[1] == 3
         assert virial.shape == (3, 3)
 
-        self.log(' sendforce')
-        self.sendmsg('FORCEREADY')  # mind the units
+        self.log(" sendforce")
+        self.sendmsg("FORCEREADY")  # mind the units
         self.send(np.array([energy / units.Ha]), np.float64)
         natoms = len(forces)
         self.send(np.array([natoms]), np.int32)
@@ -143,17 +153,17 @@ class IPIProtocol:
         self.send(morebytes, np.byte)
 
     def status(self):
-        self.log(' status')
-        self.sendmsg('STATUS')
+        self.log(" status")
+        self.sendmsg("STATUS")
         msg = self.recvmsg()
         return msg
 
     def end(self):
-        self.log(' end')
-        self.sendmsg('EXIT')
+        self.log(" end")
+        self.sendmsg("EXIT")
 
     def recvinit(self):
-        self.log(' recvinit')
+        self.log(" recvinit")
         bead_index = self.recv(1, np.int32)
         nbytes = self.recv(1, np.int32)
         initbytes = self.recv(nbytes, np.byte)
@@ -162,8 +172,8 @@ class IPIProtocol:
     def sendinit(self):
         # XXX Not sure what this function is supposed to send.
         # It 'works' with QE, but for now we try not to call it.
-        self.log(' sendinit')
-        self.sendmsg('INIT')
+        self.log(" sendinit")
+        self.sendmsg("INIT")
         self.send(0, np.int32)  # 'bead index' always zero for now
         # We send one byte, which is zero, since things may not work
         # with 0 bytes.  Apparently implementations ignore the
@@ -172,34 +182,31 @@ class IPIProtocol:
         self.send(np.zeros(1), np.byte)  # initialization string
 
     def calculate(self, positions, cell):
-        self.log('calculate')
+        self.log("calculate")
         msg = self.status()
         # We don't know how NEEDINIT is supposed to work, but some codes
         # seem to be okay if we skip it and send the positions instead.
-        if msg == 'NEEDINIT':
+        if msg == "NEEDINIT":
             self.sendinit()
             msg = self.status()
-        assert msg == 'READY', msg
+        assert msg == "READY", msg
         icell = np.linalg.pinv(cell).transpose()
         self.sendposdata(cell, icell, positions)
         msg = self.status()
-        assert msg == 'HAVEDATA', msg
+        assert msg == "HAVEDATA", msg
         e, forces, virial, morebytes = self.sendrecv_force()
-        r = dict(energy=e,
-                 forces=forces,
-                 virial=virial,
-                 morebytes=morebytes)
+        r = dict(energy=e, forces=forces, virial=virial, morebytes=morebytes)
         return r
 
 
 @contextmanager
 def bind_unixsocket(socketfile):
-    assert socketfile.startswith('/tmp/ipi_'), socketfile
+    assert socketfile.startswith("/tmp/ipi_"), socketfile
     serversocket = socket.socket(socket.AF_UNIX)
     try:
         serversocket.bind(socketfile)
     except OSError as err:
-        raise OSError('{}: {}'.format(err, repr(socketfile)))
+        raise OSError("{}: {}".format(err, repr(socketfile)))
 
     try:
         with serversocket:
@@ -211,9 +218,8 @@ def bind_unixsocket(socketfile):
 @contextmanager
 def bind_inetsocket(port):
     serversocket = socket.socket(socket.AF_INET)
-    serversocket.setsockopt(socket.SOL_SOCKET,
-                            socket.SO_REUSEADDR, 1)
-    serversocket.bind(('', port))
+    serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    serversocket.bind(("", port))
     with serversocket:
         yield serversocket
 
@@ -225,7 +231,7 @@ class FileIOSocketClientLauncher:
     def __call__(self, atoms, properties=None, port=None, unixsocket=None):
         assert self.calc is not None
         cwd = self.calc.directory
-        profile = getattr(self.calc, 'profile', None)
+        profile = getattr(self.calc, "profile", None)
         if profile is not None:
             # New GenericFileIOCalculator:
             self.calc.write_inputfiles(atoms, properties)
@@ -234,12 +240,14 @@ class FileIOSocketClientLauncher:
             else:
                 argv = profile.socketio_argv_inet(port=port)
             import os
+
             return Popen(argv, cwd=cwd, env=os.environ)
         else:
             # Old FileIOCalculator:
-            self.calc.write_input(atoms, properties=properties,
-                                  system_changes=all_changes)
-            cmd = self.calc.command.replace('PREFIX', self.calc.prefix)
+            self.calc.write_input(
+                atoms, properties=properties, system_changes=all_changes
+            )
+            cmd = self.calc.command.replace("PREFIX", self.calc.prefix)
             cmd = cmd.format(port=port, unixsocket=unixsocket)
             return Popen(cmd, shell=True, cwd=cwd)
 
@@ -247,9 +255,9 @@ class FileIOSocketClientLauncher:
 class SocketServer(IOContext):
     default_port = 31415
 
-    def __init__(self,  # launch_client=None,
-                 port=None, unixsocket=None, timeout=None,
-                 log=None):
+    def __init__(
+        self, port=None, unixsocket=None, timeout=None, log=None  # launch_client=None,
+    ):
         """Create server and listen for connections.
 
         Parameters:
@@ -275,7 +283,7 @@ class SocketServer(IOContext):
         if unixsocket is None and port is None:
             port = self.default_port
         elif unixsocket is not None and port is not None:
-            raise ValueError('Specify only one of unixsocket and port')
+            raise ValueError("Specify only one of unixsocket and port")
 
         self.port = port
         self.unixsocket = unixsocket
@@ -284,16 +292,16 @@ class SocketServer(IOContext):
 
         if unixsocket is not None:
             actualsocket = actualunixsocketname(unixsocket)
-            conn_name = 'UNIX-socket {}'.format(actualsocket)
+            conn_name = "UNIX-socket {}".format(actualsocket)
             socket_context = bind_unixsocket(actualsocket)
         else:
-            conn_name = 'INET port {}'.format(port)
+            conn_name = "INET port {}".format(port)
             socket_context = bind_inetsocket(port)
 
         self.serversocket = self.closelater(socket_context)
 
         if log:
-            print('Accepting clients on {}'.format(conn_name), file=log)
+            print("Accepting clients on {}".format(conn_name), file=log)
 
         self.serversocket.settimeout(timeout)
 
@@ -315,7 +323,7 @@ class SocketServer(IOContext):
         # It should perhaps be possible for process to be launched by user
         log = self.log
         if log:
-            print('Awaiting client', file=self.log)
+            print("Awaiting client", file=self.log)
 
         # If we launched the subprocess, the process may crash.
         # We want to detect this, using loop with timeouts, and
@@ -331,8 +339,10 @@ class SocketServer(IOContext):
                 if self.proc is not None:
                     status = self.proc.poll()
                     if status is not None:
-                        raise OSError('Subprocess terminated unexpectedly'
-                                      ' with status {}'.format(status))
+                        raise OSError(
+                            "Subprocess terminated unexpectedly"
+                            " with status {}".format(status)
+                        )
             else:
                 break
 
@@ -341,8 +351,8 @@ class SocketServer(IOContext):
 
         if log:
             # For unix sockets, address is b''.
-            source = ('client' if self.address == b'' else self.address)
-            print('Accepted connection from {}'.format(source), file=log)
+            source = "client" if self.address == b"" else self.address
+            print("Accepted connection from {}".format(source), file=log)
 
         self.protocol = IPIProtocol(self.clientsocket, txt=log)
 
@@ -353,7 +363,7 @@ class SocketServer(IOContext):
         super().close()
 
         if self.log:
-            print('Close socket server', file=self.log)
+            print("Close socket server", file=self.log)
         self._closed = True
 
         # Proper way to close sockets?
@@ -365,11 +375,11 @@ class SocketServer(IOContext):
             exitcode = self.proc.wait()
             if exitcode != 0:
                 import warnings
+
                 # Quantum Espresso seems to always exit with status 128,
                 # even if successful.
                 # Should investigate at some point
-                warnings.warn('Subprocess exited with status {}'
-                              .format(exitcode))
+                warnings.warn("Subprocess exited with status {}".format(exitcode))
         # self.log('IPI server closed')
 
     def calculate(self, atoms):
@@ -387,8 +397,15 @@ class SocketServer(IOContext):
 
 
 class SocketClient:
-    def __init__(self, host='localhost', port=None,
-                 unixsocket=None, timeout=None, log=None, comm=None):
+    def __init__(
+        self,
+        host="localhost",
+        port=None,
+        unixsocket=None,
+        timeout=None,
+        log=None,
+        comm=None,
+    ):
         """Create client and connect to server.
 
         Parameters:
@@ -413,6 +430,7 @@ class SocketClient:
             Atoms objects."""
         if comm is None:
             from ase.parallel import world
+
             comm = world
 
         # Only rank0 actually does the socket work.
@@ -442,12 +460,12 @@ class SocketClient:
             self.closed = False
 
             self.bead_index = 0
-            self.bead_initbytes = b''
-            self.state = 'READY'
+            self.bead_initbytes = b""
+            self.state = "READY"
 
     def close(self):
         if not self.closed:
-            self.log('Close SocketClient')
+            self.log("Close SocketClient")
             self.closed = True
             self.protocol.socket.close()
 
@@ -494,19 +512,19 @@ class SocketClient:
                 except SocketClosed:
                     # Server closed the connection, but we want to
                     # exit gracefully anyway
-                    msg = 'EXIT'
+                    msg = "EXIT"
 
-                if msg == 'EXIT':
+                if msg == "EXIT":
                     # Send stop signal to clients:
                     self.comm.broadcast(np.ones(1, bool), 0)
                     # (When otherwise exiting, things crashed and we should
                     # let MPI_ABORT take care of the mess instead of trying
                     # to synchronize the exit)
                     return
-                elif msg == 'STATUS':
+                elif msg == "STATUS":
                     self.protocol.sendmsg(self.state)
-                elif msg == 'POSDATA':
-                    assert self.state == 'READY'
+                elif msg == "POSDATA":
+                    assert self.state == "READY"
                     cell, icell, positions = self.protocol.recvposdata()
                     atoms.cell[:] = cell
                     atoms.positions[:] = positions
@@ -521,20 +539,20 @@ class SocketClient:
                     self.comm.broadcast(np.zeros(1, bool), 0)
                     energy, forces, virial = self.calculate(atoms, use_stress)
 
-                    self.state = 'HAVEDATA'
+                    self.state = "HAVEDATA"
                     yield
-                elif msg == 'GETFORCE':
-                    assert self.state == 'HAVEDATA', self.state
+                elif msg == "GETFORCE":
+                    assert self.state == "HAVEDATA", self.state
                     self.protocol.sendforce(energy, forces, virial)
-                    self.state = 'NEEDINIT'
-                elif msg == 'INIT':
-                    assert self.state == 'NEEDINIT'
+                    self.state = "NEEDINIT"
+                elif msg == "INIT":
+                    assert self.state == "NEEDINIT"
                     bead_index, initbytes = self.protocol.recvinit()
                     self.bead_index = bead_index
                     self.bead_initbytes = initbytes
-                    self.state = 'READY'
+                    self.state = "READY"
                 else:
-                    raise KeyError('Bad message', msg)
+                    raise KeyError("Bad message", msg)
         finally:
             self.close()
 
@@ -544,12 +562,19 @@ class SocketClient:
 
 
 class SocketIOCalculator(Calculator, IOContext):
-    implemented_properties = ['energy', 'free_energy', 'forces', 'stress']
-    supported_changes = {'positions', 'cell'}
+    implemented_properties = ["energy", "free_energy", "forces", "stress"]
+    supported_changes = {"positions", "cell"}
 
-    def __init__(self, calc=None, port=None,
-                 unixsocket=None, timeout=None, log=None, *,
-                 launch_client=None):
+    def __init__(
+        self,
+        calc=None,
+        port=None,
+        unixsocket=None,
+        timeout=None,
+        log=None,
+        *,
+        launch_client=None
+    ):
         """Initialize socket I/O calculator.
 
         This calculator launches a server which passes atomic
@@ -609,7 +634,7 @@ class SocketIOCalculator(Calculator, IOContext):
 
         if calc is not None:
             if launch_client is not None:
-                raise ValueError('Cannot pass both calc and launch_client')
+                raise ValueError("Cannot pass both calc and launch_client")
             launch_client = FileIOSocketClientLauncher(calc)
         self.launch_client = launch_client
         self.timeout = timeout
@@ -630,48 +655,52 @@ class SocketIOCalculator(Calculator, IOContext):
             self.server = self.launch_server()
 
     def todict(self):
-        d = {'type': 'calculator',
-             'name': 'socket-driver'}
+        d = {"type": "calculator", "name": "socket-driver"}
         # if self.calc is not None:
         #    d['calc'] = self.calc.todict()
         return d
 
     def launch_server(self):
-        return self.closelater(SocketServer(
-            # launch_client=launch_client,
-            port=self._port,
-            unixsocket=self._unixsocket,
-            timeout=self.timeout, log=self.log,
-        ))
+        return self.closelater(
+            SocketServer(
+                # launch_client=launch_client,
+                port=self._port,
+                unixsocket=self._unixsocket,
+                timeout=self.timeout,
+                log=self.log,
+            )
+        )
 
-    def calculate(self, atoms=None, properties=['energy'],
-                  system_changes=all_changes):
-        bad = [change for change in system_changes
-               if change not in self.supported_changes]
+    def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
+        bad = [
+            change for change in system_changes if change not in self.supported_changes
+        ]
 
         # First time calculate() is called, system_changes will be
         # all_changes.  After that, only positions and cell may change.
         if self.atoms is not None and any(bad):
             raise PropertyNotImplementedError(
-                'Cannot change {} through IPI protocol.  '
-                'Please create new socket calculator.'
-                .format(bad if len(bad) > 1 else bad[0]))
+                "Cannot change {} through IPI protocol.  "
+                "Please create new socket calculator.".format(
+                    bad if len(bad) > 1 else bad[0]
+                )
+            )
 
         self.atoms = atoms.copy()
 
         if self.server is None:
             self.server = self.launch_server()
-            proc = self.launch_client(atoms, properties,
-                                      port=self._port,
-                                      unixsocket=self._unixsocket)
+            proc = self.launch_client(
+                atoms, properties, port=self._port, unixsocket=self._unixsocket
+            )
             self.server.proc = proc  # XXX nasty hack
 
         results = self.server.calculate(atoms)
-        results['free_energy'] = results['energy']
-        virial = results.pop('virial')
+        results["free_energy"] = results["energy"]
+        virial = results.pop("virial")
         if self.atoms.cell.rank == 3 and any(self.atoms.pbc):
             vol = atoms.get_volume()
-            results['stress'] = -full_3x3_to_voigt_6_stress(virial) / vol
+            results["stress"] = -full_3x3_to_voigt_6_stress(virial) / vol
         self.results.update(results)
 
     def close(self):
@@ -689,14 +718,15 @@ class PySocketIOClient:
 
         # We pickle everything first, so we won't need to bother with the
         # process as long as it succeeds.
-        transferbytes = pickle.dumps([
-            dict(unixsocket=unixsocket, port=port),
-            atoms.copy(),
-            self._calculator_factory,
-        ])
+        transferbytes = pickle.dumps(
+            [
+                dict(unixsocket=unixsocket, port=port),
+                atoms.copy(),
+                self._calculator_factory,
+            ]
+        )
 
-        proc = Popen([sys.executable, '-m', 'ase.calculators.socketio'],
-                     stdin=PIPE)
+        proc = Popen([sys.executable, "-m", "ase.calculators.socketio"], stdin=PIPE)
 
         proc.stdin.write(transferbytes)
         proc.stdin.close()
@@ -709,14 +739,16 @@ class PySocketIOClient:
 
         socketinfo, atoms, get_calculator = pickle.load(sys.stdin.buffer)
         atoms.calc = get_calculator()
-        client = SocketClient(host='localhost',
-                              unixsocket=socketinfo.get('unixsocket'),
-                              port=socketinfo.get('port'))
+        client = SocketClient(
+            host="localhost",
+            unixsocket=socketinfo.get("unixsocket"),
+            port=socketinfo.get("port"),
+        )
         # XXX In principle we could avoid calculating stress until
         # someone requests the stress, could we not?
         # Which would make use_stress boolean unnecessary.
         client.run(atoms, use_stress=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     PySocketIOClient.main()

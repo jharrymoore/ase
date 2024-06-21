@@ -4,9 +4,9 @@ def test_nwchem():
     from ase.build import molecule
     from ase import io
 
-    atoms = molecule('CH3COOH')
-    io.write('nwchem.nwi', atoms)
-    atoms2 = io.read('nwchem.nwi')
+    atoms = molecule("CH3COOH")
+    io.write("nwchem.nwi", atoms)
+    atoms2 = io.read("nwchem.nwi")
 
     tol = 1e-8
 

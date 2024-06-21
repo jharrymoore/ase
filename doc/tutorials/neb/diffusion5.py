@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from ase.neb import NEBTools
 from ase.io import read
 
-images = read('neb.traj@-5:')
+images = read("neb.traj@-5:")
 
 nebtools = NEBTools(images)
 
@@ -17,10 +17,10 @@ max_force = nebtools.get_fmax()
 
 # Create a figure like that coming from ASE-GUI.
 fig = nebtools.plot_band()
-fig.savefig('diffusion-barrier.png')
+fig.savefig("diffusion-barrier.png")
 
 # Create a figure with custom parameters.
 fig = plt.figure(figsize=(5.5, 4.0))
 ax = fig.add_axes((0.15, 0.15, 0.8, 0.75))
 nebtools.plot_band(ax)
-fig.savefig('diffusion-barrier.png')
+fig.savefig("diffusion-barrier.png")

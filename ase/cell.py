@@ -5,7 +5,7 @@ from ase.utils.arraywrapper import arraylike
 from ase.utils import pbc2pbc
 
 
-__all__ = ['Cell']
+__all__ = ["Cell"]
 
 
 @arraylike
@@ -18,7 +18,7 @@ class Cell:
     Cells of less than three dimensions are represented by placeholder
     unit vectors that are zero."""
 
-    ase_objtype = 'cell'  # For JSON'ing
+    ase_objtype = "cell"  # For JSON'ing
 
     def __init__(self, array):
         """Create cell.
@@ -44,6 +44,7 @@ class Cell:
 
         See also :func:`ase.geometry.cell.cell_to_cellpar`."""
         from ase.geometry.cell import cell_to_cellpar
+
         return cell_to_cellpar(self.array, radians)
 
     def todict(self):
@@ -77,10 +78,12 @@ class Cell:
             cell = np.diag(cell)
         elif cell.shape == (6,):
             from ase.geometry.cell import cellpar_to_cell
+
             cell = cellpar_to_cell(cell)
         elif cell.shape != (3, 3):
-            raise ValueError('Cell must be length 3 sequence, length 6 '
-                             'sequence or 3x3 matrix!')
+            raise ValueError(
+                "Cell must be length 3 sequence, length 6 " "sequence or 3x3 matrix!"
+            )
 
         cellobj = cls(cell)
         return cellobj
@@ -91,6 +94,7 @@ class Cell:
 
         See also :func:`~ase.geometry.cell.cellpar_to_cell()`."""
         from ase.geometry.cell import cellpar_to_cell
+
         cell = cellpar_to_cell(cellpar, ab_normal, a_direction)
         return cls(cell)
 
@@ -113,19 +117,20 @@ class Cell:
 
         """
         from ase.lattice import identify_lattice
+
         pbc = self.mask() & pbc2pbc(pbc)
         lat, op = identify_lattice(self, eps=eps, pbc=pbc)
         return lat
 
     def bandpath(
-            self,
-            path: str = None,
-            npoints: int = None,
-            *,
-            density: float = None,
-            special_points: Mapping[str, Sequence[float]] = None,
-            eps: float = 2e-4,
-            pbc: Union[bool, Sequence[bool]] = True
+        self,
+        path: str = None,
+        npoints: int = None,
+        *,
+        density: float = None,
+        special_points: Mapping[str, Sequence[float]] = None,
+        eps: float = 2e-4,
+        pbc: Union[bool, Sequence[bool]] = True
     ) -> "ase.dft.kpoints.BandPath":
         """Build a :class:`~ase.dft.kpoints.BandPath` for this cell.
 
@@ -168,13 +173,14 @@ class Cell:
 
         if special_points is None:
             from ase.lattice import identify_lattice
+
             lat, op = identify_lattice(cell, eps=eps)
             bandpath = lat.bandpath(path, npoints=npoints, density=density)
             return bandpath.transform(op)
         else:
             from ase.dft.kpoints import BandPath, resolve_custom_points
-            path, special_points = resolve_custom_points(
-                path, special_points, eps=eps)
+
+            path, special_points = resolve_custom_points(path, special_points, eps=eps)
             bandpath = BandPath(cell, path=path, special_points=special_points)
             return bandpath.interpolate(npoints=npoints, density=density)
 
@@ -189,6 +195,7 @@ class Cell:
     def complete(self):
         """Convert missing cell vectors into orthogonal unit vectors."""
         from ase.geometry.cell import complete_cell
+
         return Cell(complete_cell(self.array))
 
     def copy(self):
@@ -201,7 +208,7 @@ class Cell:
 
     @property
     def rank(self) -> int:
-        """"Return the dimension of the cell.
+        """ "Return the dimension of the cell.
 
         Equal to the number of nonzero lattice vectors."""
         # The name ndim clashes with ndarray.ndim
@@ -211,6 +218,7 @@ class Cell:
     def orthorhombic(self) -> bool:
         """Return whether this cell is represented by a diagonal matrix."""
         from ase.geometry.cell import is_orthorhombic
+
         return is_orthorhombic(self)
 
     def lengths(self):
@@ -223,8 +231,7 @@ class Cell:
 
     def __array__(self, dtype=float):
         if dtype != float:
-            raise ValueError('Cannot convert cell to array of type {}'
-                             .format(dtype))
+            raise ValueError("Cannot convert cell to array of type {}".format(dtype))
         return self.array
 
     def __bool__(self):
@@ -261,7 +268,7 @@ class Cell:
         """Calculate Cartesian positions from scaled positions."""
         return scaled_positions @ self.complete()
 
-    def reciprocal(self) -> 'Cell':
+    def reciprocal(self) -> "Cell":
         """Get reciprocal lattice as a Cell object.
 
         The reciprocal cell is defined such that
@@ -299,13 +306,14 @@ class Cell:
         else:
             numbers = self.tolist()
 
-        return 'Cell({})'.format(numbers)
+        return "Cell({})".format(numbers)
 
     def niggli_reduce(self, eps=1e-5):
         """Niggli reduce this cell, returning a new cell and mapping.
 
         See also :func:`ase.build.tools.niggli_reduce_cell`."""
         from ase.build.tools import niggli_reduce_cell
+
         cell, op = niggli_reduce_cell(self, epsfactor=eps)
         result = Cell(cell)
         return result, op
@@ -315,6 +323,7 @@ class Cell:
 
         See also :func:`ase.geometry.minkowski_reduction.minkowski_reduce`."""
         from ase.geometry.minkowski_reduction import minkowski_reduce
+
         cell, op = minkowski_reduce(self, self.mask())
         result = Cell(cell)
         return result, op

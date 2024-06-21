@@ -39,11 +39,18 @@ def get_ion(fname):
     doc = minidom.parse(fname)
 
     # the elements from the header
-    elements_headers = [['symbol', str], ['label', str], ['z', int],
-                        ['valence', float], ['mass', float],
-                        ['self_energy', float], ['lmax_basis', int],
-                        ['norbs_nl', int], ['lmax_projs', int],
-                        ['nprojs_nl', int]]
+    elements_headers = [
+        ["symbol", str],
+        ["label", str],
+        ["z", int],
+        ["valence", float],
+        ["mass", float],
+        ["self_energy", float],
+        ["lmax_basis", int],
+        ["norbs_nl", int],
+        ["lmax_projs", int],
+        ["nprojs_nl", int],
+    ]
 
     ion = {}
     for i, elname in enumerate(elements_headers):
@@ -64,7 +71,7 @@ def getNodeText(node):
     for node in nodelist:
         if node.nodeType == node.TEXT_NODE:
             result.append(node.data)
-    return ''.join(result)
+    return "".join(result)
 
 
 def get_data_elements(name, dtype):
@@ -90,7 +97,7 @@ def get_data_elements(name, dtype):
     elif dtype is str:
         return getNodeText(name)
     else:
-        raise ValueError('not implemented')
+        raise ValueError("not implemented")
 
 
 def extract_pao_elements(ion, doc):
@@ -127,14 +134,23 @@ def extract_pao_elements(ion, doc):
         ion["projector"].append(extract_projector(name_projector[i]))
 
     if len(name_data) != len(name_npts):
-        raise ValueError("len(name_data) != len(name_npts): {0} != {1}".
-                         format(len(name_data), len(name_npts)))
+        raise ValueError(
+            "len(name_data) != len(name_npts): {0} != {1}".format(
+                len(name_data), len(name_npts)
+            )
+        )
     if len(name_data) != len(name_cutoff):
-        raise ValueError("len(name_data) != len(name_cutoff): {0} != {1}".
-                         format(len(name_data), len(name_cutoff)))
+        raise ValueError(
+            "len(name_data) != len(name_cutoff): {0} != {1}".format(
+                len(name_data), len(name_cutoff)
+            )
+        )
     if len(name_data) != len(name_delta):
-        raise ValueError("len(name_data) != len(name_delta): {0} != {1}".
-                         format(len(name_data), len(name_delta)))
+        raise ValueError(
+            "len(name_data) != len(name_delta): {0} != {1}".format(
+                len(name_data), len(name_delta)
+            )
+        )
 
     ion["npts"] = np.zeros((len(name_npts)), dtype=int)
     ion["delta"] = np.zeros((len(name_delta)), dtype=float)
@@ -145,8 +161,9 @@ def extract_pao_elements(ion, doc):
         ion["npts"][i] = get_data_elements(name_npts[i], int)
         ion["cutoff"][i] = get_data_elements(name_cutoff[i], float)
         ion["delta"][i] = get_data_elements(name_delta[i], float)
-        ion["data"].append(get_data_elements(name_data[i], float).
-                           reshape(ion["npts"][i], 2))
+        ion["data"].append(
+            get_data_elements(name_data[i], float).reshape(ion["npts"][i], 2)
+        )
 
 
 def extract_orbital(orb_xml):
@@ -154,11 +171,11 @@ def extract_orbital(orb_xml):
     extract the orbital
     """
     orb = {}
-    orb['l'] = str2int(orb_xml.attributes['l'].value)[0]
-    orb['n'] = str2int(orb_xml.attributes['n'].value)[0]
-    orb['z'] = str2int(orb_xml.attributes['z'].value)[0]
-    orb['ispol'] = str2int(orb_xml.attributes['ispol'].value)[0]
-    orb['population'] = str2float(orb_xml.attributes['population'].value)[0]
+    orb["l"] = str2int(orb_xml.attributes["l"].value)[0]
+    orb["n"] = str2int(orb_xml.attributes["n"].value)[0]
+    orb["z"] = str2int(orb_xml.attributes["z"].value)[0]
+    orb["ispol"] = str2int(orb_xml.attributes["ispol"].value)[0]
+    orb["population"] = str2float(orb_xml.attributes["population"].value)[0]
 
     return orb
 
@@ -168,9 +185,9 @@ def extract_projector(pro_xml):
     extract the projector
     """
     pro = {}
-    pro['l'] = str2int(pro_xml.attributes['l'].value)[0]
-    pro['n'] = str2int(pro_xml.attributes['n'].value)[0]
-    pro['ref_energy'] = str2float(pro_xml.attributes['ref_energy'].value)[0]
+    pro["l"] = str2int(pro_xml.attributes["l"].value)[0]
+    pro["n"] = str2int(pro_xml.attributes["n"].value)[0]
+    pro["ref_energy"] = str2float(pro_xml.attributes["ref_energy"].value)[0]
 
     return pro
 

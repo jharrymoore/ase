@@ -6,15 +6,17 @@ from ase.units import Hartree
 
 calc = pytest.mark.calculator
 
-required_quantities = {'eigenvalues',
-                       'fermilevel',
-                       'version',
-                       'forces',
-                       'energy',
-                       'free_energy',
-                       'stress',
-                       'ibz_kpoints',
-                       'kpoint_weights'}
+required_quantities = {
+    "eigenvalues",
+    "fermilevel",
+    "version",
+    "forces",
+    "energy",
+    "free_energy",
+    "stress",
+    "ibz_kpoints",
+    "kpoint_weights",
+}
 
 
 def run(atoms):
@@ -33,18 +35,18 @@ def run(atoms):
 
 
 @pytest.mark.calculator_lite
-@calc('abinit')
+@calc("abinit")
 def test_si(factory):
-    atoms = bulk('Si')
+    atoms = bulk("Si")
     atoms.calc = factory.calc(nbands=4 * len(atoms), kpts=[4, 4, 4])
     run(atoms)
 
 
 @pytest.mark.calculator_lite
-@pytest.mark.parametrize('pps', ['fhi', 'paw'])
-@calc('abinit')
+@pytest.mark.parametrize("pps", ["fhi", "paw"])
+@calc("abinit")
 def test_au(factory, pps):
-    atoms = bulk('Au')
+    atoms = bulk("Au")
     atoms.calc = factory.calc(
         pps=pps,
         nbands=10 * len(atoms),
@@ -59,7 +61,8 @@ def test_au(factory, pps):
 
     # test the read_abinit_gsr function
     from ase.io.abinit import read_abinit_gsr
-    dict_gsr = read_abinit_gsr(atoms.calc.directory / 'abinito_GSR.nc')
+
+    dict_gsr = read_abinit_gsr(atoms.calc.directory / "abinito_GSR.nc")
 
     atoms_gsr = dict_gsr["atoms"]
     assert atoms_gsr.cell == pytest.approx(atoms.cell, 1e-5)
@@ -71,7 +74,7 @@ def test_au(factory, pps):
 
 @pytest.fixture
 def fe_atoms():
-    return bulk('Fe')
+    return bulk("Fe")
 
 
 def getkwargs(**kw):
@@ -79,44 +82,44 @@ def getkwargs(**kw):
 
 
 @pytest.mark.calculator_lite
-@calc('abinit', occopt=7, **getkwargs())
-@calc('abinit', spinmagntarget=2.3, **getkwargs())
+@calc("abinit", occopt=7, **getkwargs())
+@calc("abinit", spinmagntarget=2.3, **getkwargs())
 def test_fe_magmom(factory, fe_atoms):
     fe_atoms.calc = factory.calc()
     run(fe_atoms)
 
 
-@calc('abinit', nbands=8)
+@calc("abinit", nbands=8)
 def test_h2o(factory):
-    atoms = molecule('H2O', vacuum=2.5)
+    atoms = molecule("H2O", vacuum=2.5)
     atoms.calc = factory.calc()
     run(atoms)
 
 
-@calc('abinit', nbands=8, occopt=7)
+@calc("abinit", nbands=8, occopt=7)
 def test_o2(factory):
-    atoms = molecule('O2', vacuum=2.5)
+    atoms = molecule("O2", vacuum=2.5)
     atoms.calc = factory.calc()
     run(atoms)
     magmom = atoms.get_magnetic_moment()
     assert magmom == pytest.approx(2, 1e-2)
-    print('magmom', magmom)
+    print("magmom", magmom)
 
 
-@pytest.mark.skip('expensive')
-@calc('abinit')
+@pytest.mark.skip("expensive")
+@calc("abinit")
 def test_manykpts(factory):
-    atoms = bulk('Au') * (2, 2, 2)
+    atoms = bulk("Au") * (2, 2, 2)
     atoms.rattle(stdev=0.01)
-    atoms.symbols[:2] = 'Cu'
+    atoms.symbols[:2] = "Cu"
     atoms.calc = factory.calc(nbands=len(atoms) * 7, kpts=[8, 8, 8])
-    run(atoms, 'manykpts')
+    run(atoms, "manykpts")
 
 
-@pytest.mark.skip('expensive')
-@calc('abinit')
+@pytest.mark.skip("expensive")
+@calc("abinit")
 def test_manyatoms(factory):
-    atoms = bulk('Ne', cubic=True) * (4, 2, 2)
+    atoms = bulk("Ne", cubic=True) * (4, 2, 2)
     atoms.rattle(stdev=0.01)
     atoms.calc = factory.calc(nbands=len(atoms) * 5)
-    run(atoms, 'manyatoms')
+    run(atoms, "manyatoms")

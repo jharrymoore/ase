@@ -22,19 +22,19 @@ def port(picklefile):
 
     name = picklefile.name
 
-    vibname, key, pckl = name.rsplit('.', 3)
-    assert pckl == 'pckl'
+    vibname, key, pckl = name.rsplit(".", 3)
+    assert pckl == "pckl"
 
     cache = MultiFileJSONCache(picklefile.parent / vibname)
 
     obj = pickle.loads(picklefile.read_bytes())
     if isinstance(obj, np.ndarray):  # vibrations
-        dct = {'forces': obj}
+        dct = {"forces": obj}
     else:  # Infrared
         forces, dipole = obj
-        assert isinstance(forces, np.ndarray), f'not supported: {type(forces)}'
-        assert isinstance(dipole, np.ndarray), f'not supported: {type(dipole)}'
-        dct = {'forces': forces, 'dipole': dipole}
+        assert isinstance(forces, np.ndarray), f"not supported: {type(forces)}"
+        assert isinstance(dipole, np.ndarray), f"not supported: {type(dipole)}"
+        dct = {"forces": forces, "dipole": dipole}
 
     outfilename = cache._filename(key)
 
@@ -42,17 +42,17 @@ def port(picklefile):
         del cache[key]
 
     cache[key] = dct
-    print(f'wrote {picklefile} ==> {outfilename}')
+    print(f"wrote {picklefile} ==> {outfilename}")
 
 
 def main(argv=None):
     parser = ArgumentParser(description=description)
-    parser.add_argument('picklefile', nargs='+')
+    parser.add_argument("picklefile", nargs="+")
     args = parser.parse_args(argv)
 
     for fname in args.picklefile:
         port(fname)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

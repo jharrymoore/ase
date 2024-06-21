@@ -18,12 +18,11 @@ def test_get_neb_method():
 
     assert isinstance(neb.get_neb_method(neb_dummy, "eb"), neb.FullSpringMethod)
     assert isinstance(neb.get_neb_method(neb_dummy, "aseneb"), neb.ASENEBMethod)
-    assert isinstance(neb.get_neb_method(neb_dummy, "improvedtangent"),
-                      neb.ImprovedTangentMethod)
-    assert isinstance(neb.get_neb_method(neb_dummy, "spline"),
-                      neb.SplineMethod)
-    assert isinstance(neb.get_neb_method(neb_dummy, "string"),
-                      neb.StringMethod)
+    assert isinstance(
+        neb.get_neb_method(neb_dummy, "improvedtangent"), neb.ImprovedTangentMethod
+    )
+    assert isinstance(neb.get_neb_method(neb_dummy, "spline"), neb.SplineMethod)
+    assert isinstance(neb.get_neb_method(neb_dummy, "string"), neb.StringMethod)
 
     with raises(ValueError, match=r".*some_random_string.*"):
         _ = neb.get_neb_method(neb_dummy, "some_random_string")
@@ -32,10 +31,9 @@ def test_get_neb_method():
 class TestNEB(object):
     @classmethod
     def setup_class(cls):
-        cls.h_atom = Atoms("H", positions=[[0., 0., 0.]], cell=[10., 10., 10.])
-        cls.h2_molecule = Atoms("H2", positions=[[0., 0., 0.], [0., 1., 0.]])
-        cls.images_dummy = [cls.h_atom.copy(), cls.h_atom.copy(),
-                            cls.h_atom.copy()]
+        cls.h_atom = Atoms("H", positions=[[0.0, 0.0, 0.0]], cell=[10.0, 10.0, 10.0])
+        cls.h2_molecule = Atoms("H2", positions=[[0.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        cls.images_dummy = [cls.h_atom.copy(), cls.h_atom.copy(), cls.h_atom.copy()]
 
     def test_deprecations(self, testdir):
         # future warning on deprecated class
@@ -55,19 +53,20 @@ class TestNEB(object):
     def test_raising_parallel_errors(self):
         # error is calculators are shared in parallel run
         with raises(RuntimeError, match=r".*Cannot use shared calculators.*"):
-            _ = neb.NEB(self.images_dummy, allow_shared_calculator=True,
-                        parallel=True)
+            _ = neb.NEB(self.images_dummy, allow_shared_calculator=True, parallel=True)
 
     def test_no_shared_calc(self):
-        images_shared_calc = [self.h_atom.copy(), self.h_atom.copy(),
-                              self.h_atom.copy()]
+        images_shared_calc = [
+            self.h_atom.copy(),
+            self.h_atom.copy(),
+            self.h_atom.copy(),
+        ]
 
         shared_calc = EMT()
         for at in images_shared_calc:
             at.calc = shared_calc
 
-        neb_not_allow = neb.NEB(images_shared_calc,
-                                allow_shared_calculator=False)
+        neb_not_allow = neb.NEB(images_shared_calc, allow_shared_calculator=False)
 
         # error if calculators are shared but not allowed to be
         with raises(ValueError, match=r".*NEB images share the same.*"):
@@ -104,7 +103,8 @@ class TestNEB(object):
 
         mismatch_numbers = [
             self.h_atom.copy(),
-            Atoms("C", positions=[[0., 0., 0.]], cell=[10., 10., 10.])]
+            Atoms("C", positions=[[0.0, 0.0, 0.0]], cell=[10.0, 10.0, 10.0]),
+        ]
         with raises(ValueError, match=r".*atoms in different orders.*"):
             _ = neb.NEB(mismatch_numbers)
 

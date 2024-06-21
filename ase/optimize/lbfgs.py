@@ -13,10 +13,20 @@ class LBFGS(Optimizer):
 
     """
 
-    def __init__(self, atoms, restart=None, logfile='-', trajectory=None,
-                 maxstep=None, memory=100, damping=1.0, alpha=70.0,
-                 use_line_search=False, master=None,
-                 force_consistent=None):
+    def __init__(
+        self,
+        atoms,
+        restart=None,
+        logfile="-",
+        trajectory=None,
+        maxstep=None,
+        memory=100,
+        damping=1.0,
+        alpha=70.0,
+        use_line_search=False,
+        master=None,
+        force_consistent=None,
+    ):
         """Parameters:
 
         atoms: Atoms object
@@ -63,23 +73,31 @@ class LBFGS(Optimizer):
             force-consistent energies if available in the calculator, but
             falls back to force_consistent=False if not.
         """
-        Optimizer.__init__(self, atoms, restart, logfile, trajectory, master,
-                           force_consistent=force_consistent)
+        Optimizer.__init__(
+            self,
+            atoms,
+            restart,
+            logfile,
+            trajectory,
+            master,
+            force_consistent=force_consistent,
+        )
 
         if maxstep is not None:
             self.maxstep = maxstep
         else:
-            self.maxstep = self.defaults['maxstep']
+            self.maxstep = self.defaults["maxstep"]
 
         if self.maxstep > 1.0:
-            raise ValueError('You are using a much too large value for ' +
-                             'the maximum step size: %.1f Angstrom' %
-                             maxstep)
+            raise ValueError(
+                "You are using a much too large value for "
+                + "the maximum step size: %.1f Angstrom" % maxstep
+            )
 
         self.memory = memory
         # Initial approximation of inverse Hessian 1./70. is to emulate the
         # behaviour of BFGS. Note that this is never changed!
-        self.H0 = 1. / alpha
+        self.H0 = 1.0 / alpha
         self.damping = damping
         self.use_line_search = use_line_search
         self.p = None
@@ -98,13 +116,21 @@ class LBFGS(Optimizer):
         self.r0 = None
         self.f0 = None
         self.e0 = None
-        self.task = 'START'
+        self.task = "START"
         self.load_restart = False
 
     def read(self):
         """Load saved arrays to reconstruct the Hessian"""
-        self.iteration, self.s, self.y, self.rho, \
-            self.r0, self.f0, self.e0, self.task = self.load()
+        (
+            self.iteration,
+            self.s,
+            self.y,
+            self.rho,
+            self.r0,
+            self.f0,
+            self.e0,
+            self.task,
+        ) = self.load()
         self.load_restart = True
 
     def step(self, forces=None):
@@ -139,7 +165,7 @@ class LBFGS(Optimizer):
             b = rho[i] * np.dot(y[i], z)
             z += s[i] * (a[i] - b)
 
-        self.p = - z.reshape((-1, 3))
+        self.p = -z.reshape((-1, 3))
         # ##
 
         g = -forces
@@ -156,8 +182,18 @@ class LBFGS(Optimizer):
         self.iteration += 1
         self.r0 = pos
         self.f0 = -g
-        self.dump((self.iteration, self.s, self.y,
-                   self.rho, self.r0, self.f0, self.e0, self.task))
+        self.dump(
+            (
+                self.iteration,
+                self.s,
+                self.y,
+                self.rho,
+                self.r0,
+                self.f0,
+                self.e0,
+                self.task,
+            )
+        )
 
     def determine_step(self, dr):
         """Determine step to take according to maxstep
@@ -165,7 +201,7 @@ class LBFGS(Optimizer):
         Normalize all steps as the largest step. This way
         we still move along the eigendirection.
         """
-        steplengths = (dr**2).sum(1)**0.5
+        steplengths = (dr**2).sum(1) ** 0.5
         longest_step = np.max(steplengths)
         if longest_step >= self.maxstep:
             dr *= self.maxstep / longest_step
@@ -197,7 +233,8 @@ class LBFGS(Optimizer):
         """Initialize history from old trajectory."""
         if isinstance(traj, str):
             from ase.io.trajectory import Trajectory
-            traj = Trajectory(traj, 'r')
+
+            traj = Trajectory(traj, "r")
         r0 = None
         f0 = None
         # The last element is not added, as we get that for free when taking
@@ -216,30 +253,38 @@ class LBFGS(Optimizer):
         """Objective function for use of the optimizers"""
         self.atoms.set_positions(x.reshape(-1, 3))
         self.function_calls += 1
-        return self.atoms.get_potential_energy(
-            force_consistent=self.force_consistent)
+        return self.atoms.get_potential_energy(force_consistent=self.force_consistent)
 
     def fprime(self, x):
         """Gradient of the objective function for use of the optimizers"""
         self.atoms.set_positions(x.reshape(-1, 3))
         self.force_calls += 1
         # Remember that forces are minus the gradient!
-        return - self.atoms.get_forces().reshape(-1)
+        return -self.atoms.get_forces().reshape(-1)
 
     def line_search(self, r, g, e):
         self.p = self.p.ravel()
         p_size = np.sqrt((self.p**2).sum())
         if p_size <= np.sqrt(len(self.atoms) * 1e-10):
-            self.p /= (p_size / np.sqrt(len(self.atoms) * 1e-10))
+            self.p /= p_size / np.sqrt(len(self.atoms) * 1e-10)
         g = g.ravel()
         r = r.ravel()
         ls = LineSearch()
-        self.alpha_k, e, self.e0, self.no_update = \
-            ls._line_search(self.func, self.fprime, r, self.p, g, e, self.e0,
-                            maxstep=self.maxstep, c1=.23,
-                            c2=.46, stpmax=50.)
+        self.alpha_k, e, self.e0, self.no_update = ls._line_search(
+            self.func,
+            self.fprime,
+            r,
+            self.p,
+            g,
+            e,
+            self.e0,
+            maxstep=self.maxstep,
+            c1=0.23,
+            c2=0.46,
+            stpmax=50.0,
+        )
         if self.alpha_k is None:
-            raise RuntimeError('LineSearch failed!')
+            raise RuntimeError("LineSearch failed!")
 
 
 class LBFGSLineSearch(LBFGS):
@@ -248,8 +293,9 @@ class LBFGSLineSearch(LBFGS):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs['use_line_search'] = True
+        kwargs["use_line_search"] = True
         LBFGS.__init__(self, *args, **kwargs)
+
 
 #    """Modified version of LBFGS.
 #

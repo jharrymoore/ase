@@ -12,7 +12,7 @@ from ase.cell import Cell
 def monkhorst_pack(size):
     """Construct a uniform sampling of k-space of given size."""
     if np.less_equal(size, 0).any():
-        raise ValueError('Illegal size: %s' % list(size))
+        raise ValueError("Illegal size: %s" % list(size))
     kpts = np.indices(size).transpose((1, 2, 3, 0)).reshape((-1, 3))
     return (kpts + 0.5) / size - 0.5
 
@@ -48,29 +48,27 @@ def get_monkhorst_pack_size_and_offset(kpts):
         if (offsets.ptp(axis=0) < 1e-9).all():
             return size, offsets[0].copy()
 
-    raise ValueError('Not an ASE-style Monkhorst-Pack grid!')
+    raise ValueError("Not an ASE-style Monkhorst-Pack grid!")
 
 
-def mindistance2monkhorstpack(atoms, *,
-                              min_distance,
-                              maxperdim=16,
-                              even=True):
+def mindistance2monkhorstpack(atoms, *, min_distance, maxperdim=16, even=True):
     """Find a Monkhorst-Pack grid (nx, ny, nz) with lowest number of
-       k-points in the *reducible* Brillouin zone, which still satisfying
-       a given minimum distance (`min_distance`) condition in real space
-       (nx, ny, nz)-supercell.
+    k-points in the *reducible* Brillouin zone, which still satisfying
+    a given minimum distance (`min_distance`) condition in real space
+    (nx, ny, nz)-supercell.
 
-       Compared to ase.calculators.calculator kptdensity2monkhorstpack
-       routine, this metric is based on a physical quantity (real space
-       distance), and it doesn't depend on non-physical quantities, such as
-       the cell vectors, since basis vectors can be always transformed
-       with integer determinant one matrices. In other words, it is
-       invariant to particular choice of cell representations.
+    Compared to ase.calculators.calculator kptdensity2monkhorstpack
+    routine, this metric is based on a physical quantity (real space
+    distance), and it doesn't depend on non-physical quantities, such as
+    the cell vectors, since basis vectors can be always transformed
+    with integer determinant one matrices. In other words, it is
+    invariant to particular choice of cell representations.
 
-       On orthogonal cells, min_distance = 2 * np.pi * kptdensity.
+    On orthogonal cells, min_distance = 2 * np.pi * kptdensity.
     """
-    return _mindistance2monkhorstpack(atoms.cell, atoms.pbc,
-                                      min_distance, maxperdim, even)
+    return _mindistance2monkhorstpack(
+        atoms.cell, atoms.pbc, min_distance, maxperdim, even
+    )
 
 
 def _mindistance2monkhorstpack(cell, pbc_c, min_distance, maxperdim, even):
@@ -78,28 +76,32 @@ def _mindistance2monkhorstpack(cell, pbc_c, min_distance, maxperdim, even):
     from ase.neighborlist import NeighborList
 
     step = 2 if even else 1
-    nl = NeighborList([min_distance / 2], skin=0.0,
-                      self_interaction=False, bothways=False)
+    nl = NeighborList(
+        [min_distance / 2], skin=0.0, self_interaction=False, bothways=False
+    )
 
     def check(nkpts_c):
-        nl.update(Atoms('H', cell=cell @ np.diag(nkpts_c), pbc=pbc_c))
+        nl.update(Atoms("H", cell=cell @ np.diag(nkpts_c), pbc=pbc_c))
         return len(nl.get_neighbors(0)[1]) == 0
 
     def generate_mpgrids():
-        ranges = [range(step, maxperdim + 1, step)
-                  if pbc else range(1, 2) for pbc in pbc_c]
+        ranges = [
+            range(step, maxperdim + 1, step) if pbc else range(1, 2) for pbc in pbc_c
+        ]
         nkpts_nc = np.column_stack([*map(np.ravel, np.meshgrid(*ranges))])
         yield from sorted(nkpts_nc, key=lambda nkpts_c: np.prod(nkpts_c))
 
     try:
         return next(filter(check, generate_mpgrids()))
     except StopIteration:
-        raise ValueError('Could not find a proper k-point grid for the system.'
-                         ' Try running with a larger maxperdim.')
+        raise ValueError(
+            "Could not find a proper k-point grid for the system."
+            " Try running with a larger maxperdim."
+        )
 
 
 def get_monkhorst_shape(kpts):
-    warnings.warn('Use get_monkhorst_pack_size_and_offset()[0] instead.')
+    warnings.warn("Use get_monkhorst_pack_size_and_offset()[0] instead.")
     return get_monkhorst_pack_size_and_offset(kpts)[0]
 
 
@@ -118,7 +120,7 @@ def kpoint_convert(cell_cv, skpts_kc=None, ckpts_kv=None):
     elif skpts_kc is None:
         return np.dot(ckpts_kv, cell_cv.T) / (2 * np.pi)
     else:
-        raise KeyError('Either scaled or cartesian coordinates must be given.')
+        raise KeyError("Either scaled or cartesian coordinates must be given.")
 
 
 def parse_path_string(s):
@@ -136,18 +138,18 @@ def parse_path_string(s):
     [['G', 'X'], ['M1', 'A']]
     """
     paths = []
-    for path in s.split(','):
-        names = [name
-                 for name in re.split(r'([A-Z][a-z0-9]*)', path)
-                 if name]
+    for path in s.split(","):
+        names = [name for name in re.split(r"([A-Z][a-z0-9]*)", path) if name]
         paths.append(names)
     return paths
 
 
 def resolve_kpt_path_string(path, special_points):
     paths = parse_path_string(path)
-    coords = [np.array([special_points[sym] for sym in subpath]).reshape(-1, 3)
-              for subpath in paths]
+    coords = [
+        np.array([special_points[sym] for sym in subpath]).reshape(-1, 3)
+        for subpath in paths
+    ]
     return paths, coords
 
 
@@ -169,7 +171,7 @@ def resolve_custom_points(pathspec, special_points, eps):
     special_points = dict(special_points)
 
     if len(pathspec) == 0:
-        return '', special_points
+        return "", special_points
 
     if isinstance(pathspec, str):
         pathspec = parse_path_string(pathspec)
@@ -197,9 +199,10 @@ def resolve_custom_points(pathspec, special_points, eps):
     def name_generator():
         counter = 0
         while True:
-            name = 'Kpt{}'.format(counter)
+            name = "Kpt{}".format(counter)
             yield name
             counter += 1
+
     custom_names = name_generator()
 
     labelseq = []
@@ -207,15 +210,15 @@ def resolve_custom_points(pathspec, special_points, eps):
         for kpt in subpath:
             if isinstance(kpt, str):
                 if kpt not in special_points:
-                    raise KeyError('No kpoint "{}" among "{}"'
-                                   .format(kpt,
-                                           ''.join(special_points)))
+                    raise KeyError(
+                        'No kpoint "{}" among "{}"'.format(kpt, "".join(special_points))
+                    )
                 labelseq.append(kpt)
                 continue
 
             kpt = np.asarray(kpt, float)
             if not kpt.shape == (3,):
-                raise ValueError(f'Not a valid kpoint: {kpt}')
+                raise ValueError(f"Not a valid kpoint: {kpt}")
 
             for key, val in special_points.items():
                 if np.abs(kpt - val).max() < eps:
@@ -228,25 +231,25 @@ def resolve_custom_points(pathspec, special_points, eps):
                     name = next(custom_names)
                 special_points[name] = kpt
                 labelseq.append(name)
-        labelseq.append(',')
+        labelseq.append(",")
 
     last = labelseq.pop()
-    assert last == ','
-    return ''.join(labelseq), special_points
+    assert last == ","
+    return "".join(labelseq), special_points
 
 
 def normalize_special_points(special_points):
     dct = {}
     for name, value in special_points.items():
         if not isinstance(name, str):
-            raise TypeError('Expected name to be a string')
+            raise TypeError("Expected name to be a string")
         if not np.shape(value) == (3,):
-            raise ValueError('Expected 3 kpoint coordinates')
+            raise ValueError("Expected 3 kpoint coordinates")
         dct[name] = np.asarray(value, float)
     return dct
 
 
-@jsonable('bandpath')
+@jsonable("bandpath")
 class BandPath:
     """Represents a Brillouin zone path or bandpath.
 
@@ -268,8 +271,8 @@ class BandPath:
     BandPath(path='GXMGRX,MR', cell=[3x3], special_points={GMRX}, kpts=[40x3])
 
     """
-    def __init__(self, cell, kpts=None,
-                 special_points=None, path=None):
+
+    def __init__(self, cell, kpts=None, special_points=None, path=None):
         if kpts is None:
             kpts = np.empty((0, 3))
 
@@ -279,7 +282,7 @@ class BandPath:
             special_points = normalize_special_points(special_points)
 
         if path is None:
-            path = ''
+            path = ""
 
         cell = Cell(cell)
         self._cell = cell
@@ -289,7 +292,7 @@ class BandPath:
         self._kpts = kpts
         self._special_points = special_points
         if not isinstance(path, str):
-            raise TypeError(f'path must be a string; was {path!r}')
+            raise TypeError(f"path must be a string; was {path!r}")
         self._path = path
 
     @property
@@ -329,7 +332,7 @@ class BandPath:
         Comma marks a discontinuous jump: K is not connected to U."""
         return self._path
 
-    def transform(self, op: np.ndarray) -> 'BandPath':
+    def transform(self, op: np.ndarray) -> "BandPath":
         """Apply 3x3 matrix to this BandPath and return new BandPath.
 
         This is useful for converting the band path to another cell.
@@ -345,23 +348,28 @@ class BandPath:
         for name, value in self.special_points.items():
             special_points[name] = value @ op
 
-        return BandPath(op.T @ self.cell, kpts=self.kpts @ op,
-                        special_points=special_points,
-                        path=self.path)
+        return BandPath(
+            op.T @ self.cell,
+            kpts=self.kpts @ op,
+            special_points=special_points,
+            path=self.path,
+        )
 
     def todict(self):
-        return {'kpts': self.kpts,
-                'special_points': self.special_points,
-                'labelseq': self.path,
-                'cell': self.cell}
+        return {
+            "kpts": self.kpts,
+            "special_points": self.special_points,
+            "labelseq": self.path,
+            "cell": self.cell,
+        }
 
     def interpolate(
-            self,
-            path: str = None,
-            npoints: int = None,
-            special_points: Dict[str, np.ndarray] = None,
-            density: float = None,
-    ) -> 'BandPath':
+        self,
+        path: str = None,
+        npoints: int = None,
+        special_points: Dict[str, np.ndarray] = None,
+        density: float = None,
+    ) -> "BandPath":
         """Create new bandpath, (re-)interpolating kpoints from this one."""
         if path is None:
             path = self.path
@@ -371,18 +379,18 @@ class BandPath:
 
         pathnames, pathcoords = resolve_kpt_path_string(path, special_points)
         kpts, x, X = paths2kpts(pathcoords, self.cell, npoints, density)
-        return BandPath(self.cell, kpts, path=path,
-                        special_points=special_points)
+        return BandPath(self.cell, kpts, path=path, special_points=special_points)
 
     def _scale(self, coords):
         return np.dot(coords, self.icell)
 
     def __repr__(self):
-        return ('{}(path={}, cell=[3x3], special_points={{{}}}, kpts=[{}x3])'
-                .format(self.__class__.__name__,
-                        repr(self.path),
-                        ''.join(sorted(self.special_points)),
-                        len(self.kpts)))
+        return "{}(path={}, cell=[3x3], special_points={{{}}}, kpts=[{}x3])".format(
+            self.__class__.__name__,
+            repr(self.path),
+            "".join(sorted(self.special_points)),
+            len(self.kpts),
+        )
 
     def cartesian_kpts(self) -> np.ndarray:
         """Get Cartesian kpoints from this bandpath."""
@@ -401,9 +409,12 @@ class BandPath:
 
         """
         import warnings
-        warnings.warn('Please do not use (kpts, x, X) = bandpath(...).  '
-                      'Use path = bandpath(...) and then kpts = path.kpts and '
-                      '(x, X, labels) = path.get_linear_kpoint_axis().')
+
+        warnings.warn(
+            "Please do not use (kpts, x, X) = bandpath(...).  "
+            "Use path = bandpath(...) and then kpts = path.kpts and "
+            "(x, X, labels) = path.get_linear_kpoint_axis()."
+        )
         yield self.kpts
 
         x, xspecial, _ = self.get_linear_kpoint_axis()
@@ -422,8 +433,7 @@ class BandPath:
         index2name = self._find_special_point_indices(eps)
         indices = sorted(index2name)
         labels = [index2name[index] for index in indices]
-        xcoords, special_xcoords = indices_to_axis_coords(
-            indices, self.kpts, self.cell)
+        xcoords, special_xcoords = indices_to_axis_coords(indices, self.kpts, self.cell)
         return xcoords, special_xcoords, labels
 
     def _find_special_point_indices(self, eps):
@@ -442,7 +452,7 @@ class BandPath:
             for arg in args.flat:
                 dist = distances[arg]
                 # Check if an adjacent point exists and is even closer:
-                neighbours = distances[max(arg - 1, 0):min(arg + 1, nkpts - 1)]
+                neighbours = distances[max(arg - 1, 0) : min(arg + 1, nkpts - 1)]
                 if not any(neighbours < dist):
                     index2name[arg] = name
 
@@ -455,11 +465,10 @@ class BandPath:
         import ase.dft.bz as bz
 
         # We previously had a "dimension=3" argument which is now unused.
-        plotkwargs.pop('dimension', None)
+        plotkwargs.pop("dimension", None)
 
         special_points = self.special_points
-        labelseq, coords = resolve_kpt_path_string(self.path,
-                                                   special_points)
+        labelseq, coords = resolve_kpt_path_string(self.path, special_points)
 
         paths = []
         points_already_plotted = set()
@@ -474,17 +483,14 @@ class BandPath:
             if label not in points_already_plotted:
                 paths.append(([label], [self._scale(point)]))
 
-        kw = {'vectors': True,
-              'pointstyle': {'marker': '.'}}
+        kw = {"vectors": True, "pointstyle": {"marker": "."}}
 
         kw.update(plotkwargs)
-        return bz.bz_plot(self.cell, paths=paths,
-                          points=self.cartesian_kpts(),
-                          **kw)
+        return bz.bz_plot(self.cell, paths=paths, points=self.cartesian_kpts(), **kw)
 
     def free_electron_band_structure(
-            self, **kwargs
-    ) -> 'ase.spectrum.band_structure.BandStructure':
+        self, **kwargs
+    ) -> "ase.spectrum.band_structure.BandStructure":
         """Return band structure of free electrons for this bandpath.
 
         Keyword arguments are passed to
@@ -494,14 +500,14 @@ class BandPath:
         from ase import Atoms
         from ase.calculators.test import FreeElectrons
         from ase.spectrum.band_structure import calculate_band_structure
+
         atoms = Atoms(cell=self.cell, pbc=True)
         atoms.calc = FreeElectrons(**kwargs)
         bs = calculate_band_structure(atoms, path=self)
         return bs
 
 
-def bandpath(path, cell, npoints=None, density=None, special_points=None,
-             eps=2e-4):
+def bandpath(path, cell, npoints=None, density=None, special_points=None, eps=2e-4):
     """Make a list of kpoints defining the path between the given points.
 
     path: list or str
@@ -534,16 +540,17 @@ def bandpath(path, cell, npoints=None, density=None, special_points=None,
     Return a :class:`~ase.dft.kpoints.BandPath` object."""
 
     cell = Cell.ascell(cell)
-    return cell.bandpath(path, npoints=npoints, density=density,
-                         special_points=special_points, eps=eps)
+    return cell.bandpath(
+        path, npoints=npoints, density=density, special_points=special_points, eps=eps
+    )
 
 
-DEFAULT_KPTS_DENSITY = 5    # points per 1/Angstrom
+DEFAULT_KPTS_DENSITY = 5  # points per 1/Angstrom
 
 
 def paths2kpts(paths, cell, npoints=None, density=None):
     if not (npoints is None or density is None):
-        raise ValueError('You may define npoints or density, but not both.')
+        raise ValueError("You may define npoints or density, but not both.")
     points = np.concatenate(paths)
     dists = points[1:] - points[:-1]
     lengths = [np.linalg.norm(d) for d in kpoint_convert(cell, skpts_kc=dists)]
@@ -645,7 +652,7 @@ def labels_from_kpts(kpts, cell, eps=1e-5, special_points=None):
                 if abs((kpt - k) % 1).sum() < eps:
                     break
             else:
-                label = '?'
+                label = "?"
         labels.append(label)
 
     xcoords, ixcoords = indices_to_axis_coords(indices, points, cell)
@@ -670,15 +677,16 @@ def indices_to_axis_coords(indices, points, cell):
 
 
 special_paths = {
-    'cubic': 'GXMGRX,MR',
-    'fcc': 'GXWKGLUWLK,UX',
-    'bcc': 'GHNGPH,PN',
-    'tetragonal': 'GXMGZRAZXR,MA',
-    'orthorhombic': 'GXSYGZURTZ,YT,UX,SR',
-    'hexagonal': 'GMKGALHA,LM,KH',
-    'monoclinic': 'GYHCEM1AXH1,MDZ,YD',
-    'rhombohedral type 1': 'GLB1,BZGX,QFP1Z,LP',
-    'rhombohedral type 2': 'GPZQGFP1Q1LZ'}
+    "cubic": "GXMGRX,MR",
+    "fcc": "GXWKGLUWLK,UX",
+    "bcc": "GHNGPH,PN",
+    "tetragonal": "GXMGZRAZXR,MA",
+    "orthorhombic": "GXSYGZURTZ,YT,UX,SR",
+    "hexagonal": "GMKGALHA,LM,KH",
+    "monoclinic": "GYHCEM1AXH1,MDZ,YD",
+    "rhombohedral type 1": "GLB1,BZGX,QFP1Z,LP",
+    "rhombohedral type 2": "GPZQGFP1Q1LZ",
+}
 
 
 def get_special_points(cell, lattice=None, eps=2e-4):
@@ -699,8 +707,7 @@ def get_special_points(cell, lattice=None, eps=2e-4):
     """
 
     if isinstance(cell, str):
-        warnings.warn('Please call this function with cell as the first '
-                      'argument')
+        warnings.warn("Please call this function with cell as the first " "argument")
         lattice, cell = cell, lattice
 
     cell = Cell.ascell(cell)
@@ -712,8 +719,9 @@ def get_special_points(cell, lattice=None, eps=2e-4):
     return path.special_points
 
 
-def monkhorst_pack_interpolate(path, values, icell, bz2ibz,
-                               size, offset=(0, 0, 0), pad_width=2):
+def monkhorst_pack_interpolate(
+    path, values, icell, bz2ibz, size, offset=(0, 0, 0), pad_width=2
+):
     """Interpolate values from Monkhorst-Pack sampling.
 
     `monkhorst_pack_interpolate` takes a set of `values`, for example
@@ -765,22 +773,21 @@ def monkhorst_pack_interpolate(path, values, icell, bz2ibz,
 
     # Create padded Monkhorst-Pack grid:
     size = np.asarray(size)
-    i = (np.indices(size + 2 * pad_width)
-         .transpose((1, 2, 3, 0)).reshape((-1, 3)))
+    i = np.indices(size + 2 * pad_width).transpose((1, 2, 3, 0)).reshape((-1, 3))
     k = (i - pad_width + 0.5) / size - 0.5 + offset
     k = np.dot(k, icell)
 
     # Fill in boundary values:
-    V = np.pad(v, [(pad_width, pad_width)] * 3 +
-               [(0, 0)] * (v.ndim - 3), mode="wrap")
+    V = np.pad(v, [(pad_width, pad_width)] * 3 + [(0, 0)] * (v.ndim - 3), mode="wrap")
 
     interpolate = LinearNDInterpolator(k, V.reshape((-1,) + V.shape[3:]))
     interpolated_points = interpolate(path)
 
     # NaN values indicate points outside interpolation domain, if fail
     # try increasing padding
-    assert not np.isnan(interpolated_points).any(), \
-        "Points outside interpolation domain. Try increasing pad_width."
+    assert not np.isnan(
+        interpolated_points
+    ).any(), "Points outside interpolation domain. Try increasing pad_width."
 
     return interpolated_points
 
@@ -790,106 +797,1506 @@ def monkhorst_pack_interpolate(path, values, icell, bz2ibz,
 # convention: cc+'<Nkpoints>'+_+'shape'. For example an 18 k point
 # sq(3)xsq(3) is named 'cc18_sq3xsq3'.
 
-cc6_1x1 = np.array([
-    1, 1, 0, 1, 0, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0,
-    0, 1, 0]).reshape((6, 3)) / 3.0
+cc6_1x1 = (
+    np.array([1, 1, 0, 1, 0, 0, 0, -1, 0, -1, -1, 0, -1, 0, 0, 0, 1, 0]).reshape((6, 3))
+    / 3.0
+)
 
-cc12_2x3 = np.array([
-    3, 4, 0, 3, 10, 0, 6, 8, 0, 3, -2, 0, 6, -4, 0,
-    6, 2, 0, -3, 8, 0, -3, 2, 0, -3, -4, 0, -6, 4, 0, -6, -2, 0, -6,
-    -8, 0]).reshape((12, 3)) / 18.0
+cc12_2x3 = (
+    np.array(
+        [
+            3,
+            4,
+            0,
+            3,
+            10,
+            0,
+            6,
+            8,
+            0,
+            3,
+            -2,
+            0,
+            6,
+            -4,
+            0,
+            6,
+            2,
+            0,
+            -3,
+            8,
+            0,
+            -3,
+            2,
+            0,
+            -3,
+            -4,
+            0,
+            -6,
+            4,
+            0,
+            -6,
+            -2,
+            0,
+            -6,
+            -8,
+            0,
+        ]
+    ).reshape((12, 3))
+    / 18.0
+)
 
-cc18_sq3xsq3 = np.array([
-    2, 2, 0, 4, 4, 0, 8, 2, 0, 4, -2, 0, 8, -4,
-    0, 10, -2, 0, 10, -8, 0, 8, -10, 0, 2, -10, 0, 4, -8, 0, -2, -8,
-    0, 2, -4, 0, -4, -4, 0, -2, -2, 0, -4, 2, 0, -2, 4, 0, -8, 4, 0,
-    -4, 8, 0]).reshape((18, 3)) / 18.0
+cc18_sq3xsq3 = (
+    np.array(
+        [
+            2,
+            2,
+            0,
+            4,
+            4,
+            0,
+            8,
+            2,
+            0,
+            4,
+            -2,
+            0,
+            8,
+            -4,
+            0,
+            10,
+            -2,
+            0,
+            10,
+            -8,
+            0,
+            8,
+            -10,
+            0,
+            2,
+            -10,
+            0,
+            4,
+            -8,
+            0,
+            -2,
+            -8,
+            0,
+            2,
+            -4,
+            0,
+            -4,
+            -4,
+            0,
+            -2,
+            -2,
+            0,
+            -4,
+            2,
+            0,
+            -2,
+            4,
+            0,
+            -8,
+            4,
+            0,
+            -4,
+            8,
+            0,
+        ]
+    ).reshape((18, 3))
+    / 18.0
+)
 
-cc18_1x1 = np.array([
-    2, 4, 0, 2, 10, 0, 4, 8, 0, 8, 4, 0, 8, 10, 0,
-    10, 8, 0, 2, -2, 0, 4, -4, 0, 4, 2, 0, -2, 8, 0, -2, 2, 0, -2, -4,
-    0, -4, 4, 0, -4, -2, 0, -4, -8, 0, -8, 2, 0, -8, -4, 0, -10, -2,
-    0]).reshape((18, 3)) / 18.0
+cc18_1x1 = (
+    np.array(
+        [
+            2,
+            4,
+            0,
+            2,
+            10,
+            0,
+            4,
+            8,
+            0,
+            8,
+            4,
+            0,
+            8,
+            10,
+            0,
+            10,
+            8,
+            0,
+            2,
+            -2,
+            0,
+            4,
+            -4,
+            0,
+            4,
+            2,
+            0,
+            -2,
+            8,
+            0,
+            -2,
+            2,
+            0,
+            -2,
+            -4,
+            0,
+            -4,
+            4,
+            0,
+            -4,
+            -2,
+            0,
+            -4,
+            -8,
+            0,
+            -8,
+            2,
+            0,
+            -8,
+            -4,
+            0,
+            -10,
+            -2,
+            0,
+        ]
+    ).reshape((18, 3))
+    / 18.0
+)
 
-cc54_sq3xsq3 = np.array([
-    4, -10, 0, 6, -10, 0, 0, -8, 0, 2, -8, 0, 6,
-    -8, 0, 8, -8, 0, -4, -6, 0, -2, -6, 0, 2, -6, 0, 4, -6, 0, 8, -6,
-    0, 10, -6, 0, -6, -4, 0, -2, -4, 0, 0, -4, 0, 4, -4, 0, 6, -4, 0,
-    10, -4, 0, -6, -2, 0, -4, -2, 0, 0, -2, 0, 2, -2, 0, 6, -2, 0, 8,
-    -2, 0, -8, 0, 0, -4, 0, 0, -2, 0, 0, 2, 0, 0, 4, 0, 0, 8, 0, 0,
-    -8, 2, 0, -6, 2, 0, -2, 2, 0, 0, 2, 0, 4, 2, 0, 6, 2, 0, -10, 4,
-    0, -6, 4, 0, -4, 4, 0, 0, 4, 0, 2, 4, 0, 6, 4, 0, -10, 6, 0, -8,
-    6, 0, -4, 6, 0, -2, 6, 0, 2, 6, 0, 4, 6, 0, -8, 8, 0, -6, 8, 0,
-    -2, 8, 0, 0, 8, 0, -6, 10, 0, -4, 10, 0]).reshape((54, 3)) / 18.0
+cc54_sq3xsq3 = (
+    np.array(
+        [
+            4,
+            -10,
+            0,
+            6,
+            -10,
+            0,
+            0,
+            -8,
+            0,
+            2,
+            -8,
+            0,
+            6,
+            -8,
+            0,
+            8,
+            -8,
+            0,
+            -4,
+            -6,
+            0,
+            -2,
+            -6,
+            0,
+            2,
+            -6,
+            0,
+            4,
+            -6,
+            0,
+            8,
+            -6,
+            0,
+            10,
+            -6,
+            0,
+            -6,
+            -4,
+            0,
+            -2,
+            -4,
+            0,
+            0,
+            -4,
+            0,
+            4,
+            -4,
+            0,
+            6,
+            -4,
+            0,
+            10,
+            -4,
+            0,
+            -6,
+            -2,
+            0,
+            -4,
+            -2,
+            0,
+            0,
+            -2,
+            0,
+            2,
+            -2,
+            0,
+            6,
+            -2,
+            0,
+            8,
+            -2,
+            0,
+            -8,
+            0,
+            0,
+            -4,
+            0,
+            0,
+            -2,
+            0,
+            0,
+            2,
+            0,
+            0,
+            4,
+            0,
+            0,
+            8,
+            0,
+            0,
+            -8,
+            2,
+            0,
+            -6,
+            2,
+            0,
+            -2,
+            2,
+            0,
+            0,
+            2,
+            0,
+            4,
+            2,
+            0,
+            6,
+            2,
+            0,
+            -10,
+            4,
+            0,
+            -6,
+            4,
+            0,
+            -4,
+            4,
+            0,
+            0,
+            4,
+            0,
+            2,
+            4,
+            0,
+            6,
+            4,
+            0,
+            -10,
+            6,
+            0,
+            -8,
+            6,
+            0,
+            -4,
+            6,
+            0,
+            -2,
+            6,
+            0,
+            2,
+            6,
+            0,
+            4,
+            6,
+            0,
+            -8,
+            8,
+            0,
+            -6,
+            8,
+            0,
+            -2,
+            8,
+            0,
+            0,
+            8,
+            0,
+            -6,
+            10,
+            0,
+            -4,
+            10,
+            0,
+        ]
+    ).reshape((54, 3))
+    / 18.0
+)
 
-cc54_1x1 = np.array([
-    2, 2, 0, 4, 4, 0, 8, 8, 0, 6, 8, 0, 4, 6, 0, 6,
-    10, 0, 4, 10, 0, 2, 6, 0, 2, 8, 0, 0, 2, 0, 0, 4, 0, 0, 8, 0, -2,
-    6, 0, -2, 4, 0, -4, 6, 0, -6, 4, 0, -4, 2, 0, -6, 2, 0, -2, 0, 0,
-    -4, 0, 0, -8, 0, 0, -8, -2, 0, -6, -2, 0, -10, -4, 0, -10, -6, 0,
-    -6, -4, 0, -8, -6, 0, -2, -2, 0, -4, -4, 0, -8, -8, 0, 4, -2, 0,
-    6, -2, 0, 6, -4, 0, 2, 0, 0, 4, 0, 0, 6, 2, 0, 6, 4, 0, 8, 6, 0,
-    8, 0, 0, 8, 2, 0, 10, 4, 0, 10, 6, 0, 2, -4, 0, 2, -6, 0, 4, -6,
-    0, 0, -2, 0, 0, -4, 0, -2, -6, 0, -4, -6, 0, -6, -8, 0, 0, -8, 0,
-    -2, -8, 0, -4, -10, 0, -6, -10, 0]).reshape((54, 3)) / 18.0
+cc54_1x1 = (
+    np.array(
+        [
+            2,
+            2,
+            0,
+            4,
+            4,
+            0,
+            8,
+            8,
+            0,
+            6,
+            8,
+            0,
+            4,
+            6,
+            0,
+            6,
+            10,
+            0,
+            4,
+            10,
+            0,
+            2,
+            6,
+            0,
+            2,
+            8,
+            0,
+            0,
+            2,
+            0,
+            0,
+            4,
+            0,
+            0,
+            8,
+            0,
+            -2,
+            6,
+            0,
+            -2,
+            4,
+            0,
+            -4,
+            6,
+            0,
+            -6,
+            4,
+            0,
+            -4,
+            2,
+            0,
+            -6,
+            2,
+            0,
+            -2,
+            0,
+            0,
+            -4,
+            0,
+            0,
+            -8,
+            0,
+            0,
+            -8,
+            -2,
+            0,
+            -6,
+            -2,
+            0,
+            -10,
+            -4,
+            0,
+            -10,
+            -6,
+            0,
+            -6,
+            -4,
+            0,
+            -8,
+            -6,
+            0,
+            -2,
+            -2,
+            0,
+            -4,
+            -4,
+            0,
+            -8,
+            -8,
+            0,
+            4,
+            -2,
+            0,
+            6,
+            -2,
+            0,
+            6,
+            -4,
+            0,
+            2,
+            0,
+            0,
+            4,
+            0,
+            0,
+            6,
+            2,
+            0,
+            6,
+            4,
+            0,
+            8,
+            6,
+            0,
+            8,
+            0,
+            0,
+            8,
+            2,
+            0,
+            10,
+            4,
+            0,
+            10,
+            6,
+            0,
+            2,
+            -4,
+            0,
+            2,
+            -6,
+            0,
+            4,
+            -6,
+            0,
+            0,
+            -2,
+            0,
+            0,
+            -4,
+            0,
+            -2,
+            -6,
+            0,
+            -4,
+            -6,
+            0,
+            -6,
+            -8,
+            0,
+            0,
+            -8,
+            0,
+            -2,
+            -8,
+            0,
+            -4,
+            -10,
+            0,
+            -6,
+            -10,
+            0,
+        ]
+    ).reshape((54, 3))
+    / 18.0
+)
 
-cc162_sq3xsq3 = np.array([
-    -8, 16, 0, -10, 14, 0, -7, 14, 0, -4, 14,
-    0, -11, 13, 0, -8, 13, 0, -5, 13, 0, -2, 13, 0, -13, 11, 0, -10,
-    11, 0, -7, 11, 0, -4, 11, 0, -1, 11, 0, 2, 11, 0, -14, 10, 0, -11,
-    10, 0, -8, 10, 0, -5, 10, 0, -2, 10, 0, 1, 10, 0, 4, 10, 0, -16,
-    8, 0, -13, 8, 0, -10, 8, 0, -7, 8, 0, -4, 8, 0, -1, 8, 0, 2, 8, 0,
-    5, 8, 0, 8, 8, 0, -14, 7, 0, -11, 7, 0, -8, 7, 0, -5, 7, 0, -2, 7,
-    0, 1, 7, 0, 4, 7, 0, 7, 7, 0, 10, 7, 0, -13, 5, 0, -10, 5, 0, -7,
-    5, 0, -4, 5, 0, -1, 5, 0, 2, 5, 0, 5, 5, 0, 8, 5, 0, 11, 5, 0,
-    -14, 4, 0, -11, 4, 0, -8, 4, 0, -5, 4, 0, -2, 4, 0, 1, 4, 0, 4, 4,
-    0, 7, 4, 0, 10, 4, 0, -13, 2, 0, -10, 2, 0, -7, 2, 0, -4, 2, 0,
-    -1, 2, 0, 2, 2, 0, 5, 2, 0, 8, 2, 0, 11, 2, 0, -11, 1, 0, -8, 1,
-    0, -5, 1, 0, -2, 1, 0, 1, 1, 0, 4, 1, 0, 7, 1, 0, 10, 1, 0, 13, 1,
-    0, -10, -1, 0, -7, -1, 0, -4, -1, 0, -1, -1, 0, 2, -1, 0, 5, -1,
-    0, 8, -1, 0, 11, -1, 0, 14, -1, 0, -11, -2, 0, -8, -2, 0, -5, -2,
-    0, -2, -2, 0, 1, -2, 0, 4, -2, 0, 7, -2, 0, 10, -2, 0, 13, -2, 0,
-    -10, -4, 0, -7, -4, 0, -4, -4, 0, -1, -4, 0, 2, -4, 0, 5, -4, 0,
-    8, -4, 0, 11, -4, 0, 14, -4, 0, -8, -5, 0, -5, -5, 0, -2, -5, 0,
-    1, -5, 0, 4, -5, 0, 7, -5, 0, 10, -5, 0, 13, -5, 0, 16, -5, 0, -7,
-    -7, 0, -4, -7, 0, -1, -7, 0, 2, -7, 0, 5, -7, 0, 8, -7, 0, 11, -7,
-    0, 14, -7, 0, 17, -7, 0, -8, -8, 0, -5, -8, 0, -2, -8, 0, 1, -8,
-    0, 4, -8, 0, 7, -8, 0, 10, -8, 0, 13, -8, 0, 16, -8, 0, -7, -10,
-    0, -4, -10, 0, -1, -10, 0, 2, -10, 0, 5, -10, 0, 8, -10, 0, 11,
-    -10, 0, 14, -10, 0, 17, -10, 0, -5, -11, 0, -2, -11, 0, 1, -11, 0,
-    4, -11, 0, 7, -11, 0, 10, -11, 0, 13, -11, 0, 16, -11, 0, -1, -13,
-    0, 2, -13, 0, 5, -13, 0, 8, -13, 0, 11, -13, 0, 14, -13, 0, 1,
-    -14, 0, 4, -14, 0, 7, -14, 0, 10, -14, 0, 13, -14, 0, 5, -16, 0,
-    8, -16, 0, 11, -16, 0, 7, -17, 0, 10, -17, 0]).reshape((162, 3)) / 27.0
+cc162_sq3xsq3 = (
+    np.array(
+        [
+            -8,
+            16,
+            0,
+            -10,
+            14,
+            0,
+            -7,
+            14,
+            0,
+            -4,
+            14,
+            0,
+            -11,
+            13,
+            0,
+            -8,
+            13,
+            0,
+            -5,
+            13,
+            0,
+            -2,
+            13,
+            0,
+            -13,
+            11,
+            0,
+            -10,
+            11,
+            0,
+            -7,
+            11,
+            0,
+            -4,
+            11,
+            0,
+            -1,
+            11,
+            0,
+            2,
+            11,
+            0,
+            -14,
+            10,
+            0,
+            -11,
+            10,
+            0,
+            -8,
+            10,
+            0,
+            -5,
+            10,
+            0,
+            -2,
+            10,
+            0,
+            1,
+            10,
+            0,
+            4,
+            10,
+            0,
+            -16,
+            8,
+            0,
+            -13,
+            8,
+            0,
+            -10,
+            8,
+            0,
+            -7,
+            8,
+            0,
+            -4,
+            8,
+            0,
+            -1,
+            8,
+            0,
+            2,
+            8,
+            0,
+            5,
+            8,
+            0,
+            8,
+            8,
+            0,
+            -14,
+            7,
+            0,
+            -11,
+            7,
+            0,
+            -8,
+            7,
+            0,
+            -5,
+            7,
+            0,
+            -2,
+            7,
+            0,
+            1,
+            7,
+            0,
+            4,
+            7,
+            0,
+            7,
+            7,
+            0,
+            10,
+            7,
+            0,
+            -13,
+            5,
+            0,
+            -10,
+            5,
+            0,
+            -7,
+            5,
+            0,
+            -4,
+            5,
+            0,
+            -1,
+            5,
+            0,
+            2,
+            5,
+            0,
+            5,
+            5,
+            0,
+            8,
+            5,
+            0,
+            11,
+            5,
+            0,
+            -14,
+            4,
+            0,
+            -11,
+            4,
+            0,
+            -8,
+            4,
+            0,
+            -5,
+            4,
+            0,
+            -2,
+            4,
+            0,
+            1,
+            4,
+            0,
+            4,
+            4,
+            0,
+            7,
+            4,
+            0,
+            10,
+            4,
+            0,
+            -13,
+            2,
+            0,
+            -10,
+            2,
+            0,
+            -7,
+            2,
+            0,
+            -4,
+            2,
+            0,
+            -1,
+            2,
+            0,
+            2,
+            2,
+            0,
+            5,
+            2,
+            0,
+            8,
+            2,
+            0,
+            11,
+            2,
+            0,
+            -11,
+            1,
+            0,
+            -8,
+            1,
+            0,
+            -5,
+            1,
+            0,
+            -2,
+            1,
+            0,
+            1,
+            1,
+            0,
+            4,
+            1,
+            0,
+            7,
+            1,
+            0,
+            10,
+            1,
+            0,
+            13,
+            1,
+            0,
+            -10,
+            -1,
+            0,
+            -7,
+            -1,
+            0,
+            -4,
+            -1,
+            0,
+            -1,
+            -1,
+            0,
+            2,
+            -1,
+            0,
+            5,
+            -1,
+            0,
+            8,
+            -1,
+            0,
+            11,
+            -1,
+            0,
+            14,
+            -1,
+            0,
+            -11,
+            -2,
+            0,
+            -8,
+            -2,
+            0,
+            -5,
+            -2,
+            0,
+            -2,
+            -2,
+            0,
+            1,
+            -2,
+            0,
+            4,
+            -2,
+            0,
+            7,
+            -2,
+            0,
+            10,
+            -2,
+            0,
+            13,
+            -2,
+            0,
+            -10,
+            -4,
+            0,
+            -7,
+            -4,
+            0,
+            -4,
+            -4,
+            0,
+            -1,
+            -4,
+            0,
+            2,
+            -4,
+            0,
+            5,
+            -4,
+            0,
+            8,
+            -4,
+            0,
+            11,
+            -4,
+            0,
+            14,
+            -4,
+            0,
+            -8,
+            -5,
+            0,
+            -5,
+            -5,
+            0,
+            -2,
+            -5,
+            0,
+            1,
+            -5,
+            0,
+            4,
+            -5,
+            0,
+            7,
+            -5,
+            0,
+            10,
+            -5,
+            0,
+            13,
+            -5,
+            0,
+            16,
+            -5,
+            0,
+            -7,
+            -7,
+            0,
+            -4,
+            -7,
+            0,
+            -1,
+            -7,
+            0,
+            2,
+            -7,
+            0,
+            5,
+            -7,
+            0,
+            8,
+            -7,
+            0,
+            11,
+            -7,
+            0,
+            14,
+            -7,
+            0,
+            17,
+            -7,
+            0,
+            -8,
+            -8,
+            0,
+            -5,
+            -8,
+            0,
+            -2,
+            -8,
+            0,
+            1,
+            -8,
+            0,
+            4,
+            -8,
+            0,
+            7,
+            -8,
+            0,
+            10,
+            -8,
+            0,
+            13,
+            -8,
+            0,
+            16,
+            -8,
+            0,
+            -7,
+            -10,
+            0,
+            -4,
+            -10,
+            0,
+            -1,
+            -10,
+            0,
+            2,
+            -10,
+            0,
+            5,
+            -10,
+            0,
+            8,
+            -10,
+            0,
+            11,
+            -10,
+            0,
+            14,
+            -10,
+            0,
+            17,
+            -10,
+            0,
+            -5,
+            -11,
+            0,
+            -2,
+            -11,
+            0,
+            1,
+            -11,
+            0,
+            4,
+            -11,
+            0,
+            7,
+            -11,
+            0,
+            10,
+            -11,
+            0,
+            13,
+            -11,
+            0,
+            16,
+            -11,
+            0,
+            -1,
+            -13,
+            0,
+            2,
+            -13,
+            0,
+            5,
+            -13,
+            0,
+            8,
+            -13,
+            0,
+            11,
+            -13,
+            0,
+            14,
+            -13,
+            0,
+            1,
+            -14,
+            0,
+            4,
+            -14,
+            0,
+            7,
+            -14,
+            0,
+            10,
+            -14,
+            0,
+            13,
+            -14,
+            0,
+            5,
+            -16,
+            0,
+            8,
+            -16,
+            0,
+            11,
+            -16,
+            0,
+            7,
+            -17,
+            0,
+            10,
+            -17,
+            0,
+        ]
+    ).reshape((162, 3))
+    / 27.0
+)
 
-cc162_1x1 = np.array([
-    -8, -16, 0, -10, -14, 0, -7, -14, 0, -4, -14,
-    0, -11, -13, 0, -8, -13, 0, -5, -13, 0, -2, -13, 0, -13, -11, 0,
-    -10, -11, 0, -7, -11, 0, -4, -11, 0, -1, -11, 0, 2, -11, 0, -14,
-    -10, 0, -11, -10, 0, -8, -10, 0, -5, -10, 0, -2, -10, 0, 1, -10,
-    0, 4, -10, 0, -16, -8, 0, -13, -8, 0, -10, -8, 0, -7, -8, 0, -4,
-    -8, 0, -1, -8, 0, 2, -8, 0, 5, -8, 0, 8, -8, 0, -14, -7, 0, -11,
-    -7, 0, -8, -7, 0, -5, -7, 0, -2, -7, 0, 1, -7, 0, 4, -7, 0, 7, -7,
-    0, 10, -7, 0, -13, -5, 0, -10, -5, 0, -7, -5, 0, -4, -5, 0, -1,
-    -5, 0, 2, -5, 0, 5, -5, 0, 8, -5, 0, 11, -5, 0, -14, -4, 0, -11,
-    -4, 0, -8, -4, 0, -5, -4, 0, -2, -4, 0, 1, -4, 0, 4, -4, 0, 7, -4,
-    0, 10, -4, 0, -13, -2, 0, -10, -2, 0, -7, -2, 0, -4, -2, 0, -1,
-    -2, 0, 2, -2, 0, 5, -2, 0, 8, -2, 0, 11, -2, 0, -11, -1, 0, -8,
-    -1, 0, -5, -1, 0, -2, -1, 0, 1, -1, 0, 4, -1, 0, 7, -1, 0, 10, -1,
-    0, 13, -1, 0, -10, 1, 0, -7, 1, 0, -4, 1, 0, -1, 1, 0, 2, 1, 0, 5,
-    1, 0, 8, 1, 0, 11, 1, 0, 14, 1, 0, -11, 2, 0, -8, 2, 0, -5, 2, 0,
-    -2, 2, 0, 1, 2, 0, 4, 2, 0, 7, 2, 0, 10, 2, 0, 13, 2, 0, -10, 4,
-    0, -7, 4, 0, -4, 4, 0, -1, 4, 0, 2, 4, 0, 5, 4, 0, 8, 4, 0, 11, 4,
-    0, 14, 4, 0, -8, 5, 0, -5, 5, 0, -2, 5, 0, 1, 5, 0, 4, 5, 0, 7, 5,
-    0, 10, 5, 0, 13, 5, 0, 16, 5, 0, -7, 7, 0, -4, 7, 0, -1, 7, 0, 2,
-    7, 0, 5, 7, 0, 8, 7, 0, 11, 7, 0, 14, 7, 0, 17, 7, 0, -8, 8, 0,
-    -5, 8, 0, -2, 8, 0, 1, 8, 0, 4, 8, 0, 7, 8, 0, 10, 8, 0, 13, 8, 0,
-    16, 8, 0, -7, 10, 0, -4, 10, 0, -1, 10, 0, 2, 10, 0, 5, 10, 0, 8,
-    10, 0, 11, 10, 0, 14, 10, 0, 17, 10, 0, -5, 11, 0, -2, 11, 0, 1,
-    11, 0, 4, 11, 0, 7, 11, 0, 10, 11, 0, 13, 11, 0, 16, 11, 0, -1,
-    13, 0, 2, 13, 0, 5, 13, 0, 8, 13, 0, 11, 13, 0, 14, 13, 0, 1, 14,
-    0, 4, 14, 0, 7, 14, 0, 10, 14, 0, 13, 14, 0, 5, 16, 0, 8, 16, 0,
-    11, 16, 0, 7, 17, 0, 10, 17, 0]).reshape((162, 3)) / 27.0
+cc162_1x1 = (
+    np.array(
+        [
+            -8,
+            -16,
+            0,
+            -10,
+            -14,
+            0,
+            -7,
+            -14,
+            0,
+            -4,
+            -14,
+            0,
+            -11,
+            -13,
+            0,
+            -8,
+            -13,
+            0,
+            -5,
+            -13,
+            0,
+            -2,
+            -13,
+            0,
+            -13,
+            -11,
+            0,
+            -10,
+            -11,
+            0,
+            -7,
+            -11,
+            0,
+            -4,
+            -11,
+            0,
+            -1,
+            -11,
+            0,
+            2,
+            -11,
+            0,
+            -14,
+            -10,
+            0,
+            -11,
+            -10,
+            0,
+            -8,
+            -10,
+            0,
+            -5,
+            -10,
+            0,
+            -2,
+            -10,
+            0,
+            1,
+            -10,
+            0,
+            4,
+            -10,
+            0,
+            -16,
+            -8,
+            0,
+            -13,
+            -8,
+            0,
+            -10,
+            -8,
+            0,
+            -7,
+            -8,
+            0,
+            -4,
+            -8,
+            0,
+            -1,
+            -8,
+            0,
+            2,
+            -8,
+            0,
+            5,
+            -8,
+            0,
+            8,
+            -8,
+            0,
+            -14,
+            -7,
+            0,
+            -11,
+            -7,
+            0,
+            -8,
+            -7,
+            0,
+            -5,
+            -7,
+            0,
+            -2,
+            -7,
+            0,
+            1,
+            -7,
+            0,
+            4,
+            -7,
+            0,
+            7,
+            -7,
+            0,
+            10,
+            -7,
+            0,
+            -13,
+            -5,
+            0,
+            -10,
+            -5,
+            0,
+            -7,
+            -5,
+            0,
+            -4,
+            -5,
+            0,
+            -1,
+            -5,
+            0,
+            2,
+            -5,
+            0,
+            5,
+            -5,
+            0,
+            8,
+            -5,
+            0,
+            11,
+            -5,
+            0,
+            -14,
+            -4,
+            0,
+            -11,
+            -4,
+            0,
+            -8,
+            -4,
+            0,
+            -5,
+            -4,
+            0,
+            -2,
+            -4,
+            0,
+            1,
+            -4,
+            0,
+            4,
+            -4,
+            0,
+            7,
+            -4,
+            0,
+            10,
+            -4,
+            0,
+            -13,
+            -2,
+            0,
+            -10,
+            -2,
+            0,
+            -7,
+            -2,
+            0,
+            -4,
+            -2,
+            0,
+            -1,
+            -2,
+            0,
+            2,
+            -2,
+            0,
+            5,
+            -2,
+            0,
+            8,
+            -2,
+            0,
+            11,
+            -2,
+            0,
+            -11,
+            -1,
+            0,
+            -8,
+            -1,
+            0,
+            -5,
+            -1,
+            0,
+            -2,
+            -1,
+            0,
+            1,
+            -1,
+            0,
+            4,
+            -1,
+            0,
+            7,
+            -1,
+            0,
+            10,
+            -1,
+            0,
+            13,
+            -1,
+            0,
+            -10,
+            1,
+            0,
+            -7,
+            1,
+            0,
+            -4,
+            1,
+            0,
+            -1,
+            1,
+            0,
+            2,
+            1,
+            0,
+            5,
+            1,
+            0,
+            8,
+            1,
+            0,
+            11,
+            1,
+            0,
+            14,
+            1,
+            0,
+            -11,
+            2,
+            0,
+            -8,
+            2,
+            0,
+            -5,
+            2,
+            0,
+            -2,
+            2,
+            0,
+            1,
+            2,
+            0,
+            4,
+            2,
+            0,
+            7,
+            2,
+            0,
+            10,
+            2,
+            0,
+            13,
+            2,
+            0,
+            -10,
+            4,
+            0,
+            -7,
+            4,
+            0,
+            -4,
+            4,
+            0,
+            -1,
+            4,
+            0,
+            2,
+            4,
+            0,
+            5,
+            4,
+            0,
+            8,
+            4,
+            0,
+            11,
+            4,
+            0,
+            14,
+            4,
+            0,
+            -8,
+            5,
+            0,
+            -5,
+            5,
+            0,
+            -2,
+            5,
+            0,
+            1,
+            5,
+            0,
+            4,
+            5,
+            0,
+            7,
+            5,
+            0,
+            10,
+            5,
+            0,
+            13,
+            5,
+            0,
+            16,
+            5,
+            0,
+            -7,
+            7,
+            0,
+            -4,
+            7,
+            0,
+            -1,
+            7,
+            0,
+            2,
+            7,
+            0,
+            5,
+            7,
+            0,
+            8,
+            7,
+            0,
+            11,
+            7,
+            0,
+            14,
+            7,
+            0,
+            17,
+            7,
+            0,
+            -8,
+            8,
+            0,
+            -5,
+            8,
+            0,
+            -2,
+            8,
+            0,
+            1,
+            8,
+            0,
+            4,
+            8,
+            0,
+            7,
+            8,
+            0,
+            10,
+            8,
+            0,
+            13,
+            8,
+            0,
+            16,
+            8,
+            0,
+            -7,
+            10,
+            0,
+            -4,
+            10,
+            0,
+            -1,
+            10,
+            0,
+            2,
+            10,
+            0,
+            5,
+            10,
+            0,
+            8,
+            10,
+            0,
+            11,
+            10,
+            0,
+            14,
+            10,
+            0,
+            17,
+            10,
+            0,
+            -5,
+            11,
+            0,
+            -2,
+            11,
+            0,
+            1,
+            11,
+            0,
+            4,
+            11,
+            0,
+            7,
+            11,
+            0,
+            10,
+            11,
+            0,
+            13,
+            11,
+            0,
+            16,
+            11,
+            0,
+            -1,
+            13,
+            0,
+            2,
+            13,
+            0,
+            5,
+            13,
+            0,
+            8,
+            13,
+            0,
+            11,
+            13,
+            0,
+            14,
+            13,
+            0,
+            1,
+            14,
+            0,
+            4,
+            14,
+            0,
+            7,
+            14,
+            0,
+            10,
+            14,
+            0,
+            13,
+            14,
+            0,
+            5,
+            16,
+            0,
+            8,
+            16,
+            0,
+            11,
+            16,
+            0,
+            7,
+            17,
+            0,
+            10,
+            17,
+            0,
+        ]
+    ).reshape((162, 3))
+    / 27.0
+)
 
 
 # The following is a list of the critical points in the 1st Brillouin zone
@@ -900,75 +2307,102 @@ cc162_1x1 = np.array([
 #
 # See http://en.wikipedia.org/wiki/Brillouin_zone
 sc_special_points = {
-    'cubic': {'G': [0, 0, 0],
-              'M': [1 / 2, 1 / 2, 0],
-              'R': [1 / 2, 1 / 2, 1 / 2],
-              'X': [0, 1 / 2, 0]},
-    'fcc': {'G': [0, 0, 0],
-            'K': [3 / 8, 3 / 8, 3 / 4],
-            'L': [1 / 2, 1 / 2, 1 / 2],
-            'U': [5 / 8, 1 / 4, 5 / 8],
-            'W': [1 / 2, 1 / 4, 3 / 4],
-            'X': [1 / 2, 0, 1 / 2]},
-    'bcc': {'G': [0, 0, 0],
-            'H': [1 / 2, -1 / 2, 1 / 2],
-            'P': [1 / 4, 1 / 4, 1 / 4],
-            'N': [0, 0, 1 / 2]},
-    'tetragonal': {'G': [0, 0, 0],
-                   'A': [1 / 2, 1 / 2, 1 / 2],
-                   'M': [1 / 2, 1 / 2, 0],
-                   'R': [0, 1 / 2, 1 / 2],
-                   'X': [0, 1 / 2, 0],
-                   'Z': [0, 0, 1 / 2]},
-    'orthorhombic': {'G': [0, 0, 0],
-                     'R': [1 / 2, 1 / 2, 1 / 2],
-                     'S': [1 / 2, 1 / 2, 0],
-                     'T': [0, 1 / 2, 1 / 2],
-                     'U': [1 / 2, 0, 1 / 2],
-                     'X': [1 / 2, 0, 0],
-                     'Y': [0, 1 / 2, 0],
-                     'Z': [0, 0, 1 / 2]},
-    'hexagonal': {'G': [0, 0, 0],
-                  'A': [0, 0, 1 / 2],
-                  'H': [1 / 3, 1 / 3, 1 / 2],
-                  'K': [1 / 3, 1 / 3, 0],
-                  'L': [1 / 2, 0, 1 / 2],
-                  'M': [1 / 2, 0, 0]}}
+    "cubic": {
+        "G": [0, 0, 0],
+        "M": [1 / 2, 1 / 2, 0],
+        "R": [1 / 2, 1 / 2, 1 / 2],
+        "X": [0, 1 / 2, 0],
+    },
+    "fcc": {
+        "G": [0, 0, 0],
+        "K": [3 / 8, 3 / 8, 3 / 4],
+        "L": [1 / 2, 1 / 2, 1 / 2],
+        "U": [5 / 8, 1 / 4, 5 / 8],
+        "W": [1 / 2, 1 / 4, 3 / 4],
+        "X": [1 / 2, 0, 1 / 2],
+    },
+    "bcc": {
+        "G": [0, 0, 0],
+        "H": [1 / 2, -1 / 2, 1 / 2],
+        "P": [1 / 4, 1 / 4, 1 / 4],
+        "N": [0, 0, 1 / 2],
+    },
+    "tetragonal": {
+        "G": [0, 0, 0],
+        "A": [1 / 2, 1 / 2, 1 / 2],
+        "M": [1 / 2, 1 / 2, 0],
+        "R": [0, 1 / 2, 1 / 2],
+        "X": [0, 1 / 2, 0],
+        "Z": [0, 0, 1 / 2],
+    },
+    "orthorhombic": {
+        "G": [0, 0, 0],
+        "R": [1 / 2, 1 / 2, 1 / 2],
+        "S": [1 / 2, 1 / 2, 0],
+        "T": [0, 1 / 2, 1 / 2],
+        "U": [1 / 2, 0, 1 / 2],
+        "X": [1 / 2, 0, 0],
+        "Y": [0, 1 / 2, 0],
+        "Z": [0, 0, 1 / 2],
+    },
+    "hexagonal": {
+        "G": [0, 0, 0],
+        "A": [0, 0, 1 / 2],
+        "H": [1 / 3, 1 / 3, 1 / 2],
+        "K": [1 / 3, 1 / 3, 0],
+        "L": [1 / 2, 0, 1 / 2],
+        "M": [1 / 2, 0, 0],
+    },
+}
 
 
 # Old version of dictionary kept for backwards compatibility.
 # Not for ordinary use.
-ibz_points = {'cubic': {'Gamma': [0, 0, 0],
-                        'X': [0, 0 / 2, 1 / 2],
-                        'R': [1 / 2, 1 / 2, 1 / 2],
-                        'M': [0 / 2, 1 / 2, 1 / 2]},
-              'fcc': {'Gamma': [0, 0, 0],
-                      'X': [1 / 2, 0, 1 / 2],
-                      'W': [1 / 2, 1 / 4, 3 / 4],
-                      'K': [3 / 8, 3 / 8, 3 / 4],
-                      'U': [5 / 8, 1 / 4, 5 / 8],
-                      'L': [1 / 2, 1 / 2, 1 / 2]},
-              'bcc': {'Gamma': [0, 0, 0],
-                      'H': [1 / 2, -1 / 2, 1 / 2],
-                      'N': [0, 0, 1 / 2],
-                      'P': [1 / 4, 1 / 4, 1 / 4]},
-              'hexagonal': {'Gamma': [0, 0, 0],
-                            'M': [0, 1 / 2, 0],
-                            'K': [-1 / 3, 1 / 3, 0],
-                            'A': [0, 0, 1 / 2],
-                            'L': [0, 1 / 2, 1 / 2],
-                            'H': [-1 / 3, 1 / 3, 1 / 2]},
-              'tetragonal': {'Gamma': [0, 0, 0],
-                             'X': [1 / 2, 0, 0],
-                             'M': [1 / 2, 1 / 2, 0],
-                             'Z': [0, 0, 1 / 2],
-                             'R': [1 / 2, 0, 1 / 2],
-                             'A': [1 / 2, 1 / 2, 1 / 2]},
-              'orthorhombic': {'Gamma': [0, 0, 0],
-                               'R': [1 / 2, 1 / 2, 1 / 2],
-                               'S': [1 / 2, 1 / 2, 0],
-                               'T': [0, 1 / 2, 1 / 2],
-                               'U': [1 / 2, 0, 1 / 2],
-                               'X': [1 / 2, 0, 0],
-                               'Y': [0, 1 / 2, 0],
-                               'Z': [0, 0, 1 / 2]}}
+ibz_points = {
+    "cubic": {
+        "Gamma": [0, 0, 0],
+        "X": [0, 0 / 2, 1 / 2],
+        "R": [1 / 2, 1 / 2, 1 / 2],
+        "M": [0 / 2, 1 / 2, 1 / 2],
+    },
+    "fcc": {
+        "Gamma": [0, 0, 0],
+        "X": [1 / 2, 0, 1 / 2],
+        "W": [1 / 2, 1 / 4, 3 / 4],
+        "K": [3 / 8, 3 / 8, 3 / 4],
+        "U": [5 / 8, 1 / 4, 5 / 8],
+        "L": [1 / 2, 1 / 2, 1 / 2],
+    },
+    "bcc": {
+        "Gamma": [0, 0, 0],
+        "H": [1 / 2, -1 / 2, 1 / 2],
+        "N": [0, 0, 1 / 2],
+        "P": [1 / 4, 1 / 4, 1 / 4],
+    },
+    "hexagonal": {
+        "Gamma": [0, 0, 0],
+        "M": [0, 1 / 2, 0],
+        "K": [-1 / 3, 1 / 3, 0],
+        "A": [0, 0, 1 / 2],
+        "L": [0, 1 / 2, 1 / 2],
+        "H": [-1 / 3, 1 / 3, 1 / 2],
+    },
+    "tetragonal": {
+        "Gamma": [0, 0, 0],
+        "X": [1 / 2, 0, 0],
+        "M": [1 / 2, 1 / 2, 0],
+        "Z": [0, 0, 1 / 2],
+        "R": [1 / 2, 0, 1 / 2],
+        "A": [1 / 2, 1 / 2, 1 / 2],
+    },
+    "orthorhombic": {
+        "Gamma": [0, 0, 0],
+        "R": [1 / 2, 1 / 2, 1 / 2],
+        "S": [1 / 2, 1 / 2, 0],
+        "T": [0, 1 / 2, 1 / 2],
+        "U": [1 / 2, 0, 1 / 2],
+        "X": [1 / 2, 0, 0],
+        "Y": [0, 1 / 2, 0],
+        "Z": [0, 0, 1 / 2],
+    },
+}

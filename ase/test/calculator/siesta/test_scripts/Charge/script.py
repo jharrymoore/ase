@@ -8,17 +8,21 @@ from ase.calculators.siesta.parameters import Species
 from ase.optimize import QuasiNewton
 from ase import Atoms
 
-atoms = Atoms('CH4', np.array([
-    [0.000000, 0.000000, 0.000000],
-    [0.682793, 0.682793, 0.682793],
-    [-0.682793, -0.682793, 0.682790],
-    [-0.682793, 0.682793, -0.682793],
-    [0.682793, -0.682793, -0.682793]]))
+atoms = Atoms(
+    "CH4",
+    np.array(
+        [
+            [0.000000, 0.000000, 0.000000],
+            [0.682793, 0.682793, 0.682793],
+            [-0.682793, -0.682793, 0.682790],
+            [-0.682793, 0.682793, -0.682793],
+            [0.682793, -0.682793, -0.682793],
+        ]
+    ),
+)
 
-siesta = Siesta(
-    species=[
-        Species(symbol='H', excess_charge=0.1)])
+siesta = Siesta(species=[Species(symbol="H", excess_charge=0.1)])
 
 atoms.calc = siesta
-dyn = QuasiNewton(atoms, trajectory='h.traj')
+dyn = QuasiNewton(atoms, trajectory="h.traj")
 dyn.run(fmax=0.02)

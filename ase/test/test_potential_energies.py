@@ -4,7 +4,7 @@ from ase.calculators.emt import EMT
 
 
 def test_potential_energies():
-    TOL = 1E-8
+    TOL = 1e-8
 
     atoms = ase.build.bulk("Ni", crystalstructure="fcc", cubic=1)
     atoms *= (2, 2, 2)

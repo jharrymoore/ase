@@ -6,8 +6,7 @@ def test_dos():
 
     cell = np.eye(3)
     shape = (11, 13, 9)
-    kpts = np.dot(monkhorst_pack(shape),
-                  np.linalg.inv(cell).T).reshape(shape + (3,))
+    kpts = np.dot(monkhorst_pack(shape), np.linalg.inv(cell).T).reshape(shape + (3,))
 
     # Free electron eigenvalues:
     eigs = 0.5 * (kpts**2).sum(3)[..., np.newaxis]  # new axis for 1 band
@@ -26,9 +25,9 @@ def test_dos():
     assert abs(dos1 - dos1w).max() < 2e-14
 
     # Analytic results:
-    ref3 = 4 * np.pi * (2 * energies)**0.5
+    ref3 = 4 * np.pi * (2 * energies) ** 0.5
     ref2 = 2 * np.pi * np.ones_like(energies)
-    ref1 = 2 * (2 * energies)**-0.5
+    ref1 = 2 * (2 * energies) ** -0.5
 
     mask = np.bitwise_and(energies > 0.02, energies < 0.1)
     dims = 1
@@ -40,6 +39,7 @@ def test_dos():
         assert abs(norm - 1) < 0.11**dims, norm
         if 0:
             import matplotlib.pyplot as plt
+
             plt.plot(energies, dos)
             plt.plot(energies, ref)
             plt.show()

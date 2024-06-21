@@ -14,7 +14,7 @@ thetaHOH = 104.52 / 180 * np.pi  # we keep this for backwards compatibility
 
 
 class TIP3P(Calculator):
-    implemented_properties = ['energy', 'forces']
+    implemented_properties = ["energy", "forces"]
     nolabel = True
     pcpot = None
 
@@ -31,9 +31,7 @@ class TIP3P(Calculator):
         Calculator.__init__(self)
         self.sites_per_mol = 3
 
-    def calculate(self, atoms=None,
-                  properties=['energy'],
-                  system_changes=all_changes):
+    def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
         R = self.atoms.positions.reshape((-1, 3, 3))
@@ -42,15 +40,15 @@ class TIP3P(Calculator):
         cell = self.atoms.cell.diagonal()
         nh2o = len(R)
 
-        assert (self.atoms.cell == np.diag(cell)).all(), 'not orthorhombic'
-        assert ((cell >= 2 * self.rc) | ~pbc).all(), 'cutoff too large'  # ???
+        assert (self.atoms.cell == np.diag(cell)).all(), "not orthorhombic"
+        assert ((cell >= 2 * self.rc) | ~pbc).all(), "cutoff too large"  # ???
         if Z[0] == 8:
             o = 0
         else:
             o = 2
         assert (Z[o::3] == 8).all()
-        assert (Z[(o + 1) % 3::3] == 1).all()
-        assert (Z[(o + 2) % 3::3] == 1).all()
+        assert (Z[(o + 1) % 3 :: 3] == 1).all()
+        assert (Z[(o + 2) % 3 :: 3] == 1).all()
 
         charges = np.array([qH, qH, qH])
         charges[o] *= -2
@@ -59,7 +57,7 @@ class TIP3P(Calculator):
         forces = np.zeros((3 * nh2o, 3))
 
         for m in range(nh2o - 1):
-            DOO = R[m + 1:, o] - R[m, o]
+            DOO = R[m + 1 :, o] - R[m, o]
             shift = np.zeros_like(DOO)
             for i, periodic in enumerate(pbc):
                 if periodic:
@@ -77,36 +75,36 @@ class TIP3P(Calculator):
             t[x12] -= y**2 * (3.0 - 2.0 * y)
             dtdd = np.zeros(len(d))
             dtdd[x12] -= 6.0 / self.width * y * (1.0 - y)
-            c6 = (sigma0**2 / d2)**3
+            c6 = (sigma0**2 / d2) ** 3
             c12 = c6**2
             e = 4 * epsilon0 * (c12 - c6)
             energy += np.dot(t, e)
-            F = (24 * epsilon0 * (2 * c12 - c6) / d2 * t -
-                 e * dtdd / d)[:, np.newaxis] * DOO
+            F = (24 * epsilon0 * (2 * c12 - c6) / d2 * t - e * dtdd / d)[
+                :, np.newaxis
+            ] * DOO
             forces[m * 3 + o] -= F.sum(0)
-            forces[m * 3 + 3 + o::3] += F
+            forces[m * 3 + 3 + o :: 3] += F
 
             for j in range(3):
-                D = R[m + 1:] - R[m, j] + shift[:, np.newaxis]
+                D = R[m + 1 :] - R[m, j] + shift[:, np.newaxis]
                 r2 = (D**2).sum(axis=2)
                 r = r2**0.5
                 e = charges[j] * charges / r * units.Hartree * units.Bohr
                 energy += np.dot(t, e).sum()
                 F = (e / r2 * t[:, np.newaxis])[:, :, np.newaxis] * D
                 FOO = -(e.sum(1) * dtdd / d)[:, np.newaxis] * DOO
-                forces[(m + 1) * 3 + o::3] += FOO
+                forces[(m + 1) * 3 + o :: 3] += FOO
                 forces[m * 3 + o] -= FOO.sum(0)
-                forces[(m + 1) * 3:] += F.reshape((-1, 3))
+                forces[(m + 1) * 3 :] += F.reshape((-1, 3))
                 forces[m * 3 + j] -= F.sum(axis=0).sum(axis=0)
 
         if self.pcpot:
-            e, f = self.pcpot.calculate(np.tile(charges, nh2o),
-                                        self.atoms.positions)
+            e, f = self.pcpot.calculate(np.tile(charges, nh2o), self.atoms.positions)
             energy += e
             forces += f
 
-        self.results['energy'] = energy
-        self.results['forces'] = forces
+        self.results["energy"] = energy
+        self.results["forces"] = forces
 
     def embed(self, charges):
         """Embed atoms in point-charges."""
@@ -116,7 +114,7 @@ class TIP3P(Calculator):
     def check_state(self, atoms, tol=1e-15):
         system_changes = Calculator.check_state(self, atoms, tol)
         if self.pcpot and self.pcpot.mmpositions is not None:
-            system_changes.append('positions')
+            system_changes.append("positions")
         return system_changes
 
     def add_virtual_sites(self, positions):

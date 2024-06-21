@@ -6,7 +6,8 @@ import numpy as np
 from ase.gui.i18n import _
 import ase.gui.ui as ui
 
-graph_help_text = _("""\
+graph_help_text = _(
+    """\
 Symbols:
 <c>e</c>: total energy
 <c>epot</c>: potential energy
@@ -28,20 +29,19 @@ Symbols:
 <c>dih(n1,n2,n3,n4)</c>: dihedral angle between <c>n<sub>1</sub></c>, \
 <c>n<sub>2</sub></c>, <c>n<sub>3</sub></c> and <c>n<sub>4</sub></c>
 <c>T</c>: temperature (K)\
-""")
+"""
+)
 
 
 class Graphs:
     def __init__(self, gui):
-        win = ui.Window('Graphs', wmtype='utility')
-        self.expr = ui.Entry('', 50, self.plot)
+        win = ui.Window("Graphs", wmtype="utility")
+        self.expr = ui.Entry("", 50, self.plot)
         win.add([self.expr, ui.helpbutton(graph_help_text)])
 
-        win.add([ui.Button(_('Plot'), self.plot, 'xy'),
-                 ' x, y1, y2, ...'], 'w')
-        win.add([ui.Button(_('Plot'), self.plot, 'y'),
-                 ' y1, y2, ...'], 'w')
-        win.add([ui.Button(_('Save'), self.save)], 'w')
+        win.add([ui.Button(_("Plot"), self.plot, "xy"), " x, y1, y2, ..."], "w")
+        win.add([ui.Button(_("Plot"), self.plot, "y"), " y1, y2, ..."], "w")
+        win.add([ui.Button(_("Save"), self.save)], "w")
 
         self.gui = gui
 
@@ -60,17 +60,16 @@ class Graphs:
         if ignore_if_nan and len(data) == 2 and np.isnan(data[1]).all():
             return
         pickledata = (data, self.gui.frame, expr, type)
-        self.gui.pipe('graph', pickledata)
+        self.gui.pipe("graph", pickledata)
 
     def save(self):
-        dialog = ui.SaveFileDialog(self.gui.window.win,
-                                   _('Save data to file ... '))
+        dialog = ui.SaveFileDialog(self.gui.window.win, _("Save data to file ... "))
         # fix tkinter not automatically setting dialog type
         # remove from Python3.8+
         # see https://github.com/python/cpython/pull/25187
         # and https://bugs.python.org/issue43655
         # and https://github.com/python/cpython/pull/25592
-        ui.set_windowtype(dialog.top, 'dialog')
+        ui.set_windowtype(dialog.top, "dialog")
         filename = dialog.go()
         if filename:
             expr = self.expr.value
@@ -80,28 +79,29 @@ class Graphs:
 
 def make_plot(data, i, expr, type, show=True):
     import matplotlib.pyplot as plt
+
     basesize = 4
     plt.figure(figsize=(basesize * 2.5**0.5, basesize))
     m = len(data)
 
     if type is None:
         if m == 1:
-            type = 'y'
+            type = "y"
         else:
-            type = 'xy'
+            type = "xy"
 
-    if type == 'y':
+    if type == "y":
         for j in range(m):
             plt.plot(data[j])
-            plt.plot([i], [data[j, i]], 'o')
+            plt.plot([i], [data[j, i]], "o")
     else:
         for j in range(1, m):
             plt.plot(data[0], data[j])
-            plt.plot([data[0, i]], [data[j, i]], 'o')
+            plt.plot([data[0, i]], [data[j, i]], "o")
     plt.title(expr)
     if show:
         plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     make_plot(*pickle.load(sys.stdin.buffer))

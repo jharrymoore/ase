@@ -31,15 +31,15 @@ def read_xyz(fileobj, index):
         yield atoms
 
 
-def write_xyz(fileobj, images, comment='', fmt='%22.15f'):
+def write_xyz(fileobj, images, comment="", fmt="%22.15f"):
     comment = comment.rstrip()
-    if '\n' in comment:
-        raise ValueError('Comment line should not have line breaks.')
+    if "\n" in comment:
+        raise ValueError("Comment line should not have line breaks.")
     for atoms in images:
         natoms = len(atoms)
-        fileobj.write('%d\n%s\n' % (natoms, comment))
+        fileobj.write("%d\n%s\n" % (natoms, comment))
         for s, (x, y, z) in zip(atoms.symbols, atoms.positions):
-            fileobj.write('%-2s %s %s %s\n' % (s, fmt % x, fmt % y, fmt % z))
+            fileobj.write("%-2s %s %s %s\n" % (s, fmt % x, fmt % y, fmt % z))
 
 
 # Compatibility with older releases

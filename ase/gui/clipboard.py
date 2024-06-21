@@ -18,7 +18,7 @@ class AtomsClipboard:
         atoms = decode(text)
         if not isinstance(atoms, Atoms):
             typename = type(atoms).__name__
-            raise ValueError(f'Cannot convert {typename} to Atoms')
+            raise ValueError(f"Cannot convert {typename} to Atoms")
         return atoms
 
     def set_atoms(self, atoms: Atoms) -> None:

@@ -127,8 +127,8 @@ class Prism:
         test_residual *= (new_vol / old_vol) ** (1.0 / 3.0)
         test_residual -= new_ase_cell
         if any(
-                np.linalg.norm(test_residual, axis=1)
-                > 0.5 * np.linalg.norm(self.ase_cell, axis=1)
+            np.linalg.norm(test_residual, axis=1)
+            > 0.5 * np.linalg.norm(self.ase_cell, axis=1)
         ):
             print(
                 "WARNING: Significant simulation cell changes from LAMMPS "
@@ -173,9 +173,7 @@ class Prism:
             # translate: expresses lammps-coordinate system in the rotate, but
             #            without tilt removed system
             # fractional: vector in tilted system
-            translate = np.linalg.solve(
-                self.lammps_tilt.T, self.lammps_cell.T
-            ).T
+            translate = np.linalg.solve(self.lammps_tilt.T, self.lammps_cell.T).T
             fractional = np.linalg.solve(self.lammps_tilt.T, vec.T).T
 
             # !TODO: make somehow nicer
@@ -197,8 +195,5 @@ class Prism:
         :rtype: bool
 
         """
-        cell_sq = self.lammps_cell ** 2
-        return (
-            np.sum(np.tril(cell_sq, -1)) / np.sum(np.diag(cell_sq))
-            > self.tolerance
-        )
+        cell_sq = self.lammps_cell**2
+        return np.sum(np.tril(cell_sq, -1)) / np.sum(np.diag(cell_sq)) > self.tolerance

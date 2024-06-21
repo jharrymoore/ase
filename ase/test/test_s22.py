@@ -9,4 +9,4 @@ def test_s22():
 
     for name in s22.names:
         assert s22.has(name)
-    assert not s22.has('hello')
+    assert not s22.has("hello")

@@ -20,8 +20,7 @@ def write_read_atoms(atom, tmp_path):
     [
         ("CH4", {2: [1]}, ["C", "H:0", "H", "H", "H"], ["H:0 2.0"]),
         ("CH4", {2: [1, 2, 3, 4]}, ["C", "H", "H", "H", "H"], ["H 2.0"]),
-        ("C2H5", {2: [2, 3]}, ["C", "C", "H:0",
-         "H:0", "H", "H", "H"], ["H:0 2.0"]),
+        ("C2H5", {2: [2, 3]}, ["C", "C", "H:0", "H:0", "H", "H", "H"], ["H:0 2.0"]),
         (
             "C2H5",
             {2: [2], 3: [3]},
@@ -55,8 +54,7 @@ def test_custom_mass_write(
     with open("{0}/{1}".format(tmp_path, "castep_test.cell"), "r") as f:
         data = f.read().replace("\n", "\\n")
 
-    position_block = re.search(
-        r"%BLOCK POSITIONS_ABS.*%ENDBLOCK POSITIONS_ABS", data)
+    position_block = re.search(r"%BLOCK POSITIONS_ABS.*%ENDBLOCK POSITIONS_ABS", data)
     assert position_block
 
     pos = position_block.group().split("\\n")[1:-1]
@@ -68,8 +66,8 @@ def test_custom_mass_write(
 
     masses = mass_block.group().split("\\n")[1:-1]
     for line, expected_line in zip(masses, expected_mass_block):
-        species_name, mass_read = line.split(' ')
-        expected_species_name, expected_mass = expected_line.split(' ')
+        species_name, mass_read = line.split(" ")
+        expected_species_name, expected_mass = expected_line.split(" ")
         assert pytest.approx(float(mass_read), abs=1e-6) == float(expected_mass)
         assert species_name == expected_species_name
 
@@ -86,6 +84,5 @@ def test_custom_mass_overwrite(tmp_path):
 
     # test that changing masses when custom masses defined causes errors
     atoms[3].mass = 3
-    with pytest.raises(ValueError,
-                       match="Could not write custom mass block for H."):
+    with pytest.raises(ValueError, match="Could not write custom mass block for H."):
         atoms.write("{0}/{1}".format(tmp_path, "castep_test2.cell"))

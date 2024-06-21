@@ -6,10 +6,10 @@ calc = pytest.mark.calculator
 
 @pytest.fixture
 def system():
-    return bulk('Al', 'fcc', a=4.5, cubic=True)
+    return bulk("Al", "fcc", a=4.5, cubic=True)
 
 
-@calc('vasp')
+@calc("vasp")
 def test_vasp_net_charge(factory, system):
     """Run VASP tests to ensure that determining number of electrons from
     user-supplied net charge (via the deprecated net_charge parameter) works
@@ -24,12 +24,7 @@ def test_vasp_net_charge(factory, system):
     some point."""
 
     # Dummy calculation to let VASP determine default number of electrons
-    calc = factory.calc(xc='LDA',
-                        nsw=-1,
-                        ibrion=-1,
-                        nelm=1,
-                        lwave=False,
-                        lcharg=False)
+    calc = factory.calc(xc="LDA", nsw=-1, ibrion=-1, nelm=1, lwave=False, lcharg=False)
     calc.calculate(system)
     default_nelect_from_vasp = calc.get_number_of_electrons()
     assert default_nelect_from_vasp == 12
@@ -38,56 +33,57 @@ def test_vasp_net_charge(factory, system):
     # determined by us + net charge
     with pytest.warns(FutureWarning):
         net_charge = -2
-        calc = factory.calc(xc='LDA',
-                            nsw=-1,
-                            ibrion=-1,
-                            nelm=1,
-                            lwave=False,
-                            lcharg=False,
-                            net_charge=net_charge)
+        calc = factory.calc(
+            xc="LDA",
+            nsw=-1,
+            ibrion=-1,
+            nelm=1,
+            lwave=False,
+            lcharg=False,
+            net_charge=net_charge,
+        )
         calc.initialize(system)
         calc.write_input(system)
-        calc.read_incar('INCAR')
-    assert calc.float_params['nelect'] == default_nelect_from_vasp + net_charge
+        calc.read_incar("INCAR")
+    assert calc.float_params["nelect"] == default_nelect_from_vasp + net_charge
 
     # Test that conflicts between explicitly given nelect and net charge are
     # detected
     with pytest.raises(ValueError):
         with pytest.warns(FutureWarning):
-            calc = factory.calc(xc='LDA',
-                                nsw=-1,
-                                ibrion=-1,
-                                nelm=1,
-                                lwave=False,
-                                lcharg=False,
-                                nelect=default_nelect_from_vasp + net_charge +
-                                1,
-                                net_charge=net_charge)
+            calc = factory.calc(
+                xc="LDA",
+                nsw=-1,
+                ibrion=-1,
+                nelm=1,
+                lwave=False,
+                lcharg=False,
+                nelect=default_nelect_from_vasp + net_charge + 1,
+                net_charge=net_charge,
+            )
             calc.calculate(system)
 
     # Test that conflicts between charge and net_charge are detected
     with pytest.raises(ValueError):
         with pytest.warns(FutureWarning):
-            calc = factory.calc(xc='LDA',
-                                nsw=-1,
-                                ibrion=-1,
-                                nelm=1,
-                                lwave=False,
-                                lcharg=False,
-                                charge=-net_charge - 1,
-                                net_charge=net_charge)
+            calc = factory.calc(
+                xc="LDA",
+                nsw=-1,
+                ibrion=-1,
+                nelm=1,
+                lwave=False,
+                lcharg=False,
+                charge=-net_charge - 1,
+                net_charge=net_charge,
+            )
             calc.calculate(system)
 
     # Test that nothing is written if net charge is 0 and nelect not given
     with pytest.warns(FutureWarning):
-        calc = factory.calc(xc='LDA',
-                            nsw=-1,
-                            ibrion=-1,
-                            nelm=1,
-                            lwave=False,
-                            lcharg=False,
-                            net_charge=0)
+        calc = factory.calc(
+            xc="LDA", nsw=-1, ibrion=-1, nelm=1, lwave=False, lcharg=False, net_charge=0
+        )
         calc.initialize(system)
         calc.write_input(system)
-        calc.read_incar('INCAR')
-    assert calc.float_params['nelect'] is None
+        calc.read_incar("INCAR")
+    assert calc.float_params["nelect"] is None

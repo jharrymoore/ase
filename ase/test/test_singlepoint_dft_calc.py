@@ -1,6 +1,5 @@
 import numpy as np
-from ase.calculators.singlepoint import (SinglePointDFTCalculator,
-                                         arrays_to_kpoints)
+from ase.calculators.singlepoint import SinglePointDFTCalculator, arrays_to_kpoints
 from ase.build import bulk
 
 
@@ -13,7 +12,7 @@ def test_singlepoint_dft_calc():
 
     kpts = arrays_to_kpoints(eps, occ, weights)
 
-    atoms = bulk('Au')
+    atoms = bulk("Au")
 
     calc = SinglePointDFTCalculator(atoms)
     calc.kpts = kpts

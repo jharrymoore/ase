@@ -12,7 +12,7 @@ def count_looks_like(a, all_cand, comp):
     """Utility method for counting occurrences."""
     n = 0
     for b in all_cand:
-        if a.info['confid'] == b.info['confid']:
+        if a.info["confid"] == b.info["confid"]:
             continue
         if comp.looks_like(a, b):
             n += 1
@@ -52,13 +52,20 @@ class Population:
         By default numpy.random.
     """
 
-    def __init__(self, data_connection, population_size,
-                 comparator=None, logfile=None, use_extinct=False,
-                 rng=np.random):
+    def __init__(
+        self,
+        data_connection,
+        population_size,
+        comparator=None,
+        logfile=None,
+        use_extinct=False,
+        rng=np.random,
+    ):
         self.dc = data_connection
         self.pop_size = population_size
         if comparator is None:
             from ase.ga.standard_comparators import AtomsComparator
+
             comparator = AtomsComparator()
         self.comparator = comparator
         self.logfile = logfile
@@ -70,14 +77,15 @@ class Population:
         self.__initialize_pop__()
 
     def __initialize_pop__(self):
-        """ Private method that initializes the population when
-            the population is created. """
+        """Private method that initializes the population when
+        the population is created."""
 
         # Get all relaxed candidates from the database
         ue = self.use_extinct
         all_cand = self.dc.get_all_relaxed_candidates(use_extinct=ue)
-        all_cand.sort(key=lambda x: x.info['key_value_pairs']['raw_score'],
-                      reverse=True)
+        all_cand.sort(
+            key=lambda x: x.info["key_value_pairs"]["raw_score"], reverse=True
+        )
         # all_cand.sort(key=lambda x: x.get_potential_energy())
 
         # Fill up the population with the self.pop_size most stable
@@ -95,36 +103,34 @@ class Population:
                 self.pop.append(c)
 
         for a in self.pop:
-            a.info['looks_like'] = count_looks_like(a, all_cand,
-                                                    self.comparator)
+            a.info["looks_like"] = count_looks_like(a, all_cand, self.comparator)
 
         self.all_cand = all_cand
         self.__calc_participation__()
 
     def __calc_participation__(self):
-        """ Determines, from the database, how many times each
-            candidate has been used to generate new candidates. """
+        """Determines, from the database, how many times each
+        candidate has been used to generate new candidates."""
         (participation, pairs) = self.dc.get_participation_in_pairing()
         for a in self.pop:
-            if a.info['confid'] in participation.keys():
-                a.info['n_paired'] = participation[a.info['confid']]
+            if a.info["confid"] in participation.keys():
+                a.info["n_paired"] = participation[a.info["confid"]]
             else:
-                a.info['n_paired'] = 0
+                a.info["n_paired"] = 0
         self.pairs = pairs
 
     def update(self, new_cand=None):
-        """ New candidates can be added to the database
-            after the population object has been created.
-            This method extracts these new candidates from the
-            database and includes them in the population. """
+        """New candidates can be added to the database
+        after the population object has been created.
+        This method extracts these new candidates from the
+        database and includes them in the population."""
 
         if len(self.pop) == 0:
             self.__initialize_pop__()
 
         if new_cand is None:
             ue = self.use_extinct
-            new_cand = self.dc.get_all_relaxed_candidates(only_new=True,
-                                                          use_extinct=ue)
+            new_cand = self.dc.get_all_relaxed_candidates(only_new=True, use_extinct=ue)
 
         for a in new_cand:
             self.__add_candidate__(a)
@@ -133,25 +139,27 @@ class Population:
         self._write_log()
 
     def get_current_population(self):
-        """ Returns a copy of the current population. """
+        """Returns a copy of the current population."""
         self.update()
         return [a.copy() for a in self.pop]
 
     def get_population_after_generation(self, gen):
-        """ Returns a copy of the population as it where
+        """Returns a copy of the population as it where
         after generation gen"""
         if self.logfile is not None:
-            fd = open(self.logfile, 'r')
+            fd = open(self.logfile, "r")
             gens = {}
             for line in fd:
-                _, no, popul = line.split(':')
-                gens[int(no)] = [int(i) for i in popul.split(',')]
+                _, no, popul = line.split(":")
+                gens[int(no)] = [int(i) for i in popul.split(",")]
             fd.close()
-            return [c.copy() for c in self.all_cand[::-1]
-                    if c.info['relax_id'] in gens[gen]]
+            return [
+                c.copy() for c in self.all_cand[::-1] if c.info["relax_id"] in gens[gen]
+            ]
 
-        all_candidates = [c for c in self.all_cand
-                          if c.info['key_value_pairs']['generation'] <= gen]
+        all_candidates = [
+            c for c in self.all_cand if c.info["key_value_pairs"]["generation"] <= gen
+        ]
         cands = [all_candidates[0]]
         for b in all_candidates:
             if b not in cands:
@@ -160,17 +168,16 @@ class Population:
                         break
                 else:
                     cands.append(b)
-        pop = cands[:self.pop_size]
+        pop = cands[: self.pop_size]
         return [a.copy() for a in pop]
 
     def __add_candidate__(self, a):
-        """ Adds a single candidate to the population. """
+        """Adds a single candidate to the population."""
 
         # check if the structure is too low in raw score
         raw_score_a = get_raw_score(a)
         raw_score_worst = get_raw_score(self.pop[-1])
-        if raw_score_a < raw_score_worst \
-                and len(self.pop) == self.pop_size:
+        if raw_score_a < raw_score_worst and len(self.pop) == self.pop_size:
             return
 
         # check if the new candidate should
@@ -179,12 +186,11 @@ class Population:
             if self.comparator.looks_like(a, b):
                 if get_raw_score(b) < raw_score_a:
                     del self.pop[i]
-                    a.info['looks_like'] = count_looks_like(a,
-                                                            self.all_cand,
-                                                            self.comparator)
+                    a.info["looks_like"] = count_looks_like(
+                        a, self.all_cand, self.comparator
+                    )
                     self.pop.append(a)
-                    self.pop.sort(key=lambda x: get_raw_score(x),
-                                  reverse=True)
+                    self.pop.sort(key=lambda x: get_raw_score(x), reverse=True)
                 return
 
         # the new candidate needs to be added, so remove the highest
@@ -193,9 +199,7 @@ class Population:
             del self.pop[-1]
 
         # add the new candidate
-        a.info['looks_like'] = count_looks_like(a,
-                                                self.all_cand,
-                                                self.comparator)
+        a.info["looks_like"] = count_looks_like(a, self.all_cand, self.comparator)
         self.pop.append(a)
         self.pop.sort(key=lambda x: get_raw_score(x), reverse=True)
 
@@ -215,22 +219,23 @@ class Population:
         if isinstance(indecies, int):
             indecies = [indecies]
 
-        f = [0.5 * (1. - tanh(2. * (scores[i] - max_s) / T - 1.))
-             for i in indecies]
+        f = [0.5 * (1.0 - tanh(2.0 * (scores[i] - max_s) / T - 1.0)) for i in indecies]
         if with_history:
-            M = [float(self.pop[i].info['n_paired']) for i in indecies]
-            L = [float(self.pop[i].info['looks_like']) for i in indecies]
-            f = [f[i] * 1. / sqrt(1. + M[i]) * 1. / sqrt(1. + L[i])
-                 for i in range(len(f))]
+            M = [float(self.pop[i].info["n_paired"]) for i in indecies]
+            L = [float(self.pop[i].info["looks_like"]) for i in indecies]
+            f = [
+                f[i] * 1.0 / sqrt(1.0 + M[i]) * 1.0 / sqrt(1.0 + L[i])
+                for i in range(len(f))
+            ]
         return f
 
     def get_two_candidates(self, with_history=True):
-        """ Returns two candidates for pairing employing the
-            fitness criteria from
-            L.B. Vilhelmsen et al., JACS, 2012, 134 (30), pp 12807-12816
-            and the roulete wheel selection scheme described in
-            R.L. Johnston Dalton Transactions,
-            Vol. 22, No. 22. (2003), pp. 4193-4207
+        """Returns two candidates for pairing employing the
+        fitness criteria from
+        L.B. Vilhelmsen et al., JACS, 2012, 134 (30), pp 12807-12816
+        and the roulete wheel selection scheme described in
+        R.L. Johnston Dalton Transactions,
+        Vol. 22, No. 22. (2003), pp. 4193-4207
         """
 
         if len(self.pop) < 2:
@@ -244,7 +249,7 @@ class Population:
         c1 = self.pop[0]
         c2 = self.pop[0]
         used_before = False
-        while c1.info['confid'] == c2.info['confid'] and not used_before:
+        while c1.info["confid"] == c2.info["confid"] and not used_before:
             nnf = True
             while nnf:
                 t = self.rng.randint(len(self.pop))
@@ -258,8 +263,8 @@ class Population:
                     c2 = self.pop[t]
                     nnf = False
 
-            c1id = c1.info['confid']
-            c2id = c2.info['confid']
+            c1id = c1.info["confid"]
+            c2id = c2.info["confid"]
             used_before = (min([c1id, c2id]), max([c1id, c2id])) in self.pairs
         return (c1.copy(), c2.copy())
 
@@ -295,18 +300,21 @@ class Population:
 
             timestamp: generation(if available): id1,id2,id3..."""
         if self.logfile is not None:
-            ids = [str(a.info['relax_id']) for a in self.pop]
+            ids = [str(a.info["relax_id"]) for a in self.pop]
             if ids != []:
                 try:
-                    gen_nums = [c.info['key_value_pairs']['generation']
-                                for c in self.all_cand]
+                    gen_nums = [
+                        c.info["key_value_pairs"]["generation"] for c in self.all_cand
+                    ]
                     max_gen = max(gen_nums)
                 except KeyError:
-                    max_gen = ' '
-                fd = open(self.logfile, 'a')
-                fd.write('{time}: {gen}: {pop}\n'.format(time=now(),
-                                                         pop=','.join(ids),
-                                                         gen=max_gen))
+                    max_gen = " "
+                fd = open(self.logfile, "a")
+                fd.write(
+                    "{time}: {gen}: {pop}\n".format(
+                        time=now(), pop=",".join(ids), gen=max_gen
+                    )
+                )
                 fd.close()
 
     def is_uniform(self, func, min_std, pop=None):
@@ -351,17 +359,25 @@ class Population:
 
 
 class RandomPopulation(Population):
-    def __init__(self, data_connection, population_size,
-                 comparator=None, logfile=None, exclude_used_pairs=False,
-                 bad_candidates=0, use_extinct=False):
+    def __init__(
+        self,
+        data_connection,
+        population_size,
+        comparator=None,
+        logfile=None,
+        exclude_used_pairs=False,
+        bad_candidates=0,
+        use_extinct=False,
+    ):
         self.exclude_used_pairs = exclude_used_pairs
         self.bad_candidates = bad_candidates
-        Population.__init__(self, data_connection, population_size,
-                            comparator, logfile, use_extinct)
+        Population.__init__(
+            self, data_connection, population_size, comparator, logfile, use_extinct
+        )
 
     def __initialize_pop__(self):
-        """ Private method that initializes the population when
-            the population is created. """
+        """Private method that initializes the population when
+        the population is created."""
 
         # Get all relaxed candidates from the database
         ue = self.use_extinct
@@ -395,17 +411,16 @@ class RandomPopulation(Population):
                 self.pop.append(ratings[i][0])
 
         for a in self.pop:
-            a.info['looks_like'] = count_looks_like(a, all_cand,
-                                                    self.comparator)
+            a.info["looks_like"] = count_looks_like(a, all_cand, self.comparator)
 
         self.all_cand = all_cand
         self.__calc_participation__()
 
     def update(self):
-        """ The update method in Population will add to the end of
+        """The update method in Population will add to the end of
         the population, that can't be used here since we might have
         bad candidates that need to stay in the population, therefore
-        just recalc the population every time. """
+        just recalc the population every time."""
 
         self.pop = []
         self.__initialize_pop__()
@@ -436,21 +451,22 @@ class RandomPopulation(Population):
         c1 = self.pop[0]
         c2 = self.pop[0]
         used_before = False
-        while c1.info['confid'] == c2.info['confid'] and not used_before:
+        while c1.info["confid"] == c2.info["confid"] and not used_before:
             t = self.rng.randint(len(self.pop))
             c1 = self.pop[t]
             t = self.rng.randint(len(self.pop))
             c2 = self.pop[t]
 
-            c1id = c1.info['confid']
-            c2id = c2.info['confid']
-            used_before = (tuple(sorted([c1id, c2id])) in self.pairs and
-                           self.exclude_used_pairs)
+            c1id = c1.info["confid"]
+            c2id = c2.info["confid"]
+            used_before = (
+                tuple(sorted([c1id, c2id])) in self.pairs and self.exclude_used_pairs
+            )
         return (c1.copy(), c2.copy())
 
 
 class FitnessSharingPopulation(Population):
-    """ Fitness sharing population that penalizes structures if they are
+    """Fitness sharing population that penalizes structures if they are
     too similar. This is determined by a distance measure
 
     Parameters:
@@ -468,18 +484,27 @@ class FitnessSharingPopulation(Population):
 
     """
 
-    def __init__(self, data_connection, population_size,
-                 comp_key, threshold, alpha_sh=1.,
-                 comparator=None, logfile=None, use_extinct=False):
+    def __init__(
+        self,
+        data_connection,
+        population_size,
+        comp_key,
+        threshold,
+        alpha_sh=1.0,
+        comparator=None,
+        logfile=None,
+        use_extinct=False,
+    ):
         self.comp_key = comp_key
         self.dt = threshold  # dissimilarity threshold
         self.alpha_sh = alpha_sh
-        self.fit_scaling = 1.
+        self.fit_scaling = 1.0
 
         self.sh_cache = dict()
 
-        Population.__init__(self, data_connection, population_size,
-                            comparator, logfile, use_extinct)
+        Population.__init__(
+            self, data_connection, population_size, comparator, logfile, use_extinct
+        )
 
     def __get_fitness__(self, candidates):
         """Input should be sorted according to raw_score."""
@@ -490,32 +515,31 @@ class FitnessSharingPopulation(Population):
         shared_fit = []
         for c in candidates:
             sc = get_raw_score(c)
-            obj_fit = 0.5 * (1. - tanh(2. * (sc - max_s) / T - 1.))
-            m = 1.
-            ck = c.info['key_value_pairs'][self.comp_key]
+            obj_fit = 0.5 * (1.0 - tanh(2.0 * (sc - max_s) / T - 1.0))
+            m = 1.0
+            ck = c.info["key_value_pairs"][self.comp_key]
             for other in candidates:
                 if other != c:
-                    name = tuple(sorted([c.info['confid'],
-                                         other.info['confid']]))
+                    name = tuple(sorted([c.info["confid"], other.info["confid"]]))
                     if name not in self.sh_cache:
-                        ok = other.info['key_value_pairs'][self.comp_key]
+                        ok = other.info["key_value_pairs"][self.comp_key]
                         d = abs(ck - ok)
                         if d < self.dt:
-                            v = 1 - (d / self.dt)**self.alpha_sh
+                            v = 1 - (d / self.dt) ** self.alpha_sh
                             self.sh_cache[name] = v
                         else:
                             self.sh_cache[name] = 0
                     m += self.sh_cache[name]
 
-            shf = (obj_fit ** self.fit_scaling) / m
+            shf = (obj_fit**self.fit_scaling) / m
             shared_fit.append(shf)
         return shared_fit
 
     def update(self):
-        """ The update method in Population will add to the end of
+        """The update method in Population will add to the end of
         the population, that can't be used here since the shared fitness
         will change for all candidates when new are added, therefore
-        just recalc the population every time. """
+        just recalc the population every time."""
 
         self.pop = []
         self.__initialize_pop__()
@@ -530,8 +554,7 @@ class FitnessSharingPopulation(Population):
 
         if len(all_cand) > 0:
             shared_fit = self.__get_fitness__(all_cand)
-            all_sorted = list(zip(*sorted(zip(shared_fit, all_cand),
-                                          reverse=True)))[1]
+            all_sorted = list(zip(*sorted(zip(shared_fit, all_cand), reverse=True)))[1]
 
             # Fill up the population with the self.pop_size most stable
             # unique candidates.
@@ -548,17 +571,16 @@ class FitnessSharingPopulation(Population):
                     self.pop.append(c)
 
             for a in self.pop:
-                a.info['looks_like'] = count_looks_like(a, all_cand,
-                                                        self.comparator)
+                a.info["looks_like"] = count_looks_like(a, all_cand, self.comparator)
         self.all_cand = all_cand
 
     def get_two_candidates(self):
-        """ Returns two candidates for pairing employing the
-            fitness criteria from
-            L.B. Vilhelmsen et al., JACS, 2012, 134 (30), pp 12807-12816
-            and the roulete wheel selection scheme described in
-            R.L. Johnston Dalton Transactions,
-            Vol. 22, No. 22. (2003), pp. 4193-4207
+        """Returns two candidates for pairing employing the
+        fitness criteria from
+        L.B. Vilhelmsen et al., JACS, 2012, 134 (30), pp 12807-12816
+        and the roulete wheel selection scheme described in
+        R.L. Johnston Dalton Transactions,
+        Vol. 22, No. 22. (2003), pp. 4193-4207
         """
 
         if len(self.pop) < 2:
@@ -571,7 +593,7 @@ class FitnessSharingPopulation(Population):
         fmax = max(fit)
         c1 = self.pop[0]
         c2 = self.pop[0]
-        while c1.info['confid'] == c2.info['confid']:
+        while c1.info["confid"] == c2.info["confid"]:
             nnf = True
             while nnf:
                 t = self.rng.randint(len(self.pop))
@@ -589,36 +611,45 @@ class FitnessSharingPopulation(Population):
 
 
 class RankFitnessPopulation(Population):
-    """ Ranks the fitness relative to set variable to flatten the surface
-        in a certain direction such that mating across variable is equally
-        likely irrespective of raw_score.
+    """Ranks the fitness relative to set variable to flatten the surface
+    in a certain direction such that mating across variable is equally
+    likely irrespective of raw_score.
 
-        Parameters:
+    Parameters:
 
-        variable_function: function
-            A function that takes as input an Atoms object and returns
-            the variable that differentiates the ranks.
+    variable_function: function
+        A function that takes as input an Atoms object and returns
+        the variable that differentiates the ranks.
 
-        exp_function: boolean
-            If True use an exponential function for ranking the fitness.
-            If False use the same as in Population. Default True.
+    exp_function: boolean
+        If True use an exponential function for ranking the fitness.
+        If False use the same as in Population. Default True.
 
-        exp_prefactor: float
-            The prefactor used in the exponential fitness scaling function.
-            Default 0.5
+    exp_prefactor: float
+        The prefactor used in the exponential fitness scaling function.
+        Default 0.5
     """
 
-    def __init__(self, data_connection, population_size, variable_function,
-                 comparator=None, logfile=None, use_extinct=False,
-                 exp_function=True, exp_prefactor=0.5):
+    def __init__(
+        self,
+        data_connection,
+        population_size,
+        variable_function,
+        comparator=None,
+        logfile=None,
+        use_extinct=False,
+        exp_function=True,
+        exp_prefactor=0.5,
+    ):
         self.exp_function = exp_function
         self.exp_prefactor = exp_prefactor
         self.vf = variable_function
         # The current fitness is set at each update of the population
         self.current_fitness = None
 
-        Population.__init__(self, data_connection, population_size,
-                            comparator, logfile, use_extinct)
+        Population.__init__(
+            self, data_connection, population_size, comparator, logfile, use_extinct
+        )
 
     def get_rank(self, rcand, key=None):
         # Set the initial order of the candidates, will need to
@@ -645,8 +676,7 @@ class RankFitnessPopulation(Population):
                 # Each niche is sorted according to raw_score and
                 # assigned a fitness according to the ranking of
                 # the candidates
-                ntr.sort(key=lambda x: x[1].info['key_value_pairs'][key],
-                         reverse=True)
+                ntr.sort(key=lambda x: x[1].info["key_value_pairs"][key], reverse=True)
                 start_rank = -1
                 cor = 0
                 for on, cn in ntr:
@@ -659,7 +689,7 @@ class RankFitnessPopulation(Population):
 
     def __get_fitness__(self, candidates):
         expf = self.exp_function
-        rfit = self.get_rank(candidates, key='raw_score')
+        rfit = self.get_rank(candidates, key="raw_score")
 
         if not expf:
             rmax = max(rfit)
@@ -671,16 +701,16 @@ class RankFitnessPopulation(Population):
             msg = "Equal fitness for best and worst candidate in the "
             msg += "population! Fitness scaling is impossible! "
             msg += "Try with a larger population."
-            assert T != 0., msg
-            return 0.5 * (1. - np.tanh(2. * (rfit - rmax) / T - 1.))
+            assert T != 0.0, msg
+            return 0.5 * (1.0 - np.tanh(2.0 * (rfit - rmax) / T - 1.0))
         else:
             return self.exp_prefactor ** (-rfit - 1)
 
     def update(self):
-        """ The update method in Population will add to the end of
+        """The update method in Population will add to the end of
         the population, that can't be used here since the fitness
         will potentially change for all candidates when new are added,
-        therefore just recalc the population every time. """
+        therefore just recalc the population every time."""
 
         self.pop = []
         self.__initialize_pop__()
@@ -726,10 +756,10 @@ class RankFitnessPopulation(Population):
         self.all_cand = all_cand
 
     def get_two_candidates(self):
-        """ Returns two candidates for pairing employing the
-            roulete wheel selection scheme described in
-            R.L. Johnston Dalton Transactions,
-            Vol. 22, No. 22. (2003), pp. 4193-4207
+        """Returns two candidates for pairing employing the
+        roulete wheel selection scheme described in
+        R.L. Johnston Dalton Transactions,
+        Vol. 22, No. 22. (2003), pp. 4193-4207
         """
 
         if len(self.pop) < 2:
@@ -743,7 +773,7 @@ class RankFitnessPopulation(Population):
         fmax = max(fit)
         c1 = self.pop[0]
         c2 = self.pop[0]
-        while c1.info['confid'] == c2.info['confid']:
+        while c1.info["confid"] == c2.info["confid"]:
             nnf = True
             while nnf:
                 t = self.rng.randint(len(self.pop))
@@ -761,7 +791,7 @@ class RankFitnessPopulation(Population):
 
 
 class MultiObjectivePopulation(RankFitnessPopulation):
-    """ Allows for assignment of fitness based on a set of two variables
+    """Allows for assignment of fitness based on a set of two variables
         such that fitness is ranked according to a Pareto-front of
         non-dominated candidates.
 
@@ -790,10 +820,19 @@ class MultiObjectivePopulation(RankFitnessPopulation):
 
     """
 
-    def __init__(self, data_connection, population_size,
-                 variable_function=None, comparator=None, logfile=None,
-                 use_extinct=False, abs_data=None, rank_data=None,
-                 exp_function=True, exp_prefactor=0.5):
+    def __init__(
+        self,
+        data_connection,
+        population_size,
+        variable_function=None,
+        comparator=None,
+        logfile=None,
+        use_extinct=False,
+        abs_data=None,
+        rank_data=None,
+        exp_function=True,
+        exp_prefactor=0.5,
+    ):
         # The current fitness is set at each update of the population
         self.current_fitness = None
 
@@ -805,16 +844,23 @@ class MultiObjectivePopulation(RankFitnessPopulation):
             abs_data = []
         self.abs_data = abs_data
 
-        RankFitnessPopulation.__init__(self, data_connection, population_size,
-                                       variable_function, comparator, logfile,
-                                       use_extinct, exp_function,
-                                       exp_prefactor)
+        RankFitnessPopulation.__init__(
+            self,
+            data_connection,
+            population_size,
+            variable_function,
+            comparator,
+            logfile,
+            use_extinct,
+            exp_function,
+            exp_prefactor,
+        )
 
     def get_nonrank(self, nrcand, key=None):
-        """"Returns a list of fitness values."""
+        """ "Returns a list of fitness values."""
         nrc_list = []
         for nrc in nrcand:
-            nrc_list.append(nrc.info['key_value_pairs'][key])
+            nrc_list.append(nrc.info["key_value_pairs"][key])
         return nrc_list
 
     def __get_fitness__(self, candidates):
@@ -897,8 +943,8 @@ class MultiObjectivePopulation(RankFitnessPopulation):
             msg = "Equal fitness for best and worst candidate in the "
             msg += "population! Fitness scaling is impossible! "
             msg += "Try with a larger population."
-            assert T != 0., msg
-            return 0.5 * (1. - np.tanh(2. * (rfro - rmax) / T - 1.))
+            assert T != 0.0, msg
+            return 0.5 * (1.0 - np.tanh(2.0 * (rfro - rmax) / T - 1.0))
         else:
             return self.exp_prefactor ** (-rfro - 1)
 

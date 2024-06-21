@@ -38,11 +38,27 @@ class SwitchLangevin(Langevin):
         Number of switching steps
     """
 
-    def __init__(self, atoms, calc1, calc2, dt, T=None, friction=None,
-                 n_eq=None, n_switch=None, temperature_K=None,
-                 **langevin_kwargs):
-        super().__init__(atoms, dt, temperature=T, temperature_K=temperature_K,
-                         friction=friction, **langevin_kwargs)
+    def __init__(
+        self,
+        atoms,
+        calc1,
+        calc2,
+        dt,
+        T=None,
+        friction=None,
+        n_eq=None,
+        n_switch=None,
+        temperature_K=None,
+        **langevin_kwargs
+    ):
+        super().__init__(
+            atoms,
+            dt,
+            temperature=T,
+            temperature_K=temperature_K,
+            friction=friction,
+            **langevin_kwargs
+        )
         if friction is None:
             raise TypeError("Missing 'friction' argument.")
         if n_eq is None:
@@ -58,7 +74,7 @@ class SwitchLangevin(Langevin):
         self.path_data = []
 
     def run(self):
-        """ Run the MD switching simulation """
+        """Run the MD switching simulation"""
         forces = self.atoms.get_forces(md=True)
 
         # run equilibration with calc1
@@ -69,8 +85,8 @@ class SwitchLangevin(Langevin):
 
         # run switch from calc1 to calc2
         self.path_data.append(
-            [0, self.lam,
-             *self.atoms.calc.get_energy_contributions(self.atoms)])
+            [0, self.lam, *self.atoms.calc.get_energy_contributions(self.atoms)]
+        )
         for step in range(1, self.n_switch):
             # update calculator
             self.lam = get_lambda(step, self.n_switch)
@@ -83,13 +99,13 @@ class SwitchLangevin(Langevin):
             # collect data
             self.call_observers()
             self.path_data.append(
-                [step, self.lam,
-                 *self.atoms.calc.get_energy_contributions(self.atoms)])
+                [step, self.lam, *self.atoms.calc.get_energy_contributions(self.atoms)]
+            )
 
         self.path_data = np.array(self.path_data)
 
     def get_free_energy_difference(self):
-        """ Return the free energy difference between calc2 and calc1, by
+        """Return the free energy difference between calc2 and calc1, by
         integrating dH/dlam along the switching path
 
         Returns
@@ -98,7 +114,7 @@ class SwitchLangevin(Langevin):
             Free energy difference, F2 - F1
         """
         if len(self.path_data) == 0:
-            raise ValueError('No free energy data found.')
+            raise ValueError("No free energy data found.")
 
         lambdas = self.path_data[:, 1]
         U1 = self.path_data[:, 2]
@@ -108,7 +124,7 @@ class SwitchLangevin(Langevin):
 
 
 def get_lambda(step, n_switch):
-    """ Return lambda value along the switching path """
+    """Return lambda value along the switching path"""
     assert step >= 0 and step <= n_switch
     t = step / (n_switch - 1)
     return t**5 * (70 * t**4 - 315 * t**3 + 540 * t**2 - 420 * t + 126)

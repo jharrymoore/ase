@@ -14,12 +14,12 @@ _solvated: List[Tuple[str, Dict[str, int], float, bool, float]] = []
 
 
 def parse_formula(formula):
-    aq = formula.endswith('(aq)')
+    aq = formula.endswith("(aq)")
     if aq:
         formula = formula[:-4]
-    charge = formula.count('+') - formula.count('-')
+    charge = formula.count("+") - formula.count("-")
     if charge:
-        formula = formula.rstrip('+-')
+        formula = formula.rstrip("+-")
     count = Formula(formula).count()
     return count, charge, aq
 
@@ -29,12 +29,12 @@ def float2str(x):
     n = f.numerator
     d = f.denominator
     if abs(n / d - f) > 1e-6:
-        return '{:.3f}'.format(f)
+        return "{:.3f}".format(f)
     if d == 0:
-        return '0'
+        return "0"
     if f.denominator == 1:
         return str(n)
-    return '{}/{}'.format(f.numerator, f.denominator)
+    return "{}/{}".format(f.numerator, f.denominator)
 
 
 def solvated(symbols):
@@ -64,15 +64,15 @@ def solvated(symbols):
         symbols = Formula(symbols).count().keys()
     if len(_solvated) == 0:
         for line in _aqueous.splitlines():
-            energy, formula = line.split(',')
-            name = formula + '(aq)'
+            energy, formula = line.split(",")
+            name = formula + "(aq)"
             count, charge, aq = parse_formula(name)
             energy = float(energy) * 0.001 * units.kcal / units.mol
             _solvated.append((name, count, charge, aq, energy))
     references = []
     for name, count, charge, aq, energy in _solvated:
         for symbol in count:
-            if symbol not in 'HO' and symbol not in symbols:
+            if symbol not in "HO" and symbol not in symbols:
                 break
         else:
             references.append((name, energy))
@@ -102,24 +102,24 @@ def bisect(A, X, Y, f):
         return
     i = len(X) // 2
     j = len(Y) // 2
-    bisect(A[:i + 1, :j + 1], X[:i + 1], Y[:j + 1], f)
-    bisect(A[:i + 1, j:], X[:i + 1], Y[j:], f)
-    bisect(A[i:, :j + 1], X[i:], Y[:j + 1], f)
+    bisect(A[: i + 1, : j + 1], X[: i + 1], Y[: j + 1], f)
+    bisect(A[: i + 1, j:], X[: i + 1], Y[j:], f)
+    bisect(A[i:, : j + 1], X[i:], Y[: j + 1], f)
     bisect(A[i:, j:], X[i:], Y[j:], f)
 
 
 def print_results(results):
     total_energy = 0.0
-    print('reference    coefficient      energy')
-    print('------------------------------------')
+    print("reference    coefficient      energy")
+    print("------------------------------------")
     for name, coef, energy in results:
         total_energy += coef * energy
         if abs(coef) < 1e-7:
             continue
-        print('{:14}{:>10}{:12.3f}'.format(name, float2str(coef), energy))
-    print('------------------------------------')
-    print('Total energy: {:22.3f}'.format(total_energy))
-    print('------------------------------------')
+        print("{:14}{:>10}{:12.3f}".format(name, float2str(coef), energy))
+    print("------------------------------------")
+    print("Total energy: {:22.3f}".format(total_energy))
+    print("------------------------------------")
 
 
 class Pourbaix:
@@ -139,25 +139,25 @@ class Pourbaix:
             assert not kwargs
             kwargs = parse_formula(formula)[0]
 
-        if 'O' not in kwargs:
-            kwargs['O'] = 0
-        if 'H' not in kwargs:
-            kwargs['H'] = 0
+        if "O" not in kwargs:
+            kwargs["O"] = 0
+        if "H" not in kwargs:
+            kwargs["H"] = 0
 
         self.kT = units.kB * T
         self.references = []
         for name, energy in references:
-            if name == 'O':
+            if name == "O":
                 continue
             count, charge, aq = parse_formula(name)
             if all(symbol in kwargs for symbol in count):
                 self.references.append((count, charge, aq, energy, name))
 
-        self.references.append(({}, -1, False, 0.0, 'e-'))  # an electron
+        self.references.append(({}, -1, False, 0.0, "e-"))  # an electron
 
         self.count = kwargs
 
-        self.N = {'e-': 0}
+        self.N = {"e-": 0}
         for symbol in kwargs:
             if symbol not in self.N:
                 self.N[symbol] = len(self.N)
@@ -232,28 +232,24 @@ class Pourbaix:
             for symbol, n in count.items():
                 eq[self.N[symbol]] = n
             eq2.append(eq)
-            if name in ['H2O(aq)', 'H+(aq)', 'e-']:
+            if name in ["H2O(aq)", "H+(aq)", "e-"]:
                 bounds.append((-np.inf, np.inf))
-                if name == 'e-':
+                if name == "e-":
                     energy = -U
-                elif name == 'H+(aq)':
+                elif name == "H+(aq)":
                     energy = -pH * alpha
             else:
                 bounds.append((0, np.inf))
                 if aq:
                     energy -= entropy
             if verbose:
-                print('{:<5}{:10}{:10.3f}'.format(len(energies),
-                                                  name, energy))
+                print("{:<5}{:10}{:10.3f}".format(len(energies), name, energy))
             energies.append(energy)
             names.append(name)
 
         from scipy.optimize import linprog
 
-        result = linprog(c=energies,
-                         A_eq=np.transpose(eq2),
-                         b_eq=eq1,
-                         bounds=bounds)
+        result = linprog(c=energies, A_eq=np.transpose(eq2), b_eq=eq1, bounds=bounds)
 
         if verbose:
             print_results(zip(names, result.x, energies))
@@ -283,21 +279,22 @@ class Pourbaix:
         compositions = [None] * len(colors)
         names = [ref[-1] for ref in self.references]
         for indices, color in colors.items():
-            compositions[color] = ' + '.join(names[i] for i in indices
-                                             if names[i] not in
-                                             ['H2O(aq)', 'H+(aq)', 'e-'])
+            compositions[color] = " + ".join(
+                names[i] for i in indices if names[i] not in ["H2O(aq)", "H+(aq)", "e-"]
+            )
         text = []
         for i, name in enumerate(compositions):
-            b = (a == i)
+            b = a == i
             x = np.dot(b.sum(1), U) / b.sum()
             y = np.dot(b.sum(0), pH) / b.sum()
-            name = re.sub(r'(\S)([+-]+)', r'\1$^{\2}$', name)
-            name = re.sub(r'(\d+)', r'$_{\1}$', name)
+            name = re.sub(r"(\S)([+-]+)", r"\1$^{\2}$", name)
+            name = re.sub(r"(\d+)", r"$_{\1}$", name)
             text.append((x, y, name))
 
         if plot:
             import matplotlib.pyplot as plt
             import matplotlib.cm as cm
+
             if ax is None:
                 ax = plt.gca()
 
@@ -305,15 +302,18 @@ class Pourbaix:
             # white border.  Unrasterized pcolormesh produces
             # unreasonably large files.  Avoid this by using the more
             # general imshow.
-            ax.imshow(a, cmap=cm.Accent,
-                      extent=[min(pH), max(pH), min(U), max(U)],
-                      origin='lower',
-                      aspect='auto')
+            ax.imshow(
+                a,
+                cmap=cm.Accent,
+                extent=[min(pH), max(pH), min(U), max(U)],
+                origin="lower",
+                aspect="auto",
+            )
 
             for x, y, name in text:
-                ax.text(y, x, name, horizontalalignment='center')
-            ax.set_xlabel('pH')
-            ax.set_ylabel('potential [V]')
+                ax.text(y, x, name, horizontalalignment="center")
+            ax.set_xlabel("pH")
+            ax.set_ylabel("potential [V]")
             ax.set_xlim(min(pH), max(pH))
             ax.set_ylim(min(U), max(U))
             if show:
@@ -332,7 +332,7 @@ class Pourbaix:
 
 
 class PhaseDiagram:
-    def __init__(self, references, filter='', verbose=True):
+    def __init__(self, references, filter="", verbose=True):
         """Phase-diagram.
 
         references: list of (name, energy) tuples
@@ -348,9 +348,11 @@ class PhaseDiagram:
         """
 
         if not references:
-            raise ValueError("You must provide a non-empty list of references"
-                             " for the phase diagram! "
-                             "You have provided '{}'".format(references))
+            raise ValueError(
+                "You must provide a non-empty list of references"
+                " for the phase diagram! "
+                "You have provided '{}'".format(references)
+            )
         filter = parse_formula(filter)[0]
 
         self.verbose = verbose
@@ -367,7 +369,7 @@ class PhaseDiagram:
                 continue
 
             if not isinstance(name, str):
-                name = Formula.from_dict(count).format('metal')
+                name = Formula.from_dict(count).format("metal")
 
             natoms = 0
             for symbol, n in count.items():
@@ -382,10 +384,10 @@ class PhaseDiagram:
             self.symbols[id] = symbol
 
         if verbose:
-            print('Species:', ', '.join(self.symbols))
-            print('References:', len(self.references))
+            print("Species:", ", ".join(self.symbols))
+            print("References:", len(self.references))
             for i, (count, energy, name, natoms) in enumerate(self.references):
-                print('{:<5}{:10}{:10.3f}'.format(i, name, energy))
+                print("{:<5}{:10}{:10.3f}".format(i, name, energy))
 
         self.points = np.zeros((len(self.references), ns + 1))
         for s, (count, energy, name, natoms) in enumerate(self.references):
@@ -410,7 +412,7 @@ class PhaseDiagram:
                 self.hull[simplex] = True
 
         if verbose:
-            print('Simplices:', len(self.simplices))
+            print("Simplices:", len(self.simplices))
 
     def decompose(self, formula=None, **kwargs):
         """Find the combination of the references with the lowest energy.
@@ -492,15 +494,15 @@ class PhaseDiagram:
         if ax is None:
             projection = None
             if dims == 3:
-                projection = '3d'
+                projection = "3d"
                 from mpl_toolkits.mplot3d import Axes3D
+
                 Axes3D  # silence pyflakes
             fig = plt.figure()
             ax = fig.add_subplot(projection=projection)
         else:
-            if dims == 3 and not hasattr(ax, 'set_zlim'):
-                raise ValueError('Cannot make 3d plot unless axes projection '
-                                 'is 3d')
+            if dims == 3 and not hasattr(ax, "set_zlim"):
+                raise ValueError("Cannot make 3d plot unless axes projection " "is 3d")
 
         if dims == 2:
             if N == 2:
@@ -508,43 +510,43 @@ class PhaseDiagram:
             elif N == 3:
                 self.plot2d3(ax)
             else:
-                raise ValueError('Can only make 2-d plots for 2 and 3 '
-                                 'component systems!')
+                raise ValueError(
+                    "Can only make 2-d plots for 2 and 3 " "component systems!"
+                )
         else:
             if N == 3:
                 self.plot3d3(ax)
             elif N == 4:
                 self.plot3d4(ax)
             else:
-                raise ValueError('Can only make 3-d plots for 3 and 4 '
-                                 'component systems!')
+                raise ValueError(
+                    "Can only make 3-d plots for 3 and 4 " "component systems!"
+                )
         if show:
             plt.show()
         return ax
 
-    def plot2d2(self, ax=None,
-                only_label_simplices=False, only_plot_simplices=False):
+    def plot2d2(self, ax=None, only_label_simplices=False, only_plot_simplices=False):
         x, e = self.points[:, 1:].T
-        names = [re.sub(r'(\d+)', r'$_{\1}$', ref[2])
-                 for ref in self.references]
+        names = [re.sub(r"(\d+)", r"$_{\1}$", ref[2]) for ref in self.references]
         hull = self.hull
         simplices = self.simplices
         xlabel = self.symbols[1]
-        ylabel = 'energy [eV/atom]'
+        ylabel = "energy [eV/atom]"
 
         if ax:
             for i, j in simplices:
-                ax.plot(x[[i, j]], e[[i, j]], '-b')
-            ax.plot(x[hull], e[hull], 'sg')
+                ax.plot(x[[i, j]], e[[i, j]], "-b")
+            ax.plot(x[hull], e[hull], "sg")
             if not only_plot_simplices:
-                ax.plot(x[~hull], e[~hull], 'or')
+                ax.plot(x[~hull], e[~hull], "or")
 
             if only_plot_simplices or only_label_simplices:
                 x = x[self.hull]
                 e = e[self.hull]
                 names = [name for name, h in zip(names, self.hull) if h]
             for a, b, name in zip(x, e, names):
-                ax.text(a, b, name, ha='center', va='top')
+                ax.text(a, b, name, ha="center", va="top")
 
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
@@ -555,64 +557,60 @@ class PhaseDiagram:
         x, y = self.points[:, 1:-1].T.copy()
         x += y / 2
         y *= 3**0.5 / 2
-        names = [re.sub(r'(\d+)', r'$_{\1}$', ref[2])
-                 for ref in self.references]
+        names = [re.sub(r"(\d+)", r"$_{\1}$", ref[2]) for ref in self.references]
         hull = self.hull
         simplices = self.simplices
 
         if ax:
             for i, j, k in simplices:
-                ax.plot(x[[i, j, k, i]], y[[i, j, k, i]], '-b')
-            ax.plot(x[hull], y[hull], 'og')
-            ax.plot(x[~hull], y[~hull], 'sr')
+                ax.plot(x[[i, j, k, i]], y[[i, j, k, i]], "-b")
+            ax.plot(x[hull], y[hull], "og")
+            ax.plot(x[~hull], y[~hull], "sr")
             for a, b, name in zip(x, y, names):
-                ax.text(a, b, name, ha='center', va='top')
+                ax.text(a, b, name, ha="center", va="top")
 
         return (x, y, names, hull, simplices)
 
     def plot3d3(self, ax):
         x, y, e = self.points[:, 1:].T
 
-        ax.scatter(x[self.hull], y[self.hull], e[self.hull],
-                   c='g', marker='o')
-        ax.scatter(x[~self.hull], y[~self.hull], e[~self.hull],
-                   c='r', marker='s')
+        ax.scatter(x[self.hull], y[self.hull], e[self.hull], c="g", marker="o")
+        ax.scatter(x[~self.hull], y[~self.hull], e[~self.hull], c="r", marker="s")
 
         for a, b, c, ref in zip(x, y, e, self.references):
-            name = re.sub(r'(\d+)', r'$_{\1}$', ref[2])
-            ax.text(a, b, c, name, ha='center', va='bottom')
+            name = re.sub(r"(\d+)", r"$_{\1}$", ref[2])
+            ax.text(a, b, c, name, ha="center", va="bottom")
 
         for i, j, k in self.simplices:
-            ax.plot(x[[i, j, k, i]],
-                    y[[i, j, k, i]],
-                    zs=e[[i, j, k, i]], c='b')
+            ax.plot(x[[i, j, k, i]], y[[i, j, k, i]], zs=e[[i, j, k, i]], c="b")
 
         ax.set_xlim3d(0, 1)
         ax.set_ylim3d(0, 1)
         ax.view_init(azim=115, elev=30)
         ax.set_xlabel(self.symbols[1])
         ax.set_ylabel(self.symbols[2])
-        ax.set_zlabel('energy [eV/atom]')
+        ax.set_zlabel("energy [eV/atom]")
 
     def plot3d4(self, ax):
         x, y, z = self.points[:, 1:-1].T
         a = x / 2 + y + z / 2
         b = 3**0.5 * (x / 2 + y / 6)
-        c = (2 / 3)**0.5 * z
+        c = (2 / 3) ** 0.5 * z
 
-        ax.scatter(a[self.hull], b[self.hull], c[self.hull],
-                   c='g', marker='o')
-        ax.scatter(a[~self.hull], b[~self.hull], c[~self.hull],
-                   c='r', marker='s')
+        ax.scatter(a[self.hull], b[self.hull], c[self.hull], c="g", marker="o")
+        ax.scatter(a[~self.hull], b[~self.hull], c[~self.hull], c="r", marker="s")
 
         for x, y, z, ref in zip(a, b, c, self.references):
-            name = re.sub(r'(\d+)', r'$_{\1}$', ref[2])
-            ax.text(x, y, z, name, ha='center', va='bottom')
+            name = re.sub(r"(\d+)", r"$_{\1}$", ref[2])
+            ax.text(x, y, z, name, ha="center", va="bottom")
 
         for i, j, k, w in self.simplices:
-            ax.plot(a[[i, j, k, i, w, k, j, w]],
-                    b[[i, j, k, i, w, k, j, w]],
-                    zs=c[[i, j, k, i, w, k, j, w]], c='b')
+            ax.plot(
+                a[[i, j, k, i, w, k, j, w]],
+                b[[i, j, k, i, w, k, j, w]],
+                zs=c[[i, j, k, i, w, k, j, w]],
+                c="b",
+            )
 
         ax.set_xlim3d(0, 1)
         ax.set_ylim3d(0, 1)

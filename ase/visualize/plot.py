@@ -2,17 +2,31 @@ from ase.io.utils import PlottingVariables, make_patch_list
 
 
 class Matplotlib(PlottingVariables):
-    def __init__(self, atoms, ax,
-                 rotation='', radii=None,
-                 colors=None, scale=1, offset=(0, 0), **parameters):
+    def __init__(
+        self,
+        atoms,
+        ax,
+        rotation="",
+        radii=None,
+        colors=None,
+        scale=1,
+        offset=(0, 0),
+        **parameters
+    ):
         PlottingVariables.__init__(
-            self, atoms, rotation=rotation,
-            radii=radii, colors=colors, scale=scale,
-            extra_offset=offset, **parameters)
+            self,
+            atoms,
+            rotation=rotation,
+            radii=radii,
+            colors=colors,
+            scale=scale,
+            extra_offset=offset,
+            **parameters
+        )
 
         self.ax = ax
         self.figure = ax.figure
-        self.ax.set_aspect('equal')
+        self.ax.set_aspect("equal")
 
     def write(self):
         self.write_body()
@@ -25,10 +39,13 @@ class Matplotlib(PlottingVariables):
             self.ax.add_patch(patch)
 
 
-def animate(images, ax=None,
-            interval=200,  # in ms; same default value as in FuncAnimation
-            save_count=None,  # ignored as of 2023 with newer matplotlib
-            **parameters):
+def animate(
+    images,
+    ax=None,
+    interval=200,  # in ms; same default value as in FuncAnimation
+    save_count=None,  # ignored as of 2023 with newer matplotlib
+    **parameters
+):
     """Convert sequence of atoms objects into Matplotlib animation.
 
     Each image is generated using plot_atoms().  Additional parameters
@@ -43,12 +60,12 @@ def animate(images, ax=None,
 
     def drawimage(atoms):
         ax.clear()
-        ax.axis('off')
+        ax.axis("off")
         plot_atoms(atoms, ax=ax, **parameters)
 
-    animation = FuncAnimation(fig, drawimage, frames=images,
-                              init_func=lambda: None,
-                              interval=interval)
+    animation = FuncAnimation(
+        fig, drawimage, frames=images, init_func=lambda: None, interval=interval
+    )
     return animation
 
 
@@ -81,6 +98,7 @@ def plot_atoms(atoms, ax=None, **parameters):
         atoms = atoms[0]
 
     import matplotlib.pyplot as plt
+
     if ax is None:
         ax = plt.gca()
     Matplotlib(atoms, ax, **parameters).write()

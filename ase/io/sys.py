@@ -11,7 +11,7 @@ from ase.units import Bohr
 
 from re import compile
 
-__all__ = ['read_sys', 'write_sys']
+__all__ = ["read_sys", "write_sys"]
 
 
 def read_sys(fileobj):
@@ -27,15 +27,14 @@ def read_sys(fileobj):
     cell.append([float(c1) * Bohr, float(c2) * Bohr, float(c3) * Bohr])
     positions = []
     symbols = []
-    reg = compile(r'(\d+|\s+)')
+    reg = compile(r"(\d+|\s+)")
     line = fileobj.readline()
-    while 'species' in line:
+    while "species" in line:
         line = fileobj.readline()
     while line:
         # The units column is ignored.
         a, symlabel, spec, x, y, z = line.split()[0:6]
-        positions.append([float(x) * Bohr, float(y) * Bohr,
-                         float(z) * Bohr])
+        positions.append([float(x) * Bohr, float(y) * Bohr, float(z) * Bohr])
         sym = reg.split(str(symlabel))
         symbols.append(sym[0])
         line = fileobj.readline()
@@ -52,11 +51,11 @@ def write_sys(fileobj, atoms):
     atoms: Atoms object
         Atoms object specifying the atomic configuration.
     """
-    fileobj.write('set cell')
+    fileobj.write("set cell")
     for i in range(3):
         d = atoms.cell[i] / Bohr
-        fileobj.write((' {:6f}  {:6f}  {:6f}').format(*d))
-    fileobj.write('  bohr\n')
+        fileobj.write((" {:6f}  {:6f}  {:6f}").format(*d))
+    fileobj.write("  bohr\n")
 
     ch_sym = atoms.get_chemical_symbols()
     atm_nm = atoms.numbers
@@ -64,8 +63,11 @@ def write_sys(fileobj, atoms):
     an = list(set(atm_nm))
 
     for i, s in enumerate(set(ch_sym)):
-        fileobj.write(('species {}{} {}.xml \n').format(s, an[i], s))
+        fileobj.write(("species {}{} {}.xml \n").format(s, an[i], s))
     for i, (S, Z, (x, y, z)) in enumerate(zip(ch_sym, atm_nm, a_pos)):
-        fileobj.write(('atom {0:5} {1:5}  {2:12.6f} {3:12.6f} {4:12.6f}\
-        bohr\n').format(S + str(i + 1), S + str(Z), x / Bohr, y / Bohr,
-                        z / Bohr))
+        fileobj.write(
+            (
+                "atom {0:5} {1:5}  {2:12.6f} {3:12.6f} {4:12.6f}\
+        bohr\n"
+            ).format(S + str(i + 1), S + str(Z), x / Bohr, y / Bohr, z / Bohr)
+        )

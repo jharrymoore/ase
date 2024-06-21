@@ -6,9 +6,13 @@ from ase.constraints import FixAtoms
 
 def test_minimahop(asap3, testdir):
     # Make Pt 111 slab with Cu2 adsorbate.
-    atoms = fcc111('Pt', (2, 2, 1), vacuum=7., orthogonal=True)
-    adsorbate = Atoms([Atom('Cu', atoms[2].position + (0., 0., 2.5)),
-                       Atom('Cu', atoms[2].position + (0., 0., 5.0))])
+    atoms = fcc111("Pt", (2, 2, 1), vacuum=7.0, orthogonal=True)
+    adsorbate = Atoms(
+        [
+            Atom("Cu", atoms[2].position + (0.0, 0.0, 2.5)),
+            Atom("Cu", atoms[2].position + (0.0, 0.0, 5.0)),
+        ]
+    )
     atoms.extend(adsorbate)
 
     # Constrain the surface to be fixed and a Hookean constraint between
@@ -18,8 +22,9 @@ def test_minimahop(asap3, testdir):
     # means we don't gain anything by including them.
     # I have disabled the hookeans to reduce test runtime.  --askhl
     #
-    constraints = [FixAtoms(indices=[atom.index for atom in atoms if
-                                     atom.symbol == 'Pt'])]
+    constraints = [
+        FixAtoms(indices=[atom.index for atom in atoms if atom.symbol == "Pt"])
+    ]
     # constraints = [FixAtoms(indices=[atom.index for atom in atoms if
     #                                  atom.symbol == 'Pt']),
     #                Hookean(a1=4, a2=5, rt=2.6, k=15.),
@@ -31,12 +36,7 @@ def test_minimahop(asap3, testdir):
     atoms.calc = calc
 
     # Instantiate and run the minima hopping algorithm.
-    hop = MinimaHopping(atoms,
-                        Ediff0=2.5,
-                        T0=2000.,
-                        beta1=1.2,
-                        beta2=1.2,
-                        mdmin=1)
+    hop = MinimaHopping(atoms, Ediff0=2.5, T0=2000.0, beta1=1.2, beta2=1.2, mdmin=1)
     hop(totalsteps=3)
     # Test ability to restart and temperature stopping.
     hop(maxtemp=3000)

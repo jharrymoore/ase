@@ -10,11 +10,11 @@ class Placzek(ResonantRaman):
     """Raman spectra within the Placzek approximation."""
 
     def __init__(self, *args, **kwargs):
-        self._approx = 'PlaczekAlpha'
+        self._approx = "PlaczekAlpha"
         ResonantRaman.__init__(self, *args, **kwargs)
 
     def set_approximation(self, value):
-        raise ValueError('Approximation can not be set.')
+        raise ValueError("Approximation can not be set.")
 
     def _signed_disps(self, sign):
         for a, i in zip(self.myindices, self.myxyz):
@@ -33,7 +33,7 @@ class Placzek(ResonantRaman):
         self.calculate_energies_and_modes()
 
         V_rcc = np.zeros((self.ndof, 3, 3), dtype=complex)
-        pre = 1. / (2 * self.delta)
+        pre = 1.0 / (2 * self.delta)
         pre *= u.Hartree * u.Bohr  # e^2Angstrom^2 / eV -> Angstrom^3
 
         om = omega
@@ -42,10 +42,9 @@ class Placzek(ResonantRaman):
 
         for i, r in enumerate(self.myr):
             V_rcc[r] = pre * (
-                polarizability(self.exp_r[i], om,
-                               form=self.dipole_form, tensor=True) -
-                polarizability(self.exm_r[i], om,
-                               form=self.dipole_form, tensor=True))
+                polarizability(self.exp_r[i], om, form=self.dipole_form, tensor=True)
+                - polarizability(self.exm_r[i], om, form=self.dipole_form, tensor=True)
+            )
         self.comm.sum(V_rcc)
 
         return self.map_to_modes(V_rcc)
@@ -66,7 +65,7 @@ class PlaczekStatic(Raman):
         self.calculate_energies_and_modes()
 
         V_rcc = np.zeros((self.ndof, 3, 3), dtype=complex)
-        pre = 1. / (2 * self.delta)
+        pre = 1.0 / (2 * self.delta)
         pre *= u.Hartree * u.Bohr  # e^2Angstrom^2 / eV -> Angstrom^3
 
         for i, r in enumerate(self.myr):
@@ -90,32 +89,31 @@ class Profeta(ResonantRaman):
     """
 
     def __init__(self, *args, **kwargs):
-        self.set_approximation(kwargs.pop('approximation', 'Profeta'))
-        self.nonresonant = kwargs.pop('nonresonant', True)
+        self.set_approximation(kwargs.pop("approximation", "Profeta"))
+        self.nonresonant = kwargs.pop("nonresonant", True)
         ResonantRaman.__init__(self, *args, **kwargs)
 
     def set_approximation(self, value):
         approx = value.lower()
-        if approx in ['profeta', 'placzek', 'p-p']:
+        if approx in ["profeta", "placzek", "p-p"]:
             self._approx = value
         else:
             raise ValueError('Please use "Profeta", "Placzek" or "P-P".')
 
-    def electronic_me_profeta_rcc(self, omega, gamma=0.1,
-                                  energy_derivative=False):
+    def electronic_me_profeta_rcc(self, omega, gamma=0.1, energy_derivative=False):
         """Raman spectra in Profeta and Mauri approximation
 
         Returns
         -------
         Electronic matrix element, unit Angstrom^2
-         """
+        """
         self.calculate_energies_and_modes()
 
         V_rcc = np.zeros((self.ndof, 3, 3), dtype=complex)
-        pre = 1. / (2 * self.delta)
+        pre = 1.0 / (2 * self.delta)
         pre *= u.Hartree * u.Bohr  # e^2Angstrom^2 / eV -> Angstrom^3
 
-        def kappa_cc(me_pc, e_p, omega, gamma, form='v'):
+        def kappa_cc(me_pc, e_p, omega, gamma, form="v"):
             """Kappa tensor after Profeta and Mauri
             PRB 63 (2001) 245415"""
             k_cc = np.zeros((3, 3), dtype=complex)
@@ -130,16 +128,22 @@ class Profeta(ResonantRaman):
         for a, i, r in zip(self.myindices, self.myxyz, self.myr):
             if not energy_derivative < 0:
                 V_rcc[r] += pre * (
-                    kappa_cc(self.expm_rpc[mr], self.ex0E_p,
-                             omega, gamma, self.dipole_form) -
-                    kappa_cc(self.exmm_rpc[mr], self.ex0E_p,
-                             omega, gamma, self.dipole_form))
+                    kappa_cc(
+                        self.expm_rpc[mr], self.ex0E_p, omega, gamma, self.dipole_form
+                    )
+                    - kappa_cc(
+                        self.exmm_rpc[mr], self.ex0E_p, omega, gamma, self.dipole_form
+                    )
+                )
             if energy_derivative:
                 V_rcc[r] += pre * (
-                    kappa_cc(self.ex0m_pc, self.expE_rp[mr],
-                             omega, gamma, self.dipole_form) -
-                    kappa_cc(self.ex0m_pc, self.exmE_rp[mr],
-                             omega, gamma, self.dipole_form))
+                    kappa_cc(
+                        self.ex0m_pc, self.expE_rp[mr], omega, gamma, self.dipole_form
+                    )
+                    - kappa_cc(
+                        self.ex0m_pc, self.exmE_rp[mr], omega, gamma, self.dipole_form
+                    )
+                )
             mr += 1
         self.comm.sum(V_rcc)
 
@@ -149,15 +153,15 @@ class Profeta(ResonantRaman):
         self.read()
         Vel_rcc = np.zeros((self.ndof, 3, 3), dtype=complex)
         approximation = self.approximation.lower()
-        if approximation == 'profeta':
+        if approximation == "profeta":
             Vel_rcc += self.electronic_me_profeta_rcc(omega, gamma)
-        elif approximation == 'placzek':
+        elif approximation == "placzek":
             Vel_rcc += self.electronic_me_profeta_rcc(omega, gamma, True)
-        elif approximation == 'p-p':
+        elif approximation == "p-p":
             Vel_rcc += self.electronic_me_profeta_rcc(omega, gamma, -1)
         else:
             raise RuntimeError(
-                'Bug: call with {0} should not happen!'.format(
-                    self.approximation))
+                "Bug: call with {0} should not happen!".format(self.approximation)
+            )
 
         return self.map_to_modes(Vel_rcc)

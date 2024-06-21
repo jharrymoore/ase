@@ -1,4 +1,5 @@
 """Structure optimization. """
+import time
 
 import collections.abc
 import time
@@ -50,7 +51,7 @@ class Dynamics(IOContext):
         """
 
         self.atoms = atoms
-        self.logfile = self.openfile(logfile, mode='a', comm=world)
+        self.logfile = self.openfile(logfile, mode="a", comm=world)
         self.observers = []
         self.nsteps = 0
         # maximum number of steps placeholder with maxint
@@ -59,17 +60,15 @@ class Dynamics(IOContext):
         if trajectory is not None:
             if isinstance(trajectory, str):
                 mode = "a" if append_trajectory else "w"
-                trajectory = self.closelater(Trajectory(
-                    trajectory, mode=mode, master=master
-                ))
+                trajectory = self.closelater(
+                    Trajectory(trajectory, mode=mode, master=master)
+                )
             self.attach(trajectory, atoms=atoms)
 
     def get_number_of_steps(self):
         return self.nsteps
 
-    def insert_observer(
-        self, function, position=0, interval=1, *args, **kwargs
-    ):
+    def insert_observer(self, function, position=0, interval=1, *args, **kwargs):
         """Insert an observer."""
         if not isinstance(function, collections.abc.Callable):
             function = function.write
@@ -130,7 +129,6 @@ class Dynamics(IOContext):
 
         # run the algorithm until converged or max_steps reached
         while not self.converged() and self.nsteps < self.max_steps:
-
             # compute the next step
             self.step()
             self.nsteps += 1
@@ -158,13 +156,13 @@ class Dynamics(IOContext):
         return converged
 
     def converged(self, *args):
-        """" a dummy function as placeholder for a real criterion, e.g. in
-        Optimizer """
+        """ " a dummy function as placeholder for a real criterion, e.g. in
+        Optimizer"""
         return False
 
     def log(self, *args):
-        """ a dummy function as placeholder for a real logger, e.g. in
-        Optimizer """
+        """a dummy function as placeholder for a real logger, e.g. in
+        Optimizer"""
         return True
 
     def step(self):
@@ -176,7 +174,7 @@ class Optimizer(Dynamics):
     """Base-class for all structure optimization classes."""
 
     # default maxstep for all optimizers
-    defaults = {'maxstep': 0.2}
+    defaults = {"maxstep": 0.2}
 
     def __init__(
         self,
@@ -250,7 +248,7 @@ class Optimizer(Dynamics):
             "optimizer": self.__class__.__name__,
         }
         # add custom attributes from subclasses
-        for attr in ('maxstep', 'alpha', 'max_steps', 'restart'):
+        for attr in ("maxstep", "alpha", "max_steps", "restart"):
             if hasattr(self, attr):
                 description.update({attr: getattr(self, attr)})
         return description
@@ -259,14 +257,14 @@ class Optimizer(Dynamics):
         pass
 
     def irun(self, fmax=0.05, steps=None):
-        """ call Dynamics.irun and keep track of fmax"""
+        """call Dynamics.irun and keep track of fmax"""
         self.fmax = fmax
         if steps:
             self.max_steps = steps
         return Dynamics.irun(self)
 
     def run(self, fmax=0.05, steps=None):
-        """ call Dynamics.run and keep track of fmax"""
+        """call Dynamics.run and keep track of fmax"""
         self.fmax = fmax
         if steps:
             self.max_steps = steps
@@ -277,18 +275,16 @@ class Optimizer(Dynamics):
         if forces is None:
             forces = self.atoms.get_forces()
         if hasattr(self.atoms, "get_curvature"):
-            return (forces ** 2).sum(
+            return (forces**2).sum(
                 axis=1
-            ).max() < self.fmax ** 2 and self.atoms.get_curvature() < 0.0
-        return (forces ** 2).sum(axis=1).max() < self.fmax ** 2
+            ).max() < self.fmax**2 and self.atoms.get_curvature() < 0.0
+        return (forces**2).sum(axis=1).max() < self.fmax**2
 
     def log(self, forces=None):
         if forces is None:
             forces = self.atoms.get_forces()
-        fmax = sqrt((forces ** 2).sum(axis=1).max())
-        e = self.atoms.get_potential_energy(
-            force_consistent=self.force_consistent
-        )
+        fmax = sqrt((forces**2).sum(axis=1).max())
+        e = self.atoms.get_potential_energy(force_consistent=self.force_consistent)
         T = time.localtime()
         if self.logfile is not None:
             name = self.__class__.__name__
@@ -305,7 +301,7 @@ class Optimizer(Dynamics):
             # Let's disable the special printing for now.
             #
             # ast = {1: "*", 0: ""}[self.force_consistent]
-            ast = ''
+            ast = ""
             args = (name, self.nsteps, T[3], T[4], T[5], e, ast, fmax)
             msg = "%s:  %3d %02d:%02d:%02d %15.6f%1s %15.6f\n" % args
             self.logfile.write(msg)
@@ -314,7 +310,7 @@ class Optimizer(Dynamics):
 
     def dump(self, data):
         if world.rank == 0 and self.restart is not None:
-            with open(self.restart, 'w') as fd:
+            with open(self.restart, "w") as fd:
                 write_json(fd, data)
 
     def load(self):
@@ -322,9 +318,11 @@ class Optimizer(Dynamics):
             try:
                 return read_json(fd, always_array=False)
             except Exception as ex:
-                msg = ('Could not decode restart file as JSON.  '
-                       'You may need to delete the restart file '
-                       f'{self.restart}')
+                msg = (
+                    "Could not decode restart file as JSON.  "
+                    "You may need to delete the restart file "
+                    f"{self.restart}"
+                )
                 raise RestartError(msg) from ex
 
     def set_force_consistent(self):

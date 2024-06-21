@@ -7,9 +7,9 @@ from ase.calculators.abc import GetOutputsMixin
 
 
 class ELK(FileIOCalculator, GetOutputsMixin):
-    command = 'elk > elk.out'
-    implemented_properties = ['energy', 'forces']
-    ignored_changes = {'pbc'}
+    command = "elk > elk.out"
+    implemented_properties = ["energy", "forces"]
+    ignored_changes = {"pbc"}
     discard_results_on_any_change = True
 
     def __init__(self, **kwargs):
@@ -26,21 +26,21 @@ class ELK(FileIOCalculator, GetOutputsMixin):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
 
         parameters = dict(self.parameters)
-        if 'forces' in properties:
-            parameters['tforce'] = True
+        if "forces" in properties:
+            parameters["tforce"] = True
 
         directory = Path(self.directory)
-        write(directory / 'elk.in', atoms, parameters=parameters,
-              format='elk-in')
+        write(directory / "elk.in", atoms, parameters=parameters, format="elk-in")
 
     def read_results(self):
         from ase.outputs import Properties
+
         reader = ElkReader(self.directory)
         dct = dict(reader.read_everything())
 
-        converged = dct.pop('converged')
+        converged = dct.pop("converged")
         if not converged:
-            raise RuntimeError('Did not converge')
+            raise RuntimeError("Did not converge")
 
         # (Filter results thorugh Properties for error detection)
         props = Properties(dct)

@@ -35,17 +35,16 @@ class HexagonalFactory(TriclinicFactory):
         """Make the basis matrix for the crystal and system unit cells."""
         # First convert the basis specification to a triclinic one
         if isinstance(self.latticeconstant, type({})):
-            self.latticeconstant['alpha'] = 90
-            self.latticeconstant['beta'] = 90
-            self.latticeconstant['gamma'] = 120
-            self.latticeconstant['b/a'] = 1.0
+            self.latticeconstant["alpha"] = 90
+            self.latticeconstant["beta"] = 90
+            self.latticeconstant["gamma"] = 120
+            self.latticeconstant["b/a"] = 1.0
         else:
             if len(self.latticeconstant) == 2:
                 a, c = self.latticeconstant
                 self.latticeconstant = (a, a, c, 90, 90, 120)
             else:
-                raise ValueError(
-                    "Improper lattice constants for hexagonal crystal.")
+                raise ValueError("Improper lattice constants for hexagonal crystal.")
         TriclinicFactory.make_crystal_basis(self)
 
     def find_directions(self, directions, miller):
@@ -58,17 +57,22 @@ class HexagonalFactory(TriclinicFactory):
         miller = list(miller)
         if miller != [None, None, None]:
             raise NotImplementedError(
-                'Specifying Miller indices of surfaces currently '
-                'broken for hexagonal crystals.')
+                "Specifying Miller indices of surfaces currently "
+                "broken for hexagonal crystals."
+            )
         for obj in (directions, miller):
             for i in range(3):
                 if obj[i] is not None:
                     (a, b, c, d) = obj[i]
                     if a + b + c != 0:
                         raise ValueError(
-                            ("(%d,%d,%d,%d) is not a valid hexagonal Miller " +
-                             "index, as the sum of the first three numbers " +
-                             "should be zero.") % (a, b, c, d))
+                            (
+                                "(%d,%d,%d,%d) is not a valid hexagonal Miller "
+                                + "index, as the sum of the first three numbers "
+                                + "should be zero."
+                            )
+                            % (a, b, c, d)
+                        )
                     x = 4 * a + 2 * b
                     y = 2 * a + 4 * b
                     z = 3 * d
@@ -91,8 +95,10 @@ class HexagonalFactory(TriclinicFactory):
         b = -x + 2 * y
         c = -x - y
         d = 2 * z
-        print("   %s%d, %d, %d%s  ~  %s%d, %d, %d, %d%s" %
-              (bra, x, y, z, ket, bra, a, b, c, d, ket))
+        print(
+            "   %s%d, %d, %d%s  ~  %s%d, %d, %d, %d%s"
+            % (bra, x, y, z, ket, bra, a, b, c, d, ket)
+        )
 
 
 Hexagonal = HexagonalFactory()
@@ -110,8 +116,12 @@ HexagonalClosedPacked = HexagonalClosedPackedFactory()
 class GraphiteFactory(HexagonalFactory):
     "A factory for creating graphite lattices."
     xtal_name = "graphite"
-    bravais_basis = [[0, 0, 0], [1.0 / 3.0, 2.0 / 3.0, 0],
-                     [1.0 / 3.0, 2.0 / 3.0, 0.5], [2.0 / 3.0, 1.0 / 3.0, 0.5]]
+    bravais_basis = [
+        [0, 0, 0],
+        [1.0 / 3.0, 2.0 / 3.0, 0],
+        [1.0 / 3.0, 2.0 / 3.0, 0.5],
+        [2.0 / 3.0, 1.0 / 3.0, 0.5],
+    ]
 
 
 Graphite = GraphiteFactory()

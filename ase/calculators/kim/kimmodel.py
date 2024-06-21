@@ -126,8 +126,7 @@ class KIMModelData:
             species_map[spec] = codes[i]
             if self.debug:
                 print(
-                    "Species {} is supported and its code is: {}".format(
-                        spec, codes[i])
+                    "Species {} is supported and its code is: {}".format(spec, codes[i])
                 )
 
         return species_map
@@ -302,8 +301,7 @@ class KIMModelCalculator(Calculator):
 
         try:
             volume = atoms.get_volume()
-            stress = self._compute_virial_stress(
-                self.forces, self._coords, volume)
+            stress = self._compute_virial_stress(self.forces, self._coords, volume)
         except ValueError:  # Volume cannot be computed
             stress = None
 
@@ -346,10 +344,10 @@ class KIMModelCalculator(Calculator):
             Total forces on contributing atoms.
         """
 
-        total_forces = np.array(self.forces[:self._num_contributing_particles])
+        total_forces = np.array(self.forces[: self._num_contributing_particles])
 
         if self._padding_image_of.size != 0:
-            pad_forces = self.forces[self._num_contributing_particles:]
+            pad_forces = self.forces[self._num_contributing_particles :]
             for f, org_index in zip(pad_forces, self._padding_image_of):
                 total_forces[org_index] += f
 

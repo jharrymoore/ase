@@ -4,7 +4,7 @@ from ase.calculators.emt import EMT
 from ase.optimize.fire import FIRE as QuasiNewton
 
 # Optimise molecule.
-initial = molecule('C2H6')
+initial = molecule("C2H6")
 initial.calc = EMT()
 relax = QuasiNewton(initial)
 relax.run(fmax=0.05)
@@ -26,8 +26,8 @@ images.append(final)
 
 # Run IDPP interpolation.
 neb = NEB(images)
-neb.interpolate('idpp')
+neb.interpolate("idpp")
 
 # Run NEB calculation.
-qn = QuasiNewton(neb, trajectory='ethane_idpp.traj', logfile='ethane_idpp.log')
+qn = QuasiNewton(neb, trajectory="ethane_idpp.traj", logfile="ethane_idpp.log")
 qn.run(fmax=0.05)

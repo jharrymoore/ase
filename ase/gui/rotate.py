@@ -9,20 +9,23 @@ class Rotate:
 
     def __init__(self, gui):
         self.gui = gui
-        win = ui.Window(_('Rotate'), wmtype='utility')
-        win.add(_('Rotation angles:'))
-        self.rotate = [ui.SpinBox(42.0, -360, 360, 1, self.change)
-                       for i in '123']
+        win = ui.Window(_("Rotate"), wmtype="utility")
+        win.add(_("Rotation angles:"))
+        self.rotate = [ui.SpinBox(42.0, -360, 360, 1, self.change) for i in "123"]
         win.add(self.rotate)
-        win.add(ui.Button(_('Update'), self.update_angles))
-        win.add(_('Note:\nYou can rotate freely\n'
-                  'with the mouse, by holding\n'
-                  'down mouse button 2.'))
+        win.add(ui.Button(_("Update"), self.update_angles))
+        win.add(
+            _(
+                "Note:\nYou can rotate freely\n"
+                "with the mouse, by holding\n"
+                "down mouse button 2."
+            )
+        )
         self.update_angles()
 
     def change(self):
         x, y, z = [float(a.value) for a in self.rotate]
-        self.gui.axes = rotate('%fx,%fy,%fz' % (x, y, z))
+        self.gui.axes = rotate("%fx,%fy,%fz" % (x, y, z))
         self.gui.set_frame()
 
     def update_angles(self):

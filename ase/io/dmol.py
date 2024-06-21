@@ -57,7 +57,7 @@ from ase.utils import reader, writer
 
 @writer
 def write_dmol_car(fd, atoms):
-    """ Write a dmol car-file from an Atoms object
+    """Write a dmol car-file from an Atoms object
 
     Notes
     -----
@@ -67,7 +67,7 @@ def write_dmol_car(fd, atoms):
     Only allows for pbc 111 or 000.
     """
 
-    fd.write('!BIOSYM archive 3\n')
+    fd.write("!BIOSYM archive 3\n")
     dt = datetime.now()
 
     symbols = atoms.get_chemical_symbols()
@@ -80,25 +80,27 @@ def write_dmol_car(fd, atoms):
         R = lstsq_fit[0]
         positions = np.dot(atoms.positions, R)
 
-        fd.write('PBC=ON\n\n')
-        fd.write('!DATE     %s\n' % dt.strftime('%b %d %H:%M:%S %Y'))
-        fd.write('PBC %9.5f %9.5f %9.5f %9.5f %9.5f %9.5f\n' % tuple(cellpar))
+        fd.write("PBC=ON\n\n")
+        fd.write("!DATE     %s\n" % dt.strftime("%b %d %H:%M:%S %Y"))
+        fd.write("PBC %9.5f %9.5f %9.5f %9.5f %9.5f %9.5f\n" % tuple(cellpar))
     elif not np.any(atoms.pbc):  # [False,False,False]
-        fd.write('PBC=OFF\n\n')
-        fd.write('!DATE     %s\n' % dt.strftime('%b %d %H:%M:%S %Y'))
+        fd.write("PBC=OFF\n\n")
+        fd.write("!DATE     %s\n" % dt.strftime("%b %d %H:%M:%S %Y"))
         positions = atoms.positions
     else:
-        raise ValueError('PBC must be all true or all false for .car format')
+        raise ValueError("PBC must be all true or all false for .car format")
 
     for i, (sym, pos) in enumerate(zip(symbols, positions)):
-        fd.write('%-6s  %12.8f   %12.8f   %12.8f XXXX 1      xx      %-2s  '
-                 '0.000\n' % (sym + str(i + 1), pos[0], pos[1], pos[2], sym))
-    fd.write('end\nend\n')
+        fd.write(
+            "%-6s  %12.8f   %12.8f   %12.8f XXXX 1      xx      %-2s  "
+            "0.000\n" % (sym + str(i + 1), pos[0], pos[1], pos[2], sym)
+        )
+    fd.write("end\nend\n")
 
 
 @reader
 def read_dmol_car(fd):
-    """ Read a dmol car-file and return an Atoms object.
+    """Read a dmol car-file and return an Atoms object.
 
     Notes
     -----
@@ -110,7 +112,7 @@ def read_dmol_car(fd):
 
     start_line = 4
 
-    if lines[1][4:6] == 'ON':
+    if lines[1][4:6] == "ON":
         start_line += 1
         cell_dat = np.array([float(fld) for fld in lines[4].split()[1:7]])
         cell = cellpar_to_cell(cell_dat)
@@ -122,7 +124,7 @@ def read_dmol_car(fd):
     symbols = []
     positions = []
     for line in lines[start_line:]:
-        if line.startswith('end'):
+        if line.startswith("end"):
             break
         flds = line.split()
         symbols.append(flds[7])
@@ -134,7 +136,7 @@ def read_dmol_car(fd):
 
 @writer
 def write_dmol_incoor(fd, atoms, bohr=True):
-    """ Write a dmol incoor-file from an Atoms object
+    """Write a dmol incoor-file from an Atoms object
 
     Notes
     -----
@@ -145,7 +147,7 @@ def write_dmol_incoor(fd, atoms, bohr=True):
     """
 
     if not np.all(atoms.pbc):
-        raise ValueError('PBC must be all true for .incoor format')
+        raise ValueError("PBC must be all true for .incoor format")
 
     if bohr:
         cell = atoms.cell / Bohr
@@ -154,24 +156,28 @@ def write_dmol_incoor(fd, atoms, bohr=True):
         cell = atoms.cell
         positions = atoms.positions
 
-    fd.write('$cell vectors\n')
-    fd.write('            %18.14f  %18.14f  %18.14f\n' % (
-        cell[0, 0], cell[0, 1], cell[0, 2]))
-    fd.write('            %18.14f  %18.14f  %18.14f\n' % (
-        cell[1, 0], cell[1, 1], cell[1, 2]))
-    fd.write('            %18.14f  %18.14f  %18.14f\n' % (
-        cell[2, 0], cell[2, 1], cell[2, 2]))
+    fd.write("$cell vectors\n")
+    fd.write(
+        "            %18.14f  %18.14f  %18.14f\n" % (cell[0, 0], cell[0, 1], cell[0, 2])
+    )
+    fd.write(
+        "            %18.14f  %18.14f  %18.14f\n" % (cell[1, 0], cell[1, 1], cell[1, 2])
+    )
+    fd.write(
+        "            %18.14f  %18.14f  %18.14f\n" % (cell[2, 0], cell[2, 1], cell[2, 2])
+    )
 
-    fd.write('$coordinates\n')
+    fd.write("$coordinates\n")
     for a, pos in zip(atoms, positions):
-        fd.write('%-12s%18.14f  %18.14f  %18.14f \n' % (
-            a.symbol, pos[0], pos[1], pos[2]))
-    fd.write('$end\n')
+        fd.write(
+            "%-12s%18.14f  %18.14f  %18.14f \n" % (a.symbol, pos[0], pos[1], pos[2])
+        )
+    fd.write("$end\n")
 
 
 @reader
 def read_dmol_incoor(fd, bohr=True):
-    """ Reads an incoor file and returns an atoms object.
+    """Reads an incoor file and returns an atoms object.
 
     Notes
     -----
@@ -183,14 +189,14 @@ def read_dmol_incoor(fd, bohr=True):
     symbols = []
     positions = []
     for i, line in enumerate(lines):
-        if line.startswith('$cell vectors'):
+        if line.startswith("$cell vectors"):
             cell = np.zeros((3, 3))
-            for j, line in enumerate(lines[i + 1:i + 4]):
+            for j, line in enumerate(lines[i + 1 : i + 4]):
                 cell[j, :] = [float(fld) for fld in line.split()]
-        if line.startswith('$coordinates'):
+        if line.startswith("$coordinates"):
             j = i + 1
             while True:
-                if lines[j].startswith('$end'):
+                if lines[j].startswith("$end"):
                     break
                 flds = lines[j].split()
                 symbols.append(flds[0])
@@ -205,19 +211,19 @@ def read_dmol_incoor(fd, bohr=True):
 
 @writer
 def write_dmol_arc(fd, images):
-    """ Writes all images to file filename in arc format.
+    """Writes all images to file filename in arc format.
 
     Similar to the .car format only pbc 111 or 000 is supported.
     """
 
-    fd.write('!BIOSYM archive 3\n')
+    fd.write("!BIOSYM archive 3\n")
     if np.all(images[0].pbc):
-        fd.write('PBC=ON\n\n')
+        fd.write("PBC=ON\n\n")
         # Rotate positions so they will align with cellpar cell
     elif not np.any(images[0].pbc):
-        fd.write('PBC=OFF\n\n')
+        fd.write("PBC=OFF\n\n")
     else:
-        raise ValueError('PBC must be all true or all false for .arc format')
+        raise ValueError("PBC must be all true or all false for .arc format")
     for atoms in images:
         dt = datetime.now()
         symbols = atoms.get_chemical_symbols()
@@ -226,37 +232,36 @@ def write_dmol_arc(fd, images):
             new_cell = cellpar_to_cell(cellpar)
             lstsq_fit = np.linalg.lstsq(atoms.cell, new_cell, rcond=-1)
             R = lstsq_fit[0]
-            fd.write('!DATE     %s\n' % dt.strftime('%b %d %H:%m:%S %Y'))
-            fd.write('PBC %9.5f %9.5f %9.5f %9.5f %9.5f %9.5f\n'
-                     % tuple(cellpar))
+            fd.write("!DATE     %s\n" % dt.strftime("%b %d %H:%m:%S %Y"))
+            fd.write("PBC %9.5f %9.5f %9.5f %9.5f %9.5f %9.5f\n" % tuple(cellpar))
             positions = np.dot(atoms.positions, R)
         elif not np.any(atoms.pbc):  # [False,False,False]
-            fd.write('!DATE     %s\n' % dt.strftime('%b %d %H:%m:%S %Y'))
+            fd.write("!DATE     %s\n" % dt.strftime("%b %d %H:%m:%S %Y"))
             positions = atoms.positions
         else:
-            raise ValueError(
-                'PBC must be all true or all false for .arc format')
+            raise ValueError("PBC must be all true or all false for .arc format")
         for i, (sym, pos) in enumerate(zip(symbols, positions)):
             fd.write(
-                '%-6s  %12.8f   %12.8f   %12.8f XXXX 1      xx      %-2s  '
-                '0.000\n' % (sym + str(i + 1), pos[0], pos[1], pos[2], sym))
-        fd.write('end\nend\n')
-        fd.write('\n')
+                "%-6s  %12.8f   %12.8f   %12.8f XXXX 1      xx      %-2s  "
+                "0.000\n" % (sym + str(i + 1), pos[0], pos[1], pos[2], sym)
+            )
+        fd.write("end\nend\n")
+        fd.write("\n")
 
 
 @reader
 def read_dmol_arc(fd, index=-1):
-    """ Read a dmol arc-file and return a series of Atoms objects (images). """
+    """Read a dmol arc-file and return a series of Atoms objects (images)."""
 
     lines = fd.readlines()
     images = []
 
-    if lines[1].startswith('PBC=ON'):
+    if lines[1].startswith("PBC=ON"):
         pbc = True
-    elif lines[1].startswith('PBC=OFF'):
+    elif lines[1].startswith("PBC=OFF"):
         pbc = False
     else:
-        raise RuntimeError('Could not read pbc from second line in file')
+        raise RuntimeError("Could not read pbc from second line in file")
 
     i = 0
     while i < len(lines):
@@ -264,22 +269,20 @@ def read_dmol_arc(fd, index=-1):
         symbols = []
         positions = []
         # parse single image
-        if lines[i].startswith('!DATE'):
+        if lines[i].startswith("!DATE"):
             # read cell
             if pbc:
-                cell_dat = np.array([float(fld)
-                                     for fld in lines[i + 1].split()[1:7]])
+                cell_dat = np.array([float(fld) for fld in lines[i + 1].split()[1:7]])
                 cell = cellpar_to_cell(cell_dat)
                 i += 1
             i += 1
             # read atoms
-            while not lines[i].startswith('end'):
+            while not lines[i].startswith("end"):
                 flds = lines[i].split()
                 symbols.append(flds[7])
                 positions.append(flds[1:4])
                 i += 1
-            image = Atoms(symbols=symbols, positions=positions, cell=cell,
-                          pbc=pbc)
+            image = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=pbc)
             images.append(image)
         if len(images) == index:
             return images[-1]
@@ -290,5 +293,6 @@ def read_dmol_arc(fd, index=-1):
         return images[index]
     else:
         from ase.io.formats import index2range
+
         indices = index2range(index, len(images))
         return [images[j] for j in indices]

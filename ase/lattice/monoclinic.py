@@ -19,14 +19,13 @@ class SimpleMonoclinicFactory(TriclinicFactory):
         unit cell."""
         # First convert the basis specification to a triclinic one
         if isinstance(self.latticeconstant, type({})):
-            self.latticeconstant['beta'] = 90
-            self.latticeconstant['gamma'] = 90
+            self.latticeconstant["beta"] = 90
+            self.latticeconstant["gamma"] = 90
         else:
             if len(self.latticeconstant) == 4:
                 self.latticeconstant = self.latticeconstant + (90, 90)
             else:
-                raise ValueError(
-                    "Improper lattice constants for monoclinic crystal.")
+                raise ValueError("Improper lattice constants for monoclinic crystal.")
 
         TriclinicFactory.make_crystal_basis(self)
 
@@ -36,15 +35,11 @@ SimpleMonoclinic = SimpleMonoclinicFactory()
 
 class BaseCenteredMonoclinicFactory(SimpleMonoclinicFactory):
     # The natural basis vectors of the crystal structure
-    int_basis = np.array([[1, -1, 0],
-                          [1, 1, 0],
-                          [0, 0, 2]])
+    int_basis = np.array([[1, -1, 0], [1, 1, 0], [0, 0, 2]])
     basis_factor = 0.5
 
     # Converts the natural basis back to the crystallographic basis
-    inverse_basis = np.array([[1, 1, 0],
-                              [-1, 1, 0],
-                              [0, 0, 1]])
+    inverse_basis = np.array([[1, 1, 0], [-1, 1, 0], [0, 0, 1]])
     inverse_basis_factor = 1.0
 
 

@@ -6,7 +6,7 @@ def test_fixedmode():
     from ase.constraints import FixedMode, dict2constraint
 
     # Create a simple mode.
-    atoms = molecule('CH3OH')
+    atoms = molecule("CH3OH")
     initial_positions = atoms.positions.copy()
     atoms.rattle(stdev=0.5)
     mode = atoms.positions - initial_positions

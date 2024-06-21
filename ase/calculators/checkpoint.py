@@ -60,9 +60,9 @@ class DevNull:
 
 
 class Checkpoint:
-    _value_prefix = '_values_'
+    _value_prefix = "_values_"
 
-    def __init__(self, db='checkpoints.db', logfile=None):
+    def __init__(self, db="checkpoints.db", logfile=None):
         self.db = db
         if logfile is None:
             logfile = DevNull()
@@ -86,12 +86,15 @@ class Checkpoint:
             except NoCheckpoint:
                 retvals = func(*args, **kwargs)
                 if isinstance(retvals, tuple):
-                    self.save(*retvals, atoms=atoms,
-                              checkpoint_func_name=checkpoint_func_name)
+                    self.save(
+                        *retvals, atoms=atoms, checkpoint_func_name=checkpoint_func_name
+                    )
                 else:
-                    self.save(retvals, atoms=atoms,
-                              checkpoint_func_name=checkpoint_func_name)
+                    self.save(
+                        retvals, atoms=atoms, checkpoint_func_name=checkpoint_func_name
+                    )
             return retvals
+
         return decorated_func
 
     def _increase_checkpoint_id(self):
@@ -99,14 +102,16 @@ class Checkpoint:
             self.checkpoint_id += [1]
         else:
             self.checkpoint_id[-1] += 1
-        self.logfile.write('Entered checkpoint region '
-                           '{0}.\n'.format(self.checkpoint_id))
+        self.logfile.write(
+            "Entered checkpoint region " "{0}.\n".format(self.checkpoint_id)
+        )
 
         self.in_checkpointed_region = True
 
     def _decrease_checkpoint_id(self):
-        self.logfile.write('Leaving checkpoint region '
-                           '{0}.\n'.format(self.checkpoint_id))
+        self.logfile.write(
+            "Leaving checkpoint region " "{0}.\n".format(self.checkpoint_id)
+        )
         if not self.in_checkpointed_region:
             self.checkpoint_id = self.checkpoint_id[:-1]
             assert len(self.checkpoint_id) >= 1
@@ -120,7 +125,7 @@ class Checkpoint:
         E.g. if checkpoint is nested and id is [3,2,6] it returns:
             'check3:2:6'
         """
-        return 'check' + ':'.join(str(id) for id in self.checkpoint_id)
+        return "check" + ":".join(str(id) for id in self.checkpoint_id)
 
     def load(self, atoms=None):
         """
@@ -141,10 +146,9 @@ class Checkpoint:
                 raise NoCheckpoint
 
             data = dbentry.data
-            atomsi = data['checkpoint_atoms_args_index']
+            atomsi = data["checkpoint_atoms_args_index"]
             i = 0
-            while (i == atomsi or
-                   '{0}{1}'.format(self._value_prefix, i) in data):
+            while i == atomsi or "{0}{1}".format(self._value_prefix, i) in data:
                 if i == atomsi:
                     newatoms = dbentry.toatoms()
                     if atoms is not None:
@@ -152,11 +156,12 @@ class Checkpoint:
                         newatoms.calc = atoms.calc
                     retvals += [newatoms]
                 else:
-                    retvals += [data['{0}{1}'.format(self._value_prefix, i)]]
+                    retvals += [data["{0}{1}".format(self._value_prefix, i)]]
                 i += 1
 
-        self.logfile.write('Successfully restored checkpoint '
-                           '{0}.\n'.format(self.checkpoint_id))
+        self.logfile.write(
+            "Successfully restored checkpoint " "{0}.\n".format(self.checkpoint_id)
+        )
         self._decrease_checkpoint_id()
         if len(retvals) == 1:
             return retvals[0]
@@ -164,26 +169,27 @@ class Checkpoint:
             return tuple(retvals)
 
     def _flush(self, *args, **kwargs):
-        data = dict(('{0}{1}'.format(self._value_prefix, i), v)
-                    for i, v in enumerate(args))
+        data = dict(
+            ("{0}{1}".format(self._value_prefix, i), v) for i, v in enumerate(args)
+        )
 
         try:
             atomsi = [isinstance(v, ase.Atoms) for v in args].index(True)
             atoms = args[atomsi]
-            del data['{0}{1}'.format(self._value_prefix, atomsi)]
+            del data["{0}{1}".format(self._value_prefix, atomsi)]
         except ValueError:
             atomsi = -1
             try:
-                atoms = kwargs['atoms']
+                atoms = kwargs["atoms"]
             except KeyError:
-                raise RuntimeError('No atoms object provided in arguments.')
+                raise RuntimeError("No atoms object provided in arguments.")
 
         try:
-            del kwargs['atoms']
+            del kwargs["atoms"]
         except KeyError:
             pass
 
-        data['checkpoint_atoms_args_index'] = atomsi
+        data["checkpoint_atoms_args_index"] = atomsi
         data.update(kwargs)
 
         with connect(self.db) as db:
@@ -192,11 +198,11 @@ class Checkpoint:
                 del db[dbentry.id]
             except KeyError:
                 pass
-            db.write(atoms, checkpoint_id=self._mangled_checkpoint_id(),
-                     data=data)
+            db.write(atoms, checkpoint_id=self._mangled_checkpoint_id(), data=data)
 
-        self.logfile.write('Successfully stored checkpoint '
-                           '{0}.\n'.format(self.checkpoint_id))
+        self.logfile.write(
+            "Successfully stored checkpoint " "{0}.\n".format(self.checkpoint_id)
+        )
 
     def flush(self, *args, **kwargs):
         """
@@ -221,10 +227,12 @@ class Checkpoint:
 
 
 def atoms_almost_equal(a, b, tol=1e-9):
-    return (np.abs(a.positions - b.positions).max() < tol and
-            (a.numbers == b.numbers).all() and
-            np.abs(a.cell - b.cell).max() < tol and
-            (a.pbc == b.pbc).all())
+    return (
+        np.abs(a.positions - b.positions).max() < tol
+        and (a.numbers == b.numbers).all()
+        and np.abs(a.cell - b.cell).max() < tol
+        and (a.pbc == b.pbc).all()
+    )
 
 
 class CheckpointCalculator(Calculator):
@@ -244,18 +252,20 @@ class CheckpointCalculator(Calculator):
         # 1st time, does calc, writes to checkfile
         # subsequent runs, reads from checkpoint file
     """
+
     implemented_properties = ase.calculators.calculator.all_properties
     default_parameters: Dict[str, Any] = {}
-    name = 'CheckpointCalculator'
+    name = "CheckpointCalculator"
 
     property_to_method_name = {
-        'energy': 'get_potential_energy',
-        'energies': 'get_potential_energies',
-        'forces': 'get_forces',
-        'stress': 'get_stress',
-        'stresses': 'get_stresses'}
+        "energy": "get_potential_energy",
+        "energies": "get_potential_energies",
+        "forces": "get_forces",
+        "stress": "get_stress",
+        "stresses": "get_stresses",
+    }
 
-    def __init__(self, calculator, db='checkpoints.db', logfile=None):
+    def __init__(self, calculator, db="checkpoints.db", logfile=None):
         Calculator.__init__(self)
         self.calculator = calculator
         if logfile is None:
@@ -271,25 +281,31 @@ class CheckpointCalculator(Calculator):
             try:
                 assert atoms_almost_equal(atoms, prev_atoms)
             except AssertionError:
-                raise AssertionError('mismatch between current atoms and '
-                                     'those read from checkpoint file')
-            self.logfile.write('retrieved results for {0} from checkpoint\n'
-                               .format(properties))
+                raise AssertionError(
+                    "mismatch between current atoms and "
+                    "those read from checkpoint file"
+                )
+            self.logfile.write(
+                "retrieved results for {0} from checkpoint\n".format(properties)
+            )
             # save results in calculator for next time
             if isinstance(self.calculator, Calculator):
-                if not hasattr(self.calculator, 'results'):
+                if not hasattr(self.calculator, "results"):
                     self.calculator.results = {}
                 self.calculator.results.update(dict(zip(properties, results)))
         except NoCheckpoint:
             if isinstance(self.calculator, Calculator):
-                self.logfile.write('doing calculation of {0} with new-style '
-                                   'calculator interface\n'.format(properties))
+                self.logfile.write(
+                    "doing calculation of {0} with new-style "
+                    "calculator interface\n".format(properties)
+                )
                 self.calculator.calculate(atoms, properties, system_changes)
-                results = [self.calculator.results[prop]
-                           for prop in properties]
+                results = [self.calculator.results[prop] for prop in properties]
             else:
-                self.logfile.write('doing calculation of {0} with old-style '
-                                   'calculator interface\n'.format(properties))
+                self.logfile.write(
+                    "doing calculation of {0} with old-style "
+                    "calculator interface\n".format(properties)
+                )
                 results = []
                 for prop in properties:
                     method_name = self.property_to_method_name[prop]

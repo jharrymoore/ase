@@ -1,40 +1,46 @@
 from ase.calculators.calculator import BaseCalculator, all_changes
-from ase.calculators.calculator import (PropertyNotImplementedError,
-                                        CalculatorSetupError)
+from ase.calculators.calculator import PropertyNotImplementedError, CalculatorSetupError
 
 
 class Mixer:
     def __init__(self, calcs, weights):
         self.check_input(calcs, weights)
-        common_properties = set.intersection(*(set(calc.implemented_properties)
-                                               for calc in calcs))
+        common_properties = set.intersection(
+            *(set(calc.implemented_properties) for calc in calcs)
+        )
         self.implemented_properties = list(common_properties)
         if not self.implemented_properties:
-            raise PropertyNotImplementedError('The provided Calculators have no'
-                                              ' properties in common!')
+            raise PropertyNotImplementedError(
+                "The provided Calculators have no" " properties in common!"
+            )
         self.calcs = calcs
         self.weights = weights
 
     @staticmethod
     def check_input(calcs, weights):
         if len(calcs) == 0:
-            raise CalculatorSetupError('Please provide a list of Calculators')
+            raise CalculatorSetupError("Please provide a list of Calculators")
         for calc in calcs:
             if not isinstance(calc, BaseCalculator):
-                raise CalculatorSetupError('All Calculators should be inherited'
-                                           ' form the BaseCalculator class')
+                raise CalculatorSetupError(
+                    "All Calculators should be inherited"
+                    " form the BaseCalculator class"
+                )
         if len(weights) != len(calcs):
-            raise ValueError('The length of the weights must be the same as the'
-                             ' number of Calculators!')
+            raise ValueError(
+                "The length of the weights must be the same as the"
+                " number of Calculators!"
+            )
 
     def get_properties(self, properties, atoms):
         results = {}
 
         def get_property(prop):
             contributs = [calc.get_property(prop, atoms) for calc in self.calcs]
-            results[f'{prop}_contributions'] = contributs
-            results[prop] = sum(weight * value for weight, value
-                                in zip(self.weights, contributs))
+            results[f"{prop}_contributions"] = contributs
+            results[prop] = sum(
+                weight * value for weight, value in zip(self.weights, contributs)
+            )
 
         for prop in properties:  # get requested properties
             get_property(prop)
@@ -68,9 +74,8 @@ class LinearCombinationCalculator(BaseCalculator):
         self.results = self.mixer.get_properties(properties, atoms)
 
     def __str__(self):
-        calculators = ', '.join(
-            calc.__class__.__name__ for calc in self.mixer.calcs)
-        return '{}({})'.format(self.__class__.__name__, calculators)
+        calculators = ", ".join(calc.__class__.__name__ for calc in self.mixer.calcs)
+        return "{}({})".format(self.__class__.__name__, calculators)
 
 
 class MixedCalculator(LinearCombinationCalculator):
@@ -99,12 +104,9 @@ class MixedCalculator(LinearCombinationCalculator):
         self.mixer.weights[1] = w2
 
     def get_energy_contributions(self, atoms=None):
-        """ Return the potential energy from calc1 and calc2 respectively """
-        self.calculate(
-            properties=['energy'],
-            atoms=atoms,
-            system_changes=all_changes)
-        return self.results['energy_contributions']
+        """Return the potential energy from calc1 and calc2 respectively"""
+        self.calculate(properties=["energy"], atoms=atoms, system_changes=all_changes)
+        return self.results["energy_contributions"]
 
 
 class SumCalculator(LinearCombinationCalculator):
@@ -126,7 +128,7 @@ class SumCalculator(LinearCombinationCalculator):
             List of an arbitrary number of :mod:`ase.calculators` objects.
         """
 
-        weights = [1.] * len(calcs)
+        weights = [1.0] * len(calcs)
         super().__init__(calcs, weights)
 
 
@@ -144,7 +146,8 @@ class AverageCalculator(LinearCombinationCalculator):
 
         if n == 0:
             raise CalculatorSetupError(
-                'The value of the calcs must be a list of Calculators')
+                "The value of the calcs must be a list of Calculators"
+            )
 
         weights = [1 / n] * n
         super().__init__(calcs, weights)

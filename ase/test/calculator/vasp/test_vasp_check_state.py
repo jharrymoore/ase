@@ -4,7 +4,7 @@ import pytest
 calc = pytest.mark.calculator
 
 
-@calc('vasp')
+@calc("vasp")
 def test_vasp_check_state(factory, atoms_2co):
     """Run tests to ensure that the VASP check_state() function call
     works correctly, i.e. correctly sets the working directories and
@@ -16,14 +16,16 @@ def test_vasp_check_state(factory, atoms_2co):
     atoms = atoms_2co  # aliasing
 
     # Test
-    settings = dict(xc='LDA',
-                    prec='Low',
-                    algo='Fast',
-                    ismear=0,
-                    sigma=1.,
-                    istart=0,
-                    lwave=False,
-                    lcharg=False)
+    settings = dict(
+        xc="LDA",
+        prec="Low",
+        algo="Fast",
+        ismear=0,
+        sigma=1.0,
+        istart=0,
+        lwave=False,
+        lcharg=False,
+    )
 
     s1 = atoms.get_chemical_symbols()
 
@@ -34,14 +36,14 @@ def test_vasp_check_state(factory, atoms_2co):
     en1 = atoms.get_potential_energy()
 
     # Test JSON dumping and restarting works
-    fi = 'json_test.json'
+    fi = "json_test.json"
     calc.write_json(filename=fi)
 
     assert os.path.isfile(fi)
 
     calc2 = factory.calc()
     calc2.read_json(fi)
-    assert not calc2.calculation_required(atoms, ['energy', 'forces'])
+    assert not calc2.calculation_required(atoms, ["energy", "forces"])
     en2 = calc2.get_potential_energy()
     assert abs(en1 - en2) < 1e-8
     os.remove(fi)  # Clean up the JSON file
@@ -62,8 +64,8 @@ def test_vasp_check_state(factory, atoms_2co):
     calc.set(sigma=0.5)
 
     # Check that we capture a change for float params
-    assert calc.check_state(atoms) == ['float_params']
-    assert calc.calculation_required(atoms, ['energy', 'forces'])
+    assert calc.check_state(atoms) == ["float_params"]
+    assert calc.calculation_required(atoms, ["energy", "forces"])
 
     en2 = atoms.get_potential_energy()
 
@@ -74,8 +76,8 @@ def test_vasp_check_state(factory, atoms_2co):
     calc.kpts = 2
 
     # Check that this requires a new calculation
-    assert calc.check_state(atoms) == ['input_params']
-    assert calc.calculation_required(atoms, ['energy', 'forces'])
+    assert calc.check_state(atoms) == ["input_params"]
+    assert calc.calculation_required(atoms, ["energy", "forces"])
 
     # Clean up
     calc.clean()

@@ -6,18 +6,18 @@ from ase.build import molecule
 
 @pytest.fixture
 def atoms():
-    return molecule('CH3CH2OH')
+    return molecule("CH3CH2OH")
 
 
 def test_fixcartesian_misc():
     mask = np.array([1, 1, 0], bool)
     indices = [2, 3]
     constraint = FixCartesian(indices, mask=mask)
-    assert '3' in str(constraint)
-    dct = constraint.todict()['kwargs']
+    assert "3" in str(constraint)
+    dct = constraint.todict()["kwargs"]
 
-    assert dct['a'] == indices
-    assert all(dct['mask'] == mask)
+    assert dct["a"] == indices
+    assert all(dct["mask"] == mask)
 
     # 2 atoms x 2 directions == 4 DOFs constrained
     assert constraint.get_removed_dof(atoms=None) == 4  # XXX atoms

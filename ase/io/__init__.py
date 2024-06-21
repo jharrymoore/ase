@@ -9,6 +9,12 @@ class ParseError(Exception):
 
 
 __all__ = [
-    'Trajectory', 'PickleTrajectory', 'BundleTrajectory', 'NetCDFTrajectory',
-    'read', 'iread', 'write', 'string2index'
+    "Trajectory",
+    "PickleTrajectory",
+    "BundleTrajectory",
+    "NetCDFTrajectory",
+    "read",
+    "iread",
+    "write",
+    "string2index",
 ]
